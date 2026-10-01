@@ -786,18 +786,7 @@ form.addEventListener("submit", event => {
     return;
   }
 
-  /*
-    FRONT-END DEMO ONLY:
-    No account is created or data saved yet.
-    Connect Firebase Authentication and a database here
-    before using this form for real student registrations.
-  */
 
-  showMessage(
-    "The form passed validation, but registration is not connected yet. Connect Firebase to create your student account.",
-    "success"
-  );
-});
 
 function showMessage(text, type) {
   message.textContent = text;
@@ -805,6 +794,123 @@ function showMessage(text, type) {
   message.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 </script>
+
+  
+<script type="module">
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    sendEmailVerification
+  } from
+    "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp
+  } from
+    "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  // Replace these values with your Firebase web app config.
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZK6zx1QtVSYBNR4xwuYjufaZYQkm2sfA",
+    authDomain: "sirajul-ummah-institute.firebaseapp.com",
+    projectId: "sirajul-ummah-institute",
+    storageBucket: "sirajul-ummah-institute.firebasestorage.app",
+    messagingSenderId: "410483489107",
+    appId: "1:410483489107:web:b50632a45d16a5031ec9a6"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const form = document.getElementById("registerForm");
+  const message = document.getElementById("message");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const fullName =
+      document.getElementById("fullName").value.trim();
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    const confirmPassword =
+      document.getElementById("confirmPassword").value;
+
+    if (!fullName) {
+      message.textContent = "Enter your full name.";
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      message.textContent = "Passwords do not match.";
+      return;
+    }
+
+    message.textContent = "Creating your account...";
+
+    try {
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await updateProfile(result.user, {
+        displayName: fullName
+      });
+
+      await setDoc(doc(db, "students", result.user.uid), {
+        fullName: fullName,
+        email: email,
+        createdAt: serverTimestamp()
+      });
+
+      await sendEmailVerification(result.user);
+
+      message.textContent =
+        "Account created! Check your email for verification.";
+
+      form.reset();
+
+      // Optional: send the student to the login page.
+      // Uncomment the next line if you want automatic redirection.
+      // window.location.href = "login.html";
+
+    } catch (error) {
+      console.error(error);
+
+      const messages = {
+        "auth/email-already-in-use":
+          "This email already has an account. Please log in.",
+        "auth/invalid-email":
+          "Enter a valid email address.",
+        "auth/weak-password":
+          "Choose a stronger password.",
+        "auth/network-request-failed":
+          "Network error. Check your internet connection.",
+        "permission-denied":
+          "Profile saving was blocked. Check Firestore rules."
+      };
+
+      message.textContent =
+        messages[error.code] ||
+        "Registration failed. Please try again.";
+    }
+  });
+</script>
+
 
 </body>
 </html>
