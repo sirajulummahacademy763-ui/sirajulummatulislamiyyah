@@ -1048,29 +1048,116 @@ loginForm.addEventListener("submit", event => {
     return;
   }
 
-  /*
-    DEMO ONLY.
+  
+</script>
 
-    This page is not yet connected to Firebase Authentication.
-    No login session is created here.
+  
 
-    Firebase sign-in will be added in the next integration step.
-  */
+<script type="module">
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 
-  showMessage(
-    "The form is ready, but login is not connected yet. Connect Firebase Authentication to sign in securely.",
-    "error"
-  );
-});
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail
+  } from
+    "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
-/* GOOGLE LOGIN PLACEHOLDER */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZK6zx1QtVSYBNR4xwuYjufaZYQkm2sfA",
+    authDomain: "sirajul-ummah-institute.firebaseapp.com",
+    databaseURL: "https://sirajul-ummah-institute-default-rtdb.firebaseio.com",
+    projectId: "sirajul-ummah-institute",
+    storageBucket: "sirajul-ummah-institute.firebasestorage.app",
+    messagingSenderId: "410483489107",
+    appId: "1:410483489107:web:b50632a45d16a5031ec9a6",
+    measurementId: "G-YDN4XKVY7R"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-document.getElementById("googleButton").addEventListener("click", () => {
-  showMessage(
-    "Google sign-in is not connected yet. It requires Firebase Authentication setup.",
-    "error"
-  );
-});
+  const form = document.getElementById("loginForm");
+  const message = document.getElementById("message");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    message.textContent = "Signing you in...";
+
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      message.textContent = "Login successful!";
+
+      // Change this destination when you create
+      // your student dashboard.
+      window.location.href = "index.html";
+
+    } catch (error) {
+      console.error(error);
+
+      const messages = {
+        "auth/invalid-credential":
+          "Incorrect email or password.",
+        "auth/user-not-found":
+          "No account found with these details.",
+        "auth/wrong-password":
+          "Incorrect email or password.",
+        "auth/invalid-email":
+          "Enter a valid email address.",
+        "auth/too-many-requests":
+          "Too many attempts. Please try again later.",
+        "auth/network-request-failed":
+          "Network error. Check your internet connection."
+      };
+
+      message.textContent =
+        messages[error.code] ||
+        "Login failed. Please try again.";
+    }
+  });
+
+  // Optional: connect your Forgot Password link to
+  // an element with id="forgotPassword".
+  const forgotLink = document.getElementById("forgotPassword");
+
+  if (forgotLink) {
+    forgotLink.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      const email =
+        document.getElementById("email").value.trim();
+
+      if (!email) {
+        message.textContent =
+          "Enter your email first, then select Forgot Password.";
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+
+        message.textContent =
+          "If the account exists, a password-reset email will be sent.";
+      } catch (error) {
+        console.error(error);
+
+        message.textContent =
+          "Could not send the reset email. Check the address and try again.";
+      }
+    });
+  }
 </script>
 
 </body>
