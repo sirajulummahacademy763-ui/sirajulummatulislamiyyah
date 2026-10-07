@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sirajul Ummah Islamic Institute: Qur'an memorization, Arabic, Islamic and Western studies, and technology through online learning.">
+<title>Sirajul Ummah Islamic Institute | Online Learning</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--night:#12163a;--deep:#1c2150;--lamp:#f5b94a;--mist:#eef0f8;--ink:#171a33;--line:#cfd3e8;--soft:#4b5072}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist);line-height:1.6}
+a{color:inherit}
+header{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px clamp(18px,5vw,64px);color:#fff}
+.logo{font-weight:700;text-decoration:none;display:flex;align-items:center;gap:10px}
+nav{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+nav a{text-decoration:none;font-weight:500}
+nav a:hover{color:var(--lamp)}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;background:var(--lamp);color:var(--night)!important;font-weight:700;text-decoration:none}
+.btn.dark{background:var(--night);color:#fff!important}
+.ghost{margin-left:16px;font-weight:700;color:#fff}
+.ar{font-family:Amiri,serif}
+.hero{background:radial-gradient(circle at 80% 40%,rgba(245,185,74,.38),transparent 48%),var(--night);color:#fff;padding:140px clamp(18px,5vw,64px) 70px;display:grid;grid-template-columns:7fr 4fr;gap:32px;align-items:center}
+.hero .arname{font-size:1.5rem;line-height:1.5;margin:0 0 4px}
+.hero .enname{opacity:.85;margin:0 0 22px;font-size:.95rem}
+.hero h1{font-family:Amiri,serif;font-size:clamp(2.4rem,5.4vw,4.4rem);line-height:1.1;margin:0 0 16px}
+.hero p.sub{max-width:52ch;font-size:1.1rem;opacity:.92;margin:0 0 26px}
+.hero img{width:100%;max-width:300px;justify-self:center;filter:drop-shadow(0 0 40px rgba(245,185,74,.5))}
+.pills{background:var(--deep);padding:16px clamp(18px,5vw,64px);display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pills a{color:#fff;text-decoration:none;border:1.5px solid rgba(245,185,74,.5);border-radius:999px;padding:8px 18px;font-weight:500}
+.pills a:hover{background:var(--lamp);color:var(--night)}
+.pills .ar{font-size:1.2rem;margin-left:6px}
+.intro{max-width:760px;margin:0 auto;padding:70px clamp(18px,5vw,40px) 30px;text-align:center}
+h2{font-family:Amiri,serif;font-size:2.4rem;margin:0 0 10px;line-height:1.15}
+.dept{display:grid;grid-template-columns:4fr 7fr;gap:40px;padding:70px clamp(18px,5vw,64px);align-items:start}
+.dept:nth-of-type(odd){background:#fff}
+.dept.dk{background:var(--night);color:#fff}
+.dept .word{font-family:Amiri,serif;font-size:clamp(70px,11vw,140px);line-height:1.1;color:#c78a14;margin:0}
+.dept.dk .word{color:var(--lamp);text-shadow:0 0 50px rgba(245,185,74,.4)}
+.dept small{display:block;font-weight:700;letter-spacing:.04em;color:var(--soft)}
+.dept.dk small{color:#cfd3e8}
+.dept ul{list-style:none;margin:18px 0 0;padding:0}
+.dept li{padding:12px 0;border-top:1.5px solid var(--line)}
+.dept.dk li{border-color:rgba(255,255,255,.18)}
+.dept li b{display:block}
+.dept li span{color:var(--soft)}
+.dept.dk li span{color:#cfd3e8}
+.wrap{max-width:1100px;margin:0 auto;padding:70px clamp(18px,5vw,64px)}
+.who{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px}
+.who div{padding:20px 18px 20px 0;border-top:2px solid var(--line)}
+.who b{display:block;font-size:1.1rem}
+.who span{color:var(--soft)}
+.steps{counter-reset:s;list-style:none;padding:0;margin:26px 0 0}
+.steps li{counter-increment:s;display:grid;grid-template-columns:56px 1fr;gap:14px;padding:18px 0;border-top:2px solid var(--line)}
+.steps li:before{content:counter(s);font-family:Amiri,serif;font-size:2.4rem;color:#c78a14;line-height:1}
+.steps b{display:block}
+.steps span{color:var(--soft)}
+details{border-top:2px solid var(--line);padding:16px 0}
+summary{font-weight:700;cursor:pointer}
+details p{margin:8px 0 0;color:var(--soft)}
+.cta{background:var(--night);color:#fff;text-align:center;padding:80px clamp(18px,5vw,64px)}
+.cta p{max-width:52ch;margin:0 auto 26px;opacity:.9}
+footer{background:var(--night);color:#cfd3e8;padding:30px clamp(18px,5vw,64px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.12);font-size:.92rem}
+footer a{text-decoration:none;margin-right:16px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+@media(max-width:820px){header{position:static;background:var(--night);flex-direction:column;align-items:flex-start}.hero{grid-template-columns:1fr;padding-top:50px}.hero img{max-width:160px;order:-1}.dept{grid-template-columns:1fr;gap:6px}.who{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+html:not(.ok){visibility:hidden}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html"><img src="logo.svg" alt="" width="44" height="44"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a>
+  <nav><a href="#programs">What we teach</a><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="wallet.html">My wallet</a><a class="btn" href="#" data-logout>Log out</a></nav>
+</header>
+
+<div class="hero">
+  <div>
+    <p class="arname ar" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</p>
+    <p class="enname">Sirajul Ummah Islamic Institute for Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning</p>
+    <h1>One institute. Five paths of knowledge.</h1>
+    <p class="sub">Memorize the Qur'an, master Arabic, study the Islamic sciences, learn Western subjects, and build technology skills, all online and at your own pace.</p>
+    <a class="btn" href="#programs">See everything we teach</a><a class="ghost" href="library.html">Open the library</a>
+  </div>
+  <img src="logo.svg" alt="Sirajul Ummah Islamic Institute logo">
+</div>
+
+<nav class="pills" aria-label="Departments">
+  <a href="#quran"><span class="ar">القرآن</span> Qur'an</a><a href="#arabic"><span class="ar">العربية</span> Arabic</a><a href="#islamic"><span class="ar">الإسلامية</span> Islamic</a><a href="#western"><span class="ar">الغربية</span> Western</a><a href="#tech"><span class="ar">التقنية</span> Technology</a>
+</nav>
+
+<div class="intro" id="programs">
+  <h2>Everything we teach, in five departments</h2>
+  <p style="color:var(--soft)">Read what each path covers before you register. Choose one, or combine them.</p>
+</div>
+
+<section class="dept" id="quran">
+  <div><p class="word" dir="rtl" lang="ar">القرآن</p><small>QUR'AN MEMORIZATION</small></div>
+  <div><h2>Memorize with accuracy, recite with beauty</h2>
+  <ul>
+    <li><b>Hifz (memorization)</b><span>Start from the beginning or continue what you already know, at a steady pace.</span></li>
+    <li><b>Tajweed</b><span>The rules of correct recitation, from letter articulation to lengthening and stops.</span></li>
+    <li><b>Recitation practice</b><span>Learn to read fluently with correct pronunciation.</span></li>
+    <li><b>Revision (muraja'ah)</b><span>Review plans so what you memorize stays with you.</span></li>
+  </ul></div>
+</section>
+
+<section class="dept dk" id="arabic">
+  <div><p class="word" dir="rtl" lang="ar">العربية</p><small>ARABIC LANGUAGE</small></div>
+  <div><h2>Understand the language of the Qur'an</h2>
+  <ul>
+    <li><b>Reading and writing</b><span>The alphabet, vowels and connecting letters, from zero.</span></li>
+    <li><b>Vocabulary</b><span>Everyday words and the words that appear most in the Qur'an.</span></li>
+    <li><b>Grammar and word forms</b><span>Nahw and sarf, explained step by step.</span></li>
+    <li><b>Speaking and comprehension</b><span>Simple conversation and understanding Arabic texts.</span></li>
+  </ul></div>
+</section>
+
+<section class="dept" id="islamic">
+  <div><p class="word" dir="rtl" lang="ar">الإسلامية</p><small>ISLAMIC STUDIES</small></div>
+  <div><h2>Know your faith from reliable sources</h2>
+  <ul>
+    <li><b>Aqeedah</b><span>The foundations of belief.</span></li>
+    <li><b>Fiqh</b><span>The rulings of prayer, fasting, zakat, hajj and daily life.</span></li>
+    <li><b>Hadith and Tafsir</b><span>Understanding the Sunnah and the meanings of the Qur'an.</span></li>
+    <li><b>Seerah and Adab</b><span>The life of the Prophet ﷺ and the character that follows from it.</span></li>
+  </ul></div>
+</section>
+
+<section class="dept dk" id="western">
+  <div><p class="word" dir="rtl" lang="ar">الغربية</p><small>WESTERN STUDIES</small></div>
+  <div><h2>Modern academic knowledge, taught with good values</h2>
+  <ul>
+    <li><b>English language</b><span>Reading, writing and speaking.</span></li>
+    <li><b>Mathematics</b><span>From the basics upward, for school-age learners and adults.</span></li>
+    <li><b>Sciences</b><span>How the natural world works.</span></li>
+    <li><b>Social studies and history</b><span>Understanding the world and its past.</span></li>
+  </ul></div>
+</section>
+
+<section class="dept" id="tech">
+  <div><p class="word" dir="rtl" lang="ar">التقنية</p><small>TECHNOLOGY</small></div>
+  <div><h2>Practical technology skills, learned online</h2>
+  <ul>
+    <li><b>Computer and internet basics</b><span>Using devices, files and the web with confidence.</span></li>
+    <li><b>Digital safety</b><span>Protecting yourself and your family online.</span></li>
+    <li><b>Everyday digital tools</b><span>Typing, documents, email and online learning tools.</span></li>
+    <li><b>Web design and programming</b><span>Build websites and learn to code.</span></li>
+  </ul></div>
+</section>
+
+<div class="wrap">
+  <h2>Who it is for</h2>
+  <div class="who">
+    <div><b>Children</b><span>Gentle, structured steps for young learners.</span></div>
+    <div><b>Teenagers</b><span>Skills and knowledge alongside school.</span></div>
+    <div><b>Adults</b><span>Start or continue at any age.</span></div>
+    <div><b>Parents</b><span>Support your children's learning at home.</span></div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top:0">
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><div><b>Create your free account</b><span>Tell us who you are and what you want to learn.</span></div></li>
+    <li><div><b>Choose your path</b><span>Pick one department or mix several.</span></div></li>
+    <li><div><b>Learn online</b><span>Study from your phone or computer, at your own pace.</span></div></li>
+    <li><div><b>Use your wallet</b><span>Your wallet keeps your coins for joining courses.</span></div></li>
+  </ol>
+</div>
+
+<div class="wrap" style="padding-top:0;max-width:820px">
+  <h2>Questions</h2>
+  <details><summary>Is it free to create an account?</summary><p>Yes. Creating an account costs nothing.</p></details>
+  <details><summary>Do I need any experience?</summary><p>No. Every department starts from the beginning.</p></details>
+  <details><summary>Can I study more than one department?</summary><p>Yes. Choose several interests when you register.</p></details>
+  <details><summary>How do I pay for courses?</summary><p>Through coins in your wallet. Check the wallet page after you log in.</p></details>
+</div>
+
+<section class="cta">
+  <h2>Begin with the lamp of knowledge</h2>
+  <p>Your library, courses and wallet are ready for you.</p>
+  <a class="btn" href="library.html">Open the library</a>
+</section>
+
+<footer>
+  <div style="max-width:560px"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.2rem;color:#f5b94a">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>
+  <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+</footer>
+<script type="module">import "./guard.js";</script>
+</body>
+</html>
