@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register | Sirajul Ummah Islamic Institute</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--night:#12163a;--deep:#1c2150;--lamp:#f5b94a;--mist:#eef0f8;--ink:#171a33;--line:#cfd3e8;--err:#b3261e;--ok:#1c7a4d}
+*{box-sizing:border-box}
+body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist);line-height:1.5}
+.wrap{display:grid;grid-template-columns:minmax(260px,4fr) 8fr;min-height:100vh}
+aside{background:radial-gradient(circle at 50% 40%,rgba(245,185,74,.35),transparent 55%),var(--night);color:#fff;padding:40px 30px;display:flex;flex-direction:column;justify-content:space-between;gap:20px;position:sticky;top:0;height:100vh}
+aside a{color:#fff;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:10px}
+aside img{width:70%;max-width:220px;align-self:center;filter:drop-shadow(0 0 40px rgba(245,185,74,.5))}
+aside small{opacity:.8}
+main{padding:40px clamp(20px,5vw,64px);max-width:780px}
+h1{font-family:Amiri,serif;font-size:2.3rem;margin:0 0 4px}
+h2{font-family:Amiri,serif;font-size:1.7rem;margin:0 0 4px}
+.sub{margin:0 0 18px;color:#4b5072}
+.prog{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 26px}
+.prog li{flex:1;border-top:4px solid var(--line);padding-top:6px;font-size:.82rem;color:#4b5072}
+.prog li.on{border-color:var(--lamp);color:var(--ink);font-weight:700}
+.prog li.done{border-color:var(--night)}
+.step{display:none}.step.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.full{grid-column:1/-1}
+label{display:block;font-size:.9rem;font-weight:500;margin-bottom:4px}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=date],select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--lamp);outline-offset:1px}
+.box{border-top:2px solid var(--line);padding-top:16px;margin-top:8px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checks label{display:flex;gap:8px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:9px 11px;margin:0;cursor:pointer}
+.hint{color:#4b5072;font-size:.88rem;margin:0 0 10px}
+.terms{display:flex;gap:8px;align-items:flex-start;margin-top:16px}
+.nav{display:flex;gap:12px;margin-top:22px}
+button{padding:13px 22px;border:0;border-radius:10px;background:var(--night);color:#fff;font:700 1rem Figtree,sans-serif;cursor:pointer;flex:1}
+button.alt{background:#fff;color:var(--night);border:1.5px solid var(--night);flex:0 0 auto}
+button:disabled{opacity:.6;cursor:wait}
+[hidden]{display:none!important}
+#msg{margin:14px 0 0;padding:12px 14px;border-radius:8px;display:none;font-weight:500}
+#msg.err{display:block;background:#fdecea;color:var(--err)}#msg.ok{display:block;background:#e6f4ec;color:var(--ok)}
+.foot{margin-top:16px;text-align:center}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}aside{position:static;height:auto;padding:22px}aside img,aside small{display:none}.grid,.checks{grid-template-columns:1fr}.prog li{font-size:0}.prog li::first-letter{font-size:.85rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <a href="index.html"><img src="logo.svg" alt="" width="40" height="40" style="width:40px;max-width:40px;filter:none"><span style="line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a>
+  <img src="logo.svg" alt="">
+  <small>Qur'an, Arabic, Islamic and Western studies, and technology, online.</small>
+</aside>
+<main>
+  <h1>Create your student account</h1>
+  <p class="sub">Four short steps. Choose only the sections you want.</p>
+  <ol class="prog" id="prog"><li class="on">1 Your details</li><li>2 Qur'an and Islamic</li><li>3 Western</li><li>4 Technology</li></ol>
+  <form id="f" novalidate>
+
+  <section class="step on">
+    <h2>Your details</h2>
+    <div class="grid">
+      <div class="full"><label for="name">Full name *</label><input id="name" type="text" autocomplete="name"></div>
+      <div><label for="email">Email *</label><input id="email" type="email" autocomplete="email"></div>
+      <div><label for="phone">Phone number *</label><input id="phone" type="tel" autocomplete="tel"></div>
+      <div><label for="gender">Gender *</label><select id="gender"><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+      <div><label for="dob">Date of birth</label><input id="dob" type="date"></div>
+      <div><label for="country">Country *</label><input id="country" type="text" autocomplete="country-name"></div>
+      <div><label for="state">State / city</label><input id="state" type="text"></div>
+      <div><label for="gname">Parent / guardian name (for children)</label><input id="gname" type="text"></div>
+      <div><label for="gphone">Parent / guardian phone</label><input id="gphone" type="tel"></div>
+      <div><label for="pw">Password * (8+ characters)</label><input id="pw" type="password" autocomplete="new-password"></div>
+      <div><label for="pw2">Confirm password *</label><input id="pw2" type="password" autocomplete="new-password"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2>Qur'an and Islamic learning <span dir="rtl" lang="ar" style="font-family:Amiri,serif">· القرآن والعلوم الإسلامية</span></h2>
+    <p class="hint">Choose a Qur'an programme and your madrasah level, or skip what you do not need.</p>
+    <div class="grid">
+      <div class="full"><label for="quran">Qur'an programme</label><select id="quran"><option value="">Not joining</option><option>Memorization (Hifz)</option><option>Tajweed and recitation</option><option>Hifz and Tajweed</option></select></div>
+      <div class="full"><label for="mlevel">Madrasah level</label><select id="mlevel"><option value="">Not joining</option></select></div>
+    </div>
+    <div class="box" id="mtracks" hidden>
+      <label>Thanawi subject groups (choose at least one)</label>
+      <div class="checks" id="mtrackList"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2>Western studies <span dir="rtl" lang="ar" style="font-family:Amiri,serif">· العلوم الغربية</span></h2>
+    <p class="hint">Choose the class you are in, or skip this section.</p>
+    <div class="grid"><div class="full"><label for="wlevel">Class</label><select id="wlevel"><option value="">Not joining</option></select></div></div>
+    <div class="box" id="wtracks" hidden>
+      <label for="wtrack">SSS 3 department *</label>
+      <select id="wtrack"><option value="">Select</option><option>Science</option><option>Art</option><option>Commercial</option></select>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2>Technology <span dir="rtl" lang="ar" style="font-family:Amiri,serif">· التقنية</span></h2>
+    <p class="hint">Choose your stage, or skip this section.</p>
+    <div class="grid"><div class="full"><label for="tlevel">Stage</label>
+      <select id="tlevel"><option value="">Not joining</option><option>Beginner (computer and internet basics)</option><option>Intermediate (digital tools and safety)</option><option>Advanced (web design and programming)</option></select></div></div>
+    <div class="box" id="tareas" hidden>
+      <label>Advanced focus (optional)</label>
+      <div class="checks"><label><input type="checkbox" value="Web design"> Web design</label><label><input type="checkbox" value="Programming"> Programming</label><label><input type="checkbox" value="Graphic design"> Graphic design</label></div>
+    </div>
+    <label class="terms"><input id="terms" type="checkbox"> <span>I confirm my details are correct and I agree to the <a href="terms.html">terms</a> and <a href="privacy.html">privacy policy</a>.</span></label>
+  </section>
+
+  <div id="msg" role="alert"></div>
+  <div class="nav"><button id="prev" type="button" class="alt" hidden>Back</button><button id="next" type="submit">Next</button></div>
+  <p class="foot">Already registered? <a href="login.html">Log in</a></p>
+  </form>
+</main>
+</div>
+
+<script type="module">
+import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+
+const $ = id => document.getElementById(id);
+const msg = (t, c) => { $("msg").textContent = t; $("msg").className = c || ""; };
+const steps = [...document.querySelectorAll(".step")], dots = [...document.querySelectorAll("#prog li")];
+let cur = 0;
+
+const fill = (id, arr) => $(id).insertAdjacentHTML("beforeend", arr.map(o => `<option>${o}</option>`).join(""));
+fill("mlevel", ["Rawdatul Atfal (روضة الأطفال)", "Ibtidai (الابتدائي)", "I'dadi (الإعدادي)", "Thanawi (الثانوي)"]);
+const THAN = "Thanawi (الثانوي)";
+const tracks = ["Languages (مواد اللغات)", "Aqeedah (مواد العقيدة)", "Fiqh and Usul (مواد الفقه وأصوله)", "Hadith and Tafsir (مواد الحديث والتفسير)", "Seerah and Adab (مواد السيرة والأدب)"];
+$("mtrackList").innerHTML = tracks.map(t => `<label><input type="checkbox" value="${t}"> ${t}</label>`).join("");
+$("wlevel").insertAdjacentHTML("beforeend",
+  '<option>Kindergarten (KG)</option>' +
+  '<optgroup label="Primary">' + [1,2,3,4,5,6].map(n => `<option>Primary ${n}</option>`).join("") + '</optgroup>' +
+  '<optgroup label="Junior secondary">' + [1,2,3].map(n => `<option>JSS ${n}</option>`).join("") + '</optgroup>' +
+  '<optgroup label="Senior secondary">' + [1,2,3].map(n => `<option>SSS ${n}</option>`).join("") + '</optgroup>');
+
+$("mlevel").onchange = () => $("mtracks").hidden = $("mlevel").value !== THAN;
+$("wlevel").onchange = () => $("wtracks").hidden = $("wlevel").value !== "SSS 3";
+$("tlevel").onchange = () => $("tareas").hidden = !$("tlevel").value.startsWith("Advanced");
+
+const checked = sel => [...document.querySelectorAll(sel + " input:checked")].map(i => i.value);
+
+function show(n) {
+  cur = n;
+  steps.forEach((s, i) => s.classList.toggle("on", i === n));
+  dots.forEach((d, i) => { d.classList.toggle("on", i === n); d.classList.toggle("done", i < n); });
+  $("prev").hidden = n === 0;
+  $("next").textContent = n === 3 ? "Create my account" : "Next";
+  msg("");
+  window.scrollTo(0, 0);
+}
+
+function check(n) {
+  if (n === 0) {
+    if (!$("name").value.trim()) return "Enter your full name.";
+    if (!/^\S+@\S+\.\S+$/.test($("email").value.trim())) return "Enter a valid email address.";
+    if ($("phone").value.trim().length < 7) return "Enter your phone number.";
+    if (!$("gender").value) return "Select your gender.";
+    if (!$("country").value.trim()) return "Enter your country.";
+    if ($("pw").value.length < 8) return "Password must be at least 8 characters.";
+    if ($("pw").value !== $("pw2").value) return "The two passwords do not match.";
+  }
+  if (n === 1 && $("mlevel").value === THAN && !checked("#mtrackList").length) return "Choose at least one Thanawi subject group.";
+  if (n === 2 && $("wlevel").value === "SSS 3" && !$("wtrack").value) return "Choose your SSS 3 department.";
+  if (n === 3) {
+    if (!($("quran").value || $("mlevel").value || $("wlevel").value || $("tlevel").value)) return "Choose at least one section to join (Qur'an and Islamic, Western, or Technology).";
+    if (!$("terms").checked) return "Tick the box to accept the terms.";
+  }
+  return "";
+}
+
+$("prev").onclick = () => show(cur - 1);
+
+const errors = {
+  "auth/email-already-in-use": "This email already has an account. Try logging in.",
+  "auth/invalid-email": "Enter a valid email address.",
+  "auth/weak-password": "Password is too weak. Use at least 8 characters.",
+  "auth/network-request-failed": "No internet connection. Check it and try again.",
+  "auth/operation-not-allowed": "Email/Password sign-in is not enabled in Firebase yet.",
+  "permission-denied": "Database rules blocked saving. Check Firestore rules."
+};
+
+$("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const problem = check(cur);
+  if (problem) return msg(problem, "err");
+  if (cur < 3) return show(cur + 1);
+
+  const name = $("name").value.trim(), email = $("email").value.trim();
+  $("next").disabled = true; msg("Creating your account...", "ok");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, $("pw").value);
+    await updateProfile(cred.user, { displayName: name });
+    await setDoc(doc(db, "students", cred.user.uid), {
+      name, email,
+      phone: $("phone").value.trim(), gender: $("gender").value, dob: $("dob").value,
+      country: $("country").value.trim(), state: $("state").value.trim(),
+      guardianName: $("gname").value.trim(), guardianPhone: $("gphone").value.trim(),
+      madrasah: ($("quran").value || $("mlevel").value) ? { quran: $("quran").value, level: $("mlevel").value, tracks: checked("#mtrackList") } : null,
+      western: $("wlevel").value ? { level: $("wlevel").value, track: $("wtrack").value } : null,
+      technology: $("tlevel").value ? { level: $("tlevel").value, areas: checked("#tareas") } : null,
+      coins: 0,
+      createdAt: serverTimestamp()
+    });
+    msg("Account created. Welcome to the institute...", "ok");
+    setTimeout(() => location.href = "index.html", 1200);
+  } catch (err) {
+    console.error(err);
+    msg(errors[err.code] || ("Could not create account: " + (err.code || err.message)), "err");
+    $("next").disabled = false;
+  }
+});
+</script>
+</body>
+</html>
+
