@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ad{max-width:900px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+.cd h2{margin-top:0}
+.cd label{display:block;font-size:.88rem;font-weight:500;margin:10px 0 3px}
+.cd input,.cd select,.cd textarea{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.cd .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cd button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer;margin-top:14px}
+.cd button.sm{padding:5px 10px;font-size:.82rem;margin:0 4px 0 0;background:#fff;color:var(--night);border:1.5px solid var(--line)}
+.it{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
+@media(max-width:600px){.cd .row{grid-template-columns:1fr}}
+</style></head><body>
+<main class="page ad" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const say = (id, t, ok) => { $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
+const LEVELS = ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi", "Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3", "Beginner", "Intermediate", "Advanced"];
+let courses = [], sel = "";
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Admin</h1><p>You do not have access to this page.</p>";
+  build(); loadCourses();
+});
+
+function build() {
+  $("app").innerHTML = `<h1>Admin</h1>
+  <div class="cd"><h2>Add coins to a student</h2>
+    <label>Student email</label><input id="ce" type="email"><label>Coins to add</label><input id="ca" type="number" min="1">
+    <button id="cb" type="button">Add coins</button> <span id="cm"></span></div>
+  <div class="cd"><h2>New course</h2>
+    <label>Title</label><input id="nt">
+    <div class="row"><div><label>Section</label><select id="ns"><option value="islamic">Qur'an and Islamic</option><option value="western">Western studies</option><option value="tech">Technology</option></select></div>
+    <div><label>Level</label><input id="nl" list="lv"><datalist id="lv">${LEVELS.map(l => `<option value="${l}">`).join("")}</datalist></div></div>
+    <label>Description</label><textarea id="nd" rows="3"></textarea>
+    <div class="row"><div><label>Price in coins (0 = free)</label><input id="np" type="number" min="0" value="0"></div><div><label>Order (1, 2, 3...)</label><input id="no" type="number" value="1"></div></div>
+    <label><input id="npub" type="checkbox" style="width:auto"> Publish now (students can see it)</label>
+    <button id="nb" type="button">Create course</button> <span id="nm"></span></div>
+  <div class="cd"><h2>Your courses</h2><div id="cl">Loading...</div></div>
+  <div class="cd"><h2>Lessons</h2><label>Course</label><select id="ls"></select>
+    <label>Lesson title</label><input id="lt">
+    <div class="row"><div><label>Type</label><select id="ly"><option value="video">Video (YouTube link)</option><option value="text">Written lesson</option><option value="live">Live class (meeting link)</option></select></div><div><label>Order (1, 2, 3...)</label><input id="lo" type="number" value="1"></div></div>
+    <label id="lcl">YouTube link</label><textarea id="lc" rows="4"></textarea>
+    <div id="lwb" hidden><label>Date and time (for live class)</label><input id="lw" placeholder="Saturday 5:00 PM"></div>
+    <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
+    <div id="ll" style="margin-top:14px"></div></div>`;
+  $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson;
+  $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
+  $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : "Lesson text"; $("lwb").hidden = t !== "live"; };
+}
+
+async function addCoins() {
+  const email = $("ce").value.trim().toLowerCase(), n = parseInt($("ca").value, 10);
+  if (!email || !(n > 0)) return say("cm", "Enter the email and a number above 0.");
+  try {
+    const s = await getDocs(query(collection(db, "students"), where("email", "==", $("ce").value.trim())));
+    if (s.empty) return say("cm", "No student with that email.");
+    await updateDoc(s.docs[0].ref, { coins: increment(n) });
+    const now = (await getDoc(s.docs[0].ref)).data().coins;
+    say("cm", `Done. ${s.docs[0].data().name} now has ${now} coins.`, true);
+  } catch (e) { say("cm", "Failed: " + (e.code || e.message)); }
+}
+
+async function addCourse() {
+  const title = $("nt").value.trim();
+  if (!title) return say("nm", "Enter a title.");
+  try {
+    await addDoc(collection(db, "courses"), { title, section: $("ns").value, level: $("nl").value.trim(), description: $("nd").value.trim(), price: Math.max(0, parseInt($("np").value, 10) || 0), order: parseInt($("no").value, 10) || 1, published: $("npub").checked, createdAt: serverTimestamp() });
+    say("nm", "Course created.", true); $("nt").value = ""; $("nd").value = ""; loadCourses();
+  } catch (e) { say("nm", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadCourses() {
+  const s = await getDocs(collection(db, "courses"));
+  courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"}</small></div>
+    <div><button class="sm" data-p="${c.id}">${c.published ? "Hide" : "Publish"}</button><button class="sm" data-e="${c.id}">Price</button><button class="sm" data-d="${c.id}">Delete</button></div></div>`).join("") : "<p>No courses yet.</p>";
+  $("cl").querySelectorAll("[data-p]").forEach(b => b.onclick = async () => { const c = courses.find(x => x.id === b.dataset.p); await updateDoc(doc(db, "courses", c.id), { published: !c.published }); loadCourses(); });
+  $("cl").querySelectorAll("[data-e]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "courses", b.dataset.e), { price: Math.max(0, parseInt(v, 10) || 0) }); loadCourses(); });
+  $("cl").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => { if (!confirm("Delete this course and its lessons?")) return; const ls = await getDocs(collection(db, "courses", b.dataset.d, "lessons")); for (const l of ls.docs) await deleteDoc(l.ref); await deleteDoc(doc(db, "courses", b.dataset.d)); loadCourses(); });
+  $("ls").innerHTML = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
+  if (!courses.find(c => c.id === sel)) sel = courses[0] ? courses[0].id : "";
+  $("ls").value = sel; loadLessons();
+}
+
+async function addLesson() {
+  const title = $("lt").value.trim(), content = $("lc").value.trim();
+  if (!sel || !title || !content) return say("lm", "Choose a course, then enter the title and content.");
+  try {
+    await addDoc(collection(db, "courses", sel, "lessons"), { title, type: $("ly").value, content, when: $("lw").value.trim(), order: parseInt($("lo").value, 10) || 1 });
+    say("lm", "Lesson added.", true); $("lt").value = ""; $("lc").value = ""; $("lo").value = (parseInt($("lo").value, 10) || 1) + 1; loadLessons();
+  } catch (e) { say("lm", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadLessons() {
+  if (!sel) return $("ll").innerHTML = "";
+  const s = await getDocs(collection(db, "courses", sel, "lessons"));
+  const ls = s.docs.map(d => ({ ref: d.ref, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  $("ll").innerHTML = ls.length ? ls.map((l, i) => `<div class="it"><span>${l.order}. ${esc(l.title)} <small>(${esc(l.type)})</small></span><button class="sm" data-x="${i}">Delete</button></div>`).join("") : "<p>No lessons in this course yet.</p>";
+  $("ll").querySelectorAll("[data-x]").forEach(b => b.onclick = async () => { if (confirm("Delete this lesson?")) { await deleteDoc(ls[+b.dataset.x].ref); loadLessons(); } });
+}
+</script>
+</body></html>
