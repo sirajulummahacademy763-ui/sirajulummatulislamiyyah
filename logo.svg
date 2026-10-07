@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sirajul Ummah Islamic Institute logo">
+<circle cx="100" cy="100" r="96" fill="#12163a" stroke="#f5b94a" stroke-width="4"/>
+<path d="M100 38C112 56 121 67 121 82C121 94 112 103 100 103C88 103 79 94 79 82C79 67 88 56 100 38Z" fill="#f5b94a"/>
+<path d="M100 66C106 76 110 82 110 88C110 94 105 98 100 98C95 98 90 94 90 88C90 82 94 76 100 66Z" fill="#fff3d6"/>
+<g stroke="#f5b94a" stroke-width="3" fill="none" stroke-linecap="round"><path d="M79 90H62V104"/><path d="M121 90H138V104"/></g>
+<g fill="#f5b94a"><circle cx="62" cy="109" r="5"/><circle cx="138" cy="109" r="5"/></g>
+<path d="M98 130C82 119 60 117 44 123V157C60 151 82 153 98 163Z" fill="#f5b94a"/>
+<path d="M102 130C118 119 140 117 156 123V157C140 151 118 153 102 163Z" fill="#e6a334"/>
+</svg>
