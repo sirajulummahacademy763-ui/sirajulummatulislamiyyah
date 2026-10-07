@@ -19,3 +19,23 @@ document.querySelectorAll(".tabs a").forEach(a=>{if((a.dataset.t||"")===(cat||""
 document.title=document.title.replace(/Sirajul Ummah Academy/g,"Sirajul Ummah Islamic Institute");
 (function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
 while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the institute").replace(/\bacademy services\b/g,"institute services").replace(/\bAcademy\b/g,"Institute")}})();
+// Show an "Admin" link only to admins
+if(!isPub){
+  Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+    import("./firebase-config.js")
+  ]).then(([a,f,c])=>{
+    a.onAuthStateChanged(c.auth,async u=>{
+      if(!u||document.querySelector("[data-admin-link]"))return;
+      try{
+        const s=await f.getDoc(f.doc(c.db,"admins",u.uid));
+        if(!s.exists())return;
+        const l=document.createElement("a");
+        l.href="admin.html";l.textContent="Admin";l.setAttribute("data-admin-link","");
+        const nav=document.querySelector("header.top nav");
+        nav.insertBefore(l,nav.querySelector("[data-logout]"));
+      }catch(e){}
+    });
+  }).catch(()=>{});
+}
