@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My wallet | Sirajul Ummah Islamic Institute</title>
 <link rel="icon" href="logo.svg">
-
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <style>
@@ -15,6 +14,7 @@ body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);backgrou
 header{background:var(--night);color:#fff;padding:18px clamp(18px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 header a{color:#fff;text-decoration:none;font-weight:700}
 button{padding:10px 18px;border:0;border-radius:8px;background:var(--lamp);color:var(--night);font:700 1rem Figtree,sans-serif;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
 main{max-width:760px;margin:0 auto;padding:40px clamp(18px,5vw,40px)}
 h1{font-family:Amiri,serif;font-size:2.2rem;margin:0 0 24px}
 h2{font-family:Amiri,serif;font-size:1.6rem;margin:0 0 6px}
@@ -41,9 +41,13 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 
-const PAYSTACK_PUBLIC_KEY = "pk_test_f004927fe211194d074b709728d8114c558131ff"; // public key only. Never put the secret key here.
-const const NAIRA_PER_10_COINS = 1300;;
-const MIN_COINS = 10, MAX_COINS = 1000, STEP = 10; // list: 10, 20, 30 ... 1000
+// PUBLIC key only. Never put the secret key (sk_...) in this file.
+const PAYSTACK_PUBLIC_KEY = "pk_test_f004927fe211194d074b709728d8114c558131ff";
+const NAIRA_PER_10_COINS = 1300;               // 10 coins = ₦1,300
+const MIN_COINS = 10, MAX_COINS = 1000, STEP = 10;
+
+const nairaFor = coins => (coins / 10) * NAIRA_PER_10_COINS;
+const fmt = n => "₦" + n.toLocaleString("en-NG");
 
 function coinOptions() {
   let html = "";
@@ -54,21 +58,26 @@ function coinOptions() {
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 document.getElementById("out").onclick = async () => { await signOut(auth); location.href = "login.html"; };
 
-function buyCoins(user, usd) {
+function buyCoins(user, coins) {
   const msg = document.getElementById("msg");
   if (!window.PaystackPop) { msg.textContent = "Payment system did not load. Check your internet and refresh."; return; }
+  const naira = nairaFor(coins);
   const handler = PaystackPop.setup({
     key: PAYSTACK_PUBLIC_KEY,
     email: user.email,
-    amount: naira * 100,
+    amount: naira * 100,                       // Paystack counts in kobo
     currency: "NGN",
     ref: "coin_" + user.uid.slice(0, 8) + "_" + Date.now(),
-    metadata: { uid: user.uid },
-    callback: () => {
-      // Coins are added by the server after Paystack confirms. Never here.
-      msg.textContent = "Payment received. Your " + (naira * COINS_PER_NGN) + " coins will appear in a few seconds.";
+    metadata: {
+      uid: user.uid,
+      coins: coins,
+      custom_fields: [{ display_name: "Coins bought", variable_name: "coins", value: String(coins) }]
     },
-    onClose: () => {}
+    callback: function () {
+      // This page never adds coins itself. Coins are added after the payment is confirmed.
+      msg.textContent = "Payment received for " + coins + " coins (" + fmt(naira) + "). Your coins will be added after we confirm the payment.";
+    },
+    onClose: function () {}
   });
   handler.openIframe();
 }
@@ -87,15 +96,14 @@ onAuthStateChanged(auth, user => {
   if (!user) return location.href = "login.html";
   const app = document.getElementById("app");
 
-  // Page layout is drawn once so the buy buttons keep working
   app.innerHTML = `<h1 id="hello">Assalamu alaikum</h1>
     <div class="coins"><span>My coins</span><b id="bal">0</b></div>
     <section class="buy">
       <h2>Buy coins</h2>
-      <p>10 coins = $1. Coins are added automatically after payment.</p>
+      <p>10 coins = ${fmt(NAIRA_PER_10_COINS)}. Pay with your card or bank through Paystack. Use the email you registered with.</p>
       <div class="chooser">
         <select id="coinSelect" aria-label="Number of coins">${coinOptions()}</select>
-        <div class="price" id="price">$1</div>
+        <div class="price" id="price"></div>
       </div>
       <button type="button" id="pay">Buy coins</button>
       <p id="msg" role="status"></p>
@@ -103,13 +111,12 @@ onAuthStateChanged(auth, user => {
     <dl id="info"></dl>`;
 
   const sel = document.getElementById("coinSelect");
-  const priceBox = document.getElementById("price");
-  const showPrice = () => { priceBox.textContent = "$" + (Number(sel.value) / COINS_PER_USD); };
+  const showPrice = () => { document.getElementById("price").textContent = fmt(nairaFor(Number(sel.value))); };
   sel.onchange = showPrice;
   showPrice();
-  document.getElementById("pay").onclick = () => buyCoins(user, Number(sel.value) / COINS_PER_USD);
+  document.getElementById("pay").onclick = () => buyCoins(user, Number(sel.value));
 
-  // Live updates: the balance changes the moment the server adds coins
+  // Live updates: the balance changes the moment coins are added
   onSnapshot(doc(db, "students", user.uid), snap => {
     const d = snap.exists() ? snap.data() : {};
     document.getElementById("hello").textContent = "Assalamu alaikum, " + (d.name || user.displayName || "student");
