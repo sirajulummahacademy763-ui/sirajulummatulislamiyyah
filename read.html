@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Read | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>.rd{max-width:1100px;margin:0 auto;padding:20px clamp(12px,3vw,32px) 40px}.rd h1{font-size:1.5rem;margin:8px 0 12px}.rd iframe{width:100%;height:80vh;min-height:520px;border:1.5px solid var(--line);border-radius:10px;background:#fff}.rd small{display:block;margin-top:10px;color:#4b5072}</style>
+</head><body>
+<main class="rd">
+<a id="back" href="library.html">&larr; Back to the library</a>
+<h1 id="ttl">Book</h1>
+<div id="box"></div>
+<small>Provided by the Internet Archive. If the book does not open, go back and choose another one.</small>
+</main>
+<script>
+const p=new URLSearchParams(location.search),id=p.get("id")||"",t=p.get("t")||"Book",c=p.get("c")||"";
+document.getElementById("ttl").textContent=t;document.title=t+" | Sirajul Ummah Islamic Institute";
+if(c)document.getElementById("back").href="library.html?category="+encodeURIComponent(c);
+if(/^[A-Za-z0-9._-]+$/.test(id)){const f=document.createElement("iframe");f.src="https://archive.org/embed/"+id;f.allowFullscreen=true;f.title=t;document.getElementById("box").appendChild(f)}
+else document.getElementById("box").textContent="This book could not be found.";
+</script>
+</body></html>
