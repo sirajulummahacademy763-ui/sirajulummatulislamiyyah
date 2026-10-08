@@ -61,7 +61,7 @@ function build(name) {
     <textarea id="xq" rows="6" placeholder="What is 2+2? | 3 | 4 | 5 | 2"></textarea>
     <button id="xb" type="button">Create</button> <span id="xm2"></span>
     <div id="xl2" style="margin-top:14px"></div></div>
-  <div class="cd"><h2>Exam results and certificates</h2><div id="xr"><p>Choose an exam above.</p></div></div>
+  <div class="cd"><h2>Exam results</h2><div id="xr"><p>Choose an exam above.</p></div></div>
   <div class="cd"><h2>Student submissions</h2><div id="sl"><p>Choose an assignment above.</p></div></div>`;
   $("ab").onclick = addAsg; $("xb").onclick = addExam;
   $("xy").onchange = () => { $("xl").textContent = $("xy").value === "mcq" ? "Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option" : "Write the question or task for students"; };
@@ -203,12 +203,12 @@ async function showRes(eid) {
   const passed = r => r.status === "graded" && r.score >= x.passMark;
   const show = r => x.type === "mcq" ? qs.map((q, i) => `${i + 1}. ${esc(q.q)}\n   Answer: ${esc((q.options || [])[(r.answers || [])[i]] || "-")}`).join("\n") : esc(r.text);
   $("xr").innerHTML = `<h3 style="margin-top:0">${esc(x.title)}</h3>` + (x.type === "mcq" ? '<button id="xauto" type="button">Mark all automatically</button> ' : "") +
-    (subs.length ? '<button id="xall" type="button">Issue certificates to all who passed</button> <span id="xmsg"></span>' : "") +
+    (subs.length ? '<span id="xmsg"></span>' : "") +
     (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}${issued[r.id] ? " · Certificate issued" : ""}
       <pre>${show(r)}</pre>
       <div class="row"><div><label>Score (out of ${x.maxScore})</label><input type="number" min="0" max="${x.maxScore}" id="xs-${r.id}" value="${r.score == null ? "" : r.score}"></div>
       <div><label>Comment</label><input id="xf-${r.id}" value="${esc(r.feedback || "")}"></div></div>
-      <button class="sm" data-xs="${r.id}" type="button">Save mark</button>${passed(r) && !issued[r.id] ? `<button class="sm" data-xc="${r.id}" type="button">Issue certificate</button>` : ""} <span id="xx-${r.id}"></span></div>`).join("") : "<p>No submissions yet.</p>");
+      <button class="sm" data-xs="${r.id}" type="button">Save mark</button>${passed(r) && !issued[r.id] ? " Passed. The admin will issue the certificate." : ""} <span id="xx-${r.id}"></span></div>`).join("") : "<p>No submissions yet.</p>");
   $("xr").querySelectorAll("[data-xs]").forEach(b => b.onclick = async () => {
     const id = b.dataset.xs, v = parseInt($("xs-" + id).value, 10);
     if (!(v >= 0 && v <= x.maxScore)) return say("xx-" + id, "Enter a score from 0 to " + x.maxScore);
@@ -240,3 +240,4 @@ async function showRes(eid) {
 }
 </script>
 </body></html>
+
