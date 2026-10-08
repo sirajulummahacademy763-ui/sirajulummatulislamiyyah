@@ -42,3 +42,5 @@ if(!isPub){
 // Copyright line on every page
 document.body.insertAdjacentHTML("beforeend",
  '<div style="background:var(--night,#12163b);color:#c9ccdf;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.</div>');
+// Help bot
+if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
