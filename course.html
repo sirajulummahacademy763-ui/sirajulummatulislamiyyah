@@ -15,7 +15,15 @@
 .vw iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:10px}
 .vw .tx{white-space:pre-wrap;line-height:1.8;font-size:1.05rem}
 .nv{display:flex;gap:10px;margin-top:14px}
-.nv button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.nv button,.as button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.as{margin-top:28px}
+.ac{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.ac h3{margin-top:0}
+.ac textarea{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.ac .q{margin:12px 0}
+.ac .q label{display:block;padding:4px 0}
+.sc{background:#e8f6ee;color:#1c7a4d;font-weight:700;padding:8px 12px;border-radius:8px;display:inline-block}
+.er{color:#b3261e;font-weight:500}
 @media(max-width:760px){.cl{grid-template-columns:1fr}}
 </style></head><body>
 <main class="page pg">
@@ -23,15 +31,16 @@
 <h1 id="ttl">Course</h1>
 <p class="lead" id="dsc"></p>
 <div id="box"><p>Loading...</p></div>
+<div class="as" id="asg"></div>
 </main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, setDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const id = new URLSearchParams(location.search).get("id") || "";
-let lessons = [], cur = 0;
+let lessons = [], cur = 0, me = null;
 
 function embed(u) {
   const m = String(u).match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
@@ -41,6 +50,7 @@ function embed(u) {
 
 onAuthStateChanged(auth, async user => {
   if (!user) return;
+  me = user;
   try {
     const c = await getDoc(doc(db, "courses", id));
     if (!c.exists()) return $("box").innerHTML = "<p>This course was not found.</p>";
@@ -50,8 +60,8 @@ onAuthStateChanged(auth, async user => {
     try { snap = await getDocs(collection(db, "courses", id, "lessons")); }
     catch (e) { return $("box").innerHTML = '<p>You need to unlock this course first. <a href="courses.html">Go to courses</a></p>'; }
     lessons = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
-    if (!lessons.length) return $("box").innerHTML = "<p>Lessons are coming soon.</p>";
-    show(0);
+    if (!lessons.length) $("box").innerHTML = "<p>Lessons are coming soon.</p>"; else show(0);
+    loadAssignments();
   } catch (e) { console.error(e); $("box").innerHTML = `<p>Could not load this course (${esc(e.code || e.message)}).</p>`; }
 });
 
@@ -66,6 +76,48 @@ function show(i) {
     <div class="nv"><button type="button" id="pv" ${i === 0 ? "disabled" : ""}>Previous</button><button type="button" id="nx" ${i === lessons.length - 1 ? "disabled" : ""}>Next lesson</button></div></div></div>`;
   $("box").querySelectorAll("[data-i]").forEach(b => b.onclick = () => show(+b.dataset.i));
   $("pv").onclick = () => show(cur - 1); $("nx").onclick = () => show(cur + 1);
+}
+
+async function loadAssignments() {
+  let asgs = [], mine = {};
+  try {
+    asgs = (await getDocs(collection(db, "courses", id, "assignments"))).docs.map(d => ({ id: d.id, ...d.data() }));
+    (await getDocs(query(collection(db, "courses", id, "submissions"), where("uid", "==", me.uid)))).docs.forEach(d => mine[d.data().assignmentId] = d.data());
+  } catch (e) { return; }
+  if (!asgs.length) return;
+  asgs.sort((a, b) => (a.createdAt ? a.createdAt.seconds : 0) - (b.createdAt ? b.createdAt.seconds : 0));
+  $("asg").innerHTML = "<h2>Assignments</h2>" + asgs.map(a => {
+    const s = mine[a.id];
+    let inner;
+    if (s) inner = s.status === "graded"
+      ? `<p class="sc">Score: ${s.score} / ${a.maxScore}</p>${s.feedback ? `<p><b>Teacher's comment:</b> ${esc(s.feedback)}</p>` : ""}`
+      : "<p>Submitted. Waiting for your teacher to mark it.</p>";
+    else if (a.type === "mcq") inner = (a.questions || []).map((q, i) => `<div class="q"><b>${i + 1}. ${esc(q.q)}</b>${(q.options || []).map((o, k) => `<label><input type="radio" name="q-${a.id}-${i}" value="${k}"> ${esc(o)}</label>`).join("")}</div>`).join("") + `<button type="button" data-s="${a.id}">Submit answers</button> <span class="er" id="e-${a.id}"></span>`;
+    else inner = `<p style="white-space:pre-wrap">${esc(a.prompt)}</p><textarea rows="6" id="t-${a.id}" placeholder="Write your answer here"></textarea><br><button type="button" data-s="${a.id}">Submit answer</button> <span class="er" id="e-${a.id}"></span>`;
+    return `<div class="ac"><h3>${esc(a.title)} <small>(${a.maxScore} marks)</small></h3>${inner}</div>`;
+  }).join("");
+  $("asg").querySelectorAll("[data-s]").forEach(b => b.onclick = () => submit(asgs.find(x => x.id === b.dataset.s)));
+}
+
+async function submit(a) {
+  const err = t => $("e-" + a.id).textContent = t;
+  const data = { uid: me.uid, assignmentId: a.id, status: "submitted", createdAt: serverTimestamp() };
+  if (a.type === "mcq") {
+    const ans = (a.questions || []).map((q, i) => { const r = document.querySelector(`input[name="q-${a.id}-${i}"]:checked`); return r ? +r.value : -1; });
+    if (ans.includes(-1)) return err("Please answer every question.");
+    data.answers = ans;
+  } else {
+    data.text = $("t-" + a.id).value.trim();
+    if (!data.text) return err("Please write your answer.");
+  }
+  if (!confirm("Submit now? You cannot change it afterwards.")) return;
+  try {
+    let name = "";
+    try { name = (await getDoc(doc(db, "students", me.uid))).data().name || ""; } catch (e) {}
+    data.studentName = name;
+    await setDoc(doc(db, "courses", id, "submissions", me.uid + "_" + a.id), data);
+    loadAssignments();
+  } catch (e) { err("Failed: " + (e.code || e.message)); }
 }
 </script>
 </body></html>
