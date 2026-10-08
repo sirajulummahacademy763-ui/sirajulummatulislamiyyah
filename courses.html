@@ -46,7 +46,7 @@ async function load() {
       getDocs(query(collection(db, "enrollments"), where("uid", "==", user.uid))),
       getDoc(doc(db, "students", user.uid))
     ]);
-    courses = cs.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    courses = cs.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.kind !== "book").sort((a, b) => (a.order || 0) - (b.order || 0));
     mine = new Set(es.docs.map(d => d.data().courseId));
     coins = st.exists() ? (st.data().coins || 0) : 0;
     draw();
