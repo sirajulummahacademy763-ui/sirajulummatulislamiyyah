@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Certificate | Sirajul Ummah Islamic Institute</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@600;700&family=Figtree:wght@400;500;700&family=Great+Vibes&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -13,32 +13,41 @@
 .ac2{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
 .hint{font-size:.85rem;color:#4b5072;margin:0 0 8px}
 
-/* Certificate: every size is in cqw, so it scales exactly like a printed A4 landscape page */
+/* Every size below is in cqw, so the certificate scales exactly like a printed A4 landscape page */
 #wrap{overflow-x:auto}
 #box{container-type:inline-size;min-width:760px}
-#cert{aspect-ratio:297/210;display:grid;grid-template-columns:27% 1fr;background:#fffdf6;color:#171a33;border:.8cqw solid #12163a;box-sizing:border-box;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#cert .sd{background:radial-gradient(circle at 50% 76%,rgba(245,185,74,.42),transparent 55%),repeating-linear-gradient(45deg,rgba(245,185,74,.09) 0 .2cqw,transparent .2cqw 1.7cqw),repeating-linear-gradient(-45deg,rgba(245,185,74,.09) 0 .2cqw,transparent .2cqw 1.7cqw),#12163a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;padding:3cqw 1.6cqw}
-#cert .sd img.lg{width:9cqw;height:9cqw}
-#cert .ar{font-family:Amiri,serif;font-size:2.1cqw;line-height:1.4;margin:.6cqw 0 0}
-#cert .en{font-size:1cqw;letter-spacing:.14em;text-transform:uppercase;color:#cfd3e8}
-#cert .md{width:12.5cqw;height:12.5cqw;border-radius:50%;border:.45cqw solid #f5b94a;box-shadow:0 0 3cqw rgba(245,185,74,.55),inset 0 0 0 .5cqw #12163a,inset 0 0 0 .7cqw rgba(245,185,74,.6);display:flex;flex-direction:column;align-items:center;justify-content:center}
-#cert .md b{font-family:Amiri,serif;font-size:3.8cqw;line-height:1;color:#f5b94a}
-#cert .md span{font-size:1.05cqw;letter-spacing:.12em;text-transform:uppercase;margin-top:.4cqw}
-#cert .vq{font-size:1cqw;color:#cfd3e8;line-height:1.5}
-#cert #qr{width:9.5cqw;background:#fff;padding:.7cqw;border-radius:.5cqw;margin:0 auto .6cqw}
+#cert{aspect-ratio:297/210;position:relative;overflow:hidden;background:#fff;color:#171a33;text-align:center;display:flex;flex-direction:column;align-items:center;padding:16.8cqw 6cqw 3cqw;box-sizing:border-box;font-family:Figtree,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#cert .sh{position:absolute;pointer-events:none}
+#cert .wl{left:0;top:0;width:27%;height:36%;background:#0b0d22;clip-path:polygon(0 0,100% 0,52% 56%,0 100%)}
+#cert .wr{right:0;top:0;width:27%;height:36%;background:#0b0d22;clip-path:polygon(0 0,100% 0,100% 100%,48% 56%)}
+#cert .bd{left:0;top:0;width:100%;height:21%;background:#1c2150;clip-path:polygon(0 0,100% 0,100% 58%,63% 100%,37% 100%,0 58%)}
+#cert .gl,#cert .gr{left:0;top:0;width:100%;height:21%;background:linear-gradient(90deg,#c78a14,#f5b94a,#c78a14)}
+#cert .gl{clip-path:polygon(0 40%,37% 82%,37% 90%,0 48%)}
+#cert .gr{clip-path:polygon(100% 40%,63% 82%,63% 90%,100% 48%)}
+#cert .bl{left:0;bottom:0;width:17%;height:22%;background:#e8edf8;clip-path:polygon(0 0,100% 100%,0 100%)}
+#cert .br{right:0;bottom:0;width:17%;height:22%;background:#e8edf8;clip-path:polygon(100% 0,100% 100%,0 100%)}
+#cert .hd{position:absolute;top:1.3cqw;left:0;right:0}
+#cert .hd .ar{font-family:Amiri,serif;font-size:2.4cqw;line-height:1.3;color:#fff}
+#cert .hd .en{font-size:1cqw;letter-spacing:.22em;text-transform:uppercase;color:#f5b94a;font-weight:700}
+#cert .lg{position:absolute;left:50%;top:6cqw;transform:translateX(-50%);width:9.6cqw;height:9.6cqw;border-radius:50%;background:#12163a;border:.45cqw solid #f5b94a;display:flex;align-items:center;justify-content:center}
+#cert .lg svg{width:78%;height:78%}
+#cert .t1{font-family:Cinzel,Amiri,serif;font-weight:700;font-size:6cqw;line-height:1;letter-spacing:.06em;color:#12163a;margin:0}
+#cert .t2{font-family:Cinzel,Amiri,serif;font-weight:600;font-size:2.4cqw;letter-spacing:.3em;color:#8a5d00;margin:.7cqw 0 1.8cqw}
+#cert .rb{background:#1c2150;color:#fff;font-size:1.2cqw;letter-spacing:.17em;font-weight:700;padding:.75cqw 5cqw;clip-path:polygon(0 0,100% 0,97.5% 50%,100% 100%,0 100%,2.5% 50%)}
+#cert .nm{font-family:"Great Vibes",cursive;font-size:5.4cqw;line-height:1.2;text-transform:capitalize;color:#12163a;border-bottom:.15cqw solid #12163a;padding:0 3cqw .2cqw;margin:1.4cqw 0 1.6cqw;max-width:78cqw}
+#cert .tx{font-size:1.65cqw;line-height:1.75;margin:0;max-width:72cqw;color:#2b2f55}
+#cert .tx b{color:#12163a}
+#cert .gd{display:inline-block;background:#f5b94a;color:#12163a;font-weight:700;padding:.1cqw 1.4cqw;border-radius:99cqw;font-size:1.45cqw}
+#cert .ex{display:block;font-size:1.3cqw;color:#4b5072}
+#cert .dt{font-size:1.45cqw;color:#4b5072;margin:.9cqw 0 0}
+#cert .sg{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;width:68cqw}
+#cert .sg .ln{width:20cqw;border-top:.14cqw solid #171a33;padding-top:.5cqw;font-size:1.3cqw;color:#4b5072}
+#cert .sg svg{width:9cqw;height:9cqw;margin-bottom:-.4cqw}
+#cert .fp{font-size:.95cqw;color:#6b7094;margin:1cqw 0 0;overflow-wrap:anywhere;line-height:1.4;max-width:60cqw}
+#cert .qr{position:absolute;left:2.4cqw;bottom:1.8cqw;width:7.2cqw;font-size:.9cqw;color:#4b5072;line-height:1.3}
+#cert #qr{background:#fff;padding:.4cqw;border:.1cqw solid #cfd3e8;margin-bottom:.3cqw}
 #cert #qr img,#cert #qr canvas{width:100%!important;height:auto!important;display:block}
 #cert #qr canvas{display:none}
-#cert .mn{margin:1.3cqw;padding:3cqw 4cqw 2.4cqw;box-shadow:inset 0 0 0 .15cqw #c78a14,inset 0 0 0 .55cqw #fffdf6,inset 0 0 0 .7cqw #f5b94a;display:flex;flex-direction:column;text-align:left}
-#cert .kk{font-size:1.2cqw;letter-spacing:.34em;text-transform:uppercase;color:#8a5d00;font-weight:700}
-#cert h1{font-family:Amiri,serif;font-size:7.2cqw;line-height:1.05;margin:.3cqw 0 1.4cqw;color:#12163a}
-#cert .sm{font-size:1.5cqw;color:#4b5072;margin:0}
-#cert .nm{font-family:Amiri,serif;font-size:4.1cqw;line-height:1.2;border-bottom:.2cqw solid #c78a14;padding:.4cqw 0 .7cqw;margin:.6cqw 0 1.5cqw;color:#8a5d00}
-#cert .tx{font-size:1.7cqw;line-height:1.7;margin:0}
-#cert .ex{display:block;font-size:1.4cqw;color:#4b5072;margin-top:.3cqw}
-#cert .dt{font-size:1.5cqw;margin:1.2cqw 0 0;color:#4b5072}
-#cert .sg{display:flex;gap:5cqw;margin-top:auto;padding-top:2cqw}
-#cert .sg div{width:20cqw;border-top:.14cqw solid #171a33;padding-top:.5cqw;font-size:1.25cqw;color:#4b5072}
-#cert .fp{font-size:.95cqw;color:#6b7094;margin:1.6cqw 0 0;overflow-wrap:anywhere;line-height:1.5}
 @page{size:A4 landscape;margin:0}
 @media print{
   body *{visibility:hidden}
@@ -58,6 +67,8 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const day = t => t && t.toDate ? t.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
 const id = new URLSearchParams(location.search).get("id") || "";
+const LAMP = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 13c5 6 8 10 8 14a8 8 0 0 1-16 0c0-4 3-8 8-14z" fill="#f5b94a"/><path d="M14 38c6-2 12-1 17 3v11c-5-4-11-5-17-3zM50 38c-6-2-12-1-17 3v11c5-4 11-5 17-3z" fill="#f5b94a"/></svg>';
+const SEAL = '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#9c1c1c" stroke-width="9" stroke-dasharray="7 3.5"/><circle cx="50" cy="50" r="40" fill="#9c1c1c"/><circle cx="50" cy="50" r="31" fill="none" stroke="#c24a4a" stroke-width="2"/><g transform="translate(18 18) scale(.64)" fill="#c24a4a"><path d="M32 13c5 6 8 10 8 14a8 8 0 0 1-16 0c0-4 3-8 8-14z"/><path d="M14 38c6-2 12-1 17 3v11c-5-4-11-5-17-3zM50 38c-6-2-12-1-17 3v11c5-4 11-5 17-3z"/></g></svg>';
 
 onAuthStateChanged(auth, async u => {
   if (!u) return;
@@ -72,23 +83,18 @@ onAuthStateChanged(auth, async u => {
       $("app").innerHTML = `<div class="ac2"><button class="bt" id="pr">Print or save as PDF</button><a class="bt" href="certificate.html">All my certificates</a></div>
       <p class="hint">Tip: on a phone, swipe sideways to see the whole certificate.</p>
       <div id="wrap"><div id="box"><div id="cert">
-        <div class="sd">
-          <div><img class="lg" src="logo.svg" alt="" width="90" height="90">
-            <p class="ar" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</p>
-            <div class="en">Sirajul Ummah<br>Islamic Institute</div></div>
-          <div class="md"><b>${pct}%</b><span>${esc(c.grade)}</span></div>
-          <div><div id="qr"></div><div class="vq">Scan to verify<br><b>${esc(no)}</b></div></div>
-        </div>
-        <div class="mn">
-          <div class="kk">Certificate of</div>
-          <h1>Achievement</h1>
-          <p class="sm">This is to certify that</p>
-          <div class="nm">${esc(c.studentName)}</div>
-          <p class="tx">has successfully completed the course <b>${esc(c.courseTitle)}</b>,<br>with a score of <b>${c.score} / ${c.maxScore} (${pct}%)</b>.${sameTitle ? "" : `<span class="ex" dir="auto">Assessment: ${esc(c.examTitle)}</span>`}</p>
-          <p class="dt">Issued on ${day(c.issuedAt)}</p>
-          <div class="sg"><div>Teacher</div><div>Director</div></div>
-          <p class="fp">Certificate no. ${esc(no)} &middot; Verify at ${esc(link)}</p>
-        </div>
+        <div class="sh wl"></div><div class="sh wr"></div><div class="sh bd"></div><div class="sh gl"></div><div class="sh gr"></div><div class="sh bl"></div><div class="sh br"></div>
+        <div class="hd"><div class="ar" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</div><div class="en">Sirajul Ummah Islamic Institute</div></div>
+        <div class="lg">${LAMP}</div>
+        <h1 class="t1">CERTIFICATE</h1>
+        <div class="t2">OF ACHIEVEMENT</div>
+        <div class="rb">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
+        <div class="nm">${esc(String(c.studentName || "").toLowerCase())}</div>
+        <p class="tx">for successfully completing the course <b>${esc(c.courseTitle)}</b><br>with a score of <b>${c.score} / ${c.maxScore} (${pct}%)</b> and a grade of <span class="gd">${esc(c.grade)}</span>${sameTitle ? "" : `<span class="ex" dir="auto">Assessment: ${esc(c.examTitle)}</span>`}</p>
+        <p class="dt">Issued on ${day(c.issuedAt)}</p>
+        <div class="sg"><div class="ln">Teacher</div>${SEAL}<div class="ln">Director</div></div>
+        <p class="fp">Certificate no. ${esc(no)} &middot; Verify at ${esc(link)}</p>
+        <div class="qr"><div id="qr"></div>Scan to verify</div>
       </div></div></div>`;
       $("pr").onclick = () => window.print();
       if (window.QRCode) new QRCode($("qr"), { text: link, width: 160, height: 160, colorDark: "#12163a", colorLight: "#ffffff" });
