@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>.rd{max-width:940px;margin:0 auto;padding:20px clamp(10px,3vw,32px) 60px}.rd h1{font-size:1.6rem;margin:8px 0 12px}#pages .pg{margin:0 auto 14px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 10px rgba(18,22,58,.08)}#pages canvas{display:block;max-width:100%}#msg{color:#4b5072}</style>
+</head><body>
+<main class="rd">
+<a id="back" href="library.html">&larr; Back to the library</a>
+<h1 id="ttl">Book</h1>
+<p id="msg">Opening your book...</p>
+<div id="pages"></div>
+</main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const p = new URLSearchParams(location.search), id = p.get("id") || "", c = p.get("c") || "";
+if (c) $("back").href = "library.html?category=" + encodeURIComponent(c);
+const msg = t => $("msg").textContent = t;
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  try {
+    const b = await getDoc(doc(db, "courses", id));
+    if (!b.exists()) return msg("This book was not found.");
+    $("ttl").textContent = b.data().title; document.title = b.data().title + " | Sirajul Ummah Islamic Institute";
+    let snap;
+    try { snap = await getDocs(collection(db, "courses", id, "lessons")); }
+    catch (e) { return msg("Please unlock this book first, in the library."); }
+    const l = snap.docs.map(d => d.data()).find(x => x.type === "pdf");
+    if (!l) return msg("The PDF for this book is not available yet.");
+    await show(l.content);
+  } catch (e) { console.error(e); msg("Could not open this book (" + (e.code || e.message) + ")."); }
+});
+async function show(url) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const pdf = await pdfjsLib.getDocument(url).promise;
+  msg(pdf.numPages + " pages");
+  const W = Math.min($("pages").clientWidth || 360, 900), dpr = window.devicePixelRatio || 1;
+  const v1 = (await pdf.getPage(1)).getViewport({ scale: 1 }), scale = W / v1.width;
+  const io = new IntersectionObserver(es => es.forEach(async e => {
+    if (!e.isIntersecting) return; io.unobserve(e.target);
+    const pg = await pdf.getPage(+e.target.dataset.n), vp = pg.getViewport({ scale: scale * dpr });
+    const cv = e.target.querySelector("canvas"); cv.width = vp.width; cv.height = vp.height;
+    cv.style.width = W + "px"; cv.style.height = (vp.height / dpr) + "px";
+    await pg.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise; e.target.style.minHeight = "";
+  }), { rootMargin: "800px" });
+  for (let n = 1; n <= pdf.numPages; n++) {
+    const d = document.createElement("div"); d.className = "pg"; d.dataset.n = n; d.style.width = W + "px"; d.style.minHeight = (v1.height * scale) + "px";
+    d.innerHTML = "<canvas></canvas>"; $("pages").appendChild(d); io.observe(d);
+  }
+}
+</script>
+</body></html>
