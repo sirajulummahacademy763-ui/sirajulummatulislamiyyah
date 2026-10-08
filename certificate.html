@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certificate | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.cw{max-width:900px}
+.ls2{background:#fff;border:1.5px solid #cfd3e8;border-left:5px solid #f5b94a;border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.ls2 small{display:block;color:#4b5072}
+.bt{display:inline-block;font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:#12163a;color:#f5b94a;cursor:pointer;text-decoration:none}
+#cert{background:#fffdf6;border:3px solid #c78a14;outline:2px solid #f5b94a;outline-offset:-12px;border-radius:6px;padding:46px 40px;text-align:center;color:#171a33;position:relative}
+#cert .ar{font-family:Amiri,serif;font-size:1.5rem;color:#12163a;margin:6px 0 0}
+#cert .en{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;color:#4b5072}
+#cert h1{font-family:Amiri,serif;font-size:clamp(2rem,6vw,3.2rem);color:#8a5d00;margin:18px 0 6px}
+#cert .nm{font-family:Amiri,serif;font-size:clamp(2rem,6vw,3rem);border-bottom:2px solid #c78a14;display:inline-block;padding:0 24px 4px;margin:10px 0}
+#cert p{margin:8px 0;line-height:1.7}
+#cert .gr{display:inline-block;margin:10px 0;padding:6px 22px;border-radius:999px;background:#12163a;color:#f5b94a;font-weight:700}
+#cert .sg{display:flex;justify-content:space-around;gap:20px;margin-top:34px;flex-wrap:wrap}
+#cert .sg div{min-width:180px;border-top:1.5px solid #171a33;padding-top:6px;font-size:.9rem}
+#cert .no{margin-top:22px;font-size:.8rem;color:#4b5072;word-break:break-all}
+.ac2{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+@page{size:landscape;margin:10mm}
+@media print{
+  body *{visibility:hidden}
+  #cert,#cert *{visibility:visible}
+  #cert{position:absolute;left:0;top:0;width:100%}
+}
+</style></head><body>
+<main class="page cw">
+<div id="app"><p>Loading...</p></div>
+</main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const day = t => t && t.toDate ? t.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+const id = new URLSearchParams(location.search).get("id") || "";
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  try {
+    if (id) {
+      const s = await getDoc(doc(db, "certificates", id));
+      if (!s.exists()) return $("app").innerHTML = '<h1>Certificate</h1><p>This certificate was not found. <a href="certificate.html">My certificates</a></p>';
+      const c = s.data(), pct = Math.round(c.score / c.maxScore * 100);
+      const link = location.origin + location.pathname + "?id=" + encodeURIComponent(id);
+      $("app").innerHTML = `<div class="ac2 noprint"><button class="bt" id="pr">Print or save as PDF</button><a class="bt" href="certificate.html">All my certificates</a></div>
+      <div id="cert">
+        <img src="logo.svg" alt="" width="80" height="80">
+        <p class="ar" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</p>
+        <div class="en">Sirajul Ummah Islamic Institute</div>
+        <h1>Certificate of Achievement</h1>
+        <p>This is to certify that</p>
+        <div class="nm">${esc(c.studentName)}</div>
+        <p>has successfully completed the ${esc(c.examTitle)}<br>in the course <b>${esc(c.courseTitle)}</b></p>
+        <p>with a score of <b>${c.score} / ${c.maxScore} (${pct}%)</b></p>
+        <div class="gr">${esc(c.grade)}</div>
+        <p>Issued on ${day(c.issuedAt)}</p>
+        <div class="sg"><div>Teacher</div><div>Director</div></div>
+        <div class="no">Certificate no. ${esc(id)}<br>Verify at: ${esc(link)}</div>
+      </div>`;
+      $("pr").onclick = () => window.print();
+      return;
+    }
+    const s = await getDocs(query(collection(db, "certificates"), where("uid", "==", u.uid)));
+    $("app").innerHTML = "<h1>My certificates</h1>" + (s.empty ? "<p>You have no certificates yet. Pass a test or exam and your teacher will issue one.</p>" :
+      s.docs.map(d => { const c = d.data(); return `<div class="ls2"><div><b>${esc(c.courseTitle)}</b><small>${esc(c.examTitle)} · ${c.score} / ${c.maxScore} · ${esc(c.grade)} · ${day(c.issuedAt)}</small></div><a class="bt" href="certificate.html?id=${encodeURIComponent(d.id)}">View</a></div>`; }).join(""));
+  } catch (e) { $("app").innerHTML = "<p>Could not load: " + esc(e.code || e.message) + "</p>"; }
+});
+</script>
+</body></html>
