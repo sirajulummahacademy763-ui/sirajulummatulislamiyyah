@@ -19,7 +19,7 @@ document.querySelectorAll(".tabs a").forEach(a=>{if((a.dataset.t||"")===(cat||""
 document.title=document.title.replace(/Sirajul Ummah Academy/g,"Sirajul Ummah Islamic Institute");
 (function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
 while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the institute").replace(/\bacademy services\b/g,"institute services").replace(/\bAcademy\b/g,"Institute")}})();
-// Show an "Admin" link only to admins
+// Show "Admin" and "Teacher" links only to the people who have those roles
 if(!isPub){
   Promise.all([
     import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
@@ -27,15 +27,15 @@ if(!isPub){
     import("./firebase-config.js")
   ]).then(([a,f,c])=>{
     a.onAuthStateChanged(c.auth,async u=>{
-      if(!u||document.querySelector("[data-admin-link]"))return;
-      try{
-        const s=await f.getDoc(f.doc(c.db,"admins",u.uid));
-        if(!s.exists())return;
+      if(!u||document.querySelector("[data-role-link]"))return;
+      const nv=document.querySelector("header.top nav");
+      const add=(href,text)=>{
         const l=document.createElement("a");
-        l.href="admin.html";l.textContent="Admin";l.setAttribute("data-admin-link","");
-        const nav=document.querySelector("header.top nav");
-        nav.insertBefore(l,nav.querySelector("[data-logout]"));
-      }catch(e){}
+        l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
+        nv.insertBefore(l,nv.querySelector("[data-logout]"));
+      };
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())add("admin.html","Admin"); }catch(e){}
+      try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher"); }catch(e){}
     });
   }).catch(()=>{});
 }
