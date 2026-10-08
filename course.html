@@ -69,6 +69,7 @@ function show(i) {
   cur = i; const l = lessons[i];
   let body = "";
   if (l.type === "video") { const e = embed(l.content); body = e ? `<iframe src="${esc(e)}" allowfullscreen title="${esc(l.title)}"></iframe>` : "<p>This video link is not supported.</p>"; }
+  else if (l.type === "jitsi") { const room = encodeURIComponent(String(l.content).replace(/[^\w-]/g, "")); const nm = encodeURIComponent(JSON.stringify(me.displayName || "Student")); body = `<h3>Live class</h3><p>${esc(l.when || "Time to be announced")}</p><iframe allow="camera; microphone; fullscreen; display-capture; autoplay" src="https://meet.jit.si/${room}#config.prejoinPageEnabled=false&userInfo.displayName=${nm}" style="height:520px;aspect-ratio:auto"></iframe><p><a href="https://meet.jit.si/${room}" target="_blank" rel="noopener">Open the class in a new tab</a></p>`; }
   else if (l.type === "live") body = `<h3>Live class</h3><p>${esc(l.when || "Time to be announced")}</p><p><a class="btn" href="${esc(l.content)}" target="_blank" rel="noopener">Join the live class</a></p>`;
   else body = `<div class="tx">${esc(l.content)}</div>`;
   $("box").innerHTML = `<div class="cl"><ul class="ls">${lessons.map((x, k) => `<li><button type="button" data-i="${k}" class="${k === i ? "on" : ""}">${k + 1}. ${esc(x.title)}<small>${esc(x.type)}</small></button></li>`).join("")}</ul>
