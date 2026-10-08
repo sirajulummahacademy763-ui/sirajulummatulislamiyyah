@@ -20,7 +20,7 @@
 <main class="page ad" id="app"><p>Checking access...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -50,8 +50,12 @@ function build() {
     <label><input id="npub" type="checkbox" style="width:auto"> Publish now (students can see it)</label>
     <button id="nb" type="button">Create course</button> <span id="nm"></span></div>
   <div class="cd"><h2>Your courses</h2><div id="cl">Loading...</div></div>
+  <div class="cd"><h2>Teachers</h2>
+    <p style="margin-top:0">The teacher must first register on the site. Then enter the email they registered with.</p>
+    <label>Teacher email</label><input id="te" type="email">
+    <button id="tab" type="button">Add teacher</button> <span id="tam"></span>
+    <div id="tl" style="margin-top:14px"></div></div>
   <div class="cd"><h2>Assign a teacher to a course</h2>
-    <p style="margin-top:0">A teacher must first be added in Firebase: Firestore, collection <b>teachers</b>, document ID = the teacher's UID, field <b>name</b>.</p>
     <label>Course</label><select id="tc"></select>
     <label>Teacher</label><select id="tt"></select>
     <button id="tb" type="button">Assign teacher</button> <span id="tm"></span></div>
@@ -62,7 +66,7 @@ function build() {
     <div id="lwb" hidden><label>Date and time (for live class)</label><input id="lw" placeholder="Saturday 5:00 PM"></div>
     <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
     <div id="ll" style="margin-top:14px"></div></div>`;
-  $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher;
+  $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : "Lesson text"; $("lwb").hidden = t !== "live"; };
 }
@@ -73,6 +77,23 @@ async function loadTeachers() {
     teachers = s.docs.map(d => ({ id: d.id, name: d.data().name || d.id }));
   } catch (e) { teachers = []; }
   $("tt").innerHTML = teachers.length ? teachers.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("") : '<option value="">No teachers added yet</option>';
+  $("tl").innerHTML = teachers.length ? teachers.map(t => `<div class="it"><span>${esc(t.name)}</span><button class="sm" data-rt="${t.id}">Remove</button></div>`).join("") : "<p>No teachers yet.</p>";
+  $("tl").querySelectorAll("[data-rt]").forEach(b => b.onclick = async () => {
+    if (!confirm("Remove this teacher?")) return;
+    await deleteDoc(doc(db, "teachers", b.dataset.rt)); loadTeachers();
+  });
+}
+
+async function addTeacher() {
+  const email = $("te").value.trim();
+  if (!email) return say("tam", "Enter the teacher's email.");
+  try {
+    const s = await getDocs(query(collection(db, "students"), where("email", "==", email)));
+    if (s.empty) return say("tam", "No registered user with that email. They must register first.");
+    const d = s.docs[0];
+    await setDoc(doc(db, "teachers", d.id), { name: d.data().name || email, email });
+    say("tam", "Teacher added.", true); $("te").value = ""; loadTeachers();
+  } catch (e) { say("tam", "Failed: " + (e.code || e.message)); }
 }
 
 async function assignTeacher() {
