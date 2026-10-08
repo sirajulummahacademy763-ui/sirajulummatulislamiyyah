@@ -49,6 +49,14 @@ function build() {
     <div class="row"><div><label>Price in coins (0 = free)</label><input id="np" type="number" min="0" value="0"></div><div><label>Order (1, 2, 3...)</label><input id="no" type="number" value="1"></div></div>
     <label><input id="npub" type="checkbox" style="width:auto"> Publish now (students can see it)</label>
     <button id="nb" type="button">Create course</button> <span id="nm"></span></div>
+  <div class="cd"><h2>New syllabus book (PDF)</h2>
+    <p style="margin-top:0">One book for one class. Students unlock it with coins in the library.</p>
+    <div class="row"><div><label>Section</label><select id="bs"><option value="islamic">Arabic and Islamic</option><option value="western">Western studies</option><option value="tech">Technology</option></select></div>
+    <div><label>Class</label><select id="bc"></select></div></div>
+    <label>Book title</label><input id="bt">
+    <label>PDF link (a file in your site such as books/ibtidai-1.pdf, or a full https link)</label><input id="bu">
+    <div class="row"><div><label>Price in coins</label><input id="bp" type="number" min="0" value="2"></div><div><label>Order (1, 2, 3...)</label><input id="bo" type="number" value="1"></div></div>
+    <button id="bb" type="button">Add book</button> <span id="bm"></span></div>
   <div class="cd"><h2>Your courses</h2><div id="cl">Loading...</div></div>
   <div class="cd"><h2>Teachers</h2>
     <p style="margin-top:0">The teacher must first register on the site. Then enter the email they registered with.</p>
@@ -67,6 +75,9 @@ function build() {
     <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
     <div id="ll" style="margin-top:14px"></div></div>`;
   $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher;
+  const BC = { islamic: ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi"], western: ["Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3"], tech: ["Beginner", "Intermediate", "Advanced"] };
+  const fillBC = () => { $("bc").innerHTML = BC[$("bs").value].map(c => `<option>${c}</option>`).join(""); };
+  $("bs").onchange = fillBC; fillBC(); $("bb").onclick = addBook;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : t === "jitsi" ? "Room name (leave empty to create a secret one automatically)" : "Lesson text"; $("lwb").hidden = !(t === "live" || t === "jitsi"); };
 }
@@ -126,10 +137,20 @@ async function addCourse() {
   } catch (e) { say("nm", "Failed: " + (e.code || e.message)); }
 }
 
+async function addBook() {
+  const title = $("bt").value.trim(), url = $("bu").value.trim();
+  if (!title || !url) return say("bm", "Enter the book title and the PDF link.");
+  try {
+    const ref = await addDoc(collection(db, "courses"), { title, kind: "book", section: $("bs").value, level: $("bc").value, description: "", price: Math.max(0, parseInt($("bp").value, 10) || 0), order: parseInt($("bo").value, 10) || 1, published: true, createdAt: serverTimestamp() });
+    await addDoc(collection(db, "courses", ref.id, "lessons"), { title: "PDF", type: "pdf", content: url, when: "", order: 1 });
+    say("bm", "Book added.", true); $("bt").value = ""; $("bu").value = ""; loadCourses();
+  } catch (e) { say("bm", "Failed: " + (e.code || e.message)); }
+}
+
 async function loadCourses() {
   const s = await getDocs(collection(db, "courses"));
   courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
-  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"} · Teacher: ${esc(c.teacherName || "none")}</small></div>
+  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${c.kind === "book" ? "BOOK · " : ""}${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"} · Teacher: ${esc(c.teacherName || "none")}</small></div>
     <div><button class="sm" data-p="${c.id}">${c.published ? "Hide" : "Publish"}</button><button class="sm" data-e="${c.id}">Price</button><button class="sm" data-d="${c.id}">Delete</button></div></div>`).join("") : "<p>No courses yet.</p>";
   $("cl").querySelectorAll("[data-p]").forEach(b => b.onclick = async () => { const c = courses.find(x => x.id === b.dataset.p); await updateDoc(doc(db, "courses", c.id), { published: !c.published }); loadCourses(); });
   $("cl").querySelectorAll("[data-e]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "courses", b.dataset.e), { price: Math.max(0, parseInt(v, 10) || 0) }); loadCourses(); });
