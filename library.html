@@ -52,22 +52,45 @@
 .chip.on{background:var(--night);color:#fff;border-color:var(--night)}
 .bk{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:16px 0;border-top:1.5px solid var(--line)}
 .bk b{display:block}.bk span{color:#4b5072;font-size:.88rem}.bk p{margin:4px 0 0;color:#4b5072}
+
+.seg{display:inline-flex;border:1.5px solid var(--night);border-radius:999px;overflow:hidden;margin:4px 0 8px}
+.seg button{font:inherit;font-weight:700;padding:9px 20px;border:0;background:#fff;color:var(--night);cursor:pointer}
+.seg button.on{background:var(--night);color:#fff}
+.hy{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.hy.hh{background:var(--night);color:#fff;border-radius:10px;padding:10px 14px;margin-top:6px}
+.hy .hc{min-width:0}
+@media(max-width:700px){.hy{grid-template-columns:1fr;gap:6px}.hy.hh{display:none}}
+.sh2{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+.sh2 .bal{background:var(--night);color:#fff;border-radius:999px;padding:6px 16px;font-weight:700}
+.sh2 .bal b{color:var(--lamp)}
+table.bt{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.bt th{background:var(--night);color:#fff;text-align:left;padding:12px 14px;font-weight:500}
+.bt td{padding:14px;border-top:1px solid var(--line);vertical-align:middle}
+.bt td.cl{font-family:Amiri,serif;font-size:1.25rem;color:#8a5a00;white-space:nowrap}
+.bt .soon{color:#4b5072;font-style:italic}
+.bt .u{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:8px;background:var(--night);color:#fff;cursor:pointer}
+.bt .u:disabled{opacity:.5;cursor:not-allowed}
+.bt .btn{padding:8px 16px}
+@media(max-width:640px){.bt thead{display:none}.bt tr{display:block;border-top:1px solid var(--line);padding:10px 4px}.bt td{display:block;border:0;padding:4px 12px}.bt td.cl{font-size:1.1rem}}
 </style></head><body>
 <main class="page">
 <h1>Digital library</h1>
 <p class="lead">Read, listen and study. More books are being added.</p>
-<div class="tabs"><a href="library.html" data-t="">All sections</a><a href="library.html?category=quran" data-t="quran">Qur'an</a><a href="library.html?category=hadith" data-t="hadith">Hadith</a><a href="library.html?category=books" data-t="books">Arabic and Islamic books</a><a href="library.html?category=western" data-t="western">Western studies</a><a href="library.html?category=tech" data-t="tech">Technology</a></div>
+<div class="tabs"><a href="library.html" data-t="">All sections</a><a href="library.html?category=quran" data-t="quran">Qur'an</a><a href="library.html?category=hadith" data-t="hadith">Hadith</a><a href="library.html?category=islamic" data-t="islamic">Islamic books</a><a href="library.html?category=western" data-t="western">Western books</a><a href="library.html?category=tech" data-t="tech">Technology books</a><a href="library.html?category=free" data-t="free">Free worldwide books</a></div>
 <div data-home class="tiles">
-<a class="tile" href="library.html?category=quran"><i dir="rtl" lang="ar">القرآن</i><b>Qur'an</b><span>Read all 114 surahs and listen to many reciters.</span></a>
-<a class="tile" href="library.html?category=hadith"><i dir="rtl" lang="ar">الحديث</i><b>Hadith</b><span>The major collections in Arabic and English.</span></a>
-<a class="tile" href="library.html?category=books"><i dir="rtl" lang="ar">الكتب</i><b>Arabic and Islamic books</b><span>Tafsir, hadith books, fiqh, aqeedah and Arabic language.</span></a>
-<a class="tile" href="library.html?category=western"><i dir="rtl" lang="ar">الغربية</i><b>Western studies</b><span>Lessons and textbooks from KG to university level.</span></a>
-<a class="tile" href="library.html?category=tech"><i dir="rtl" lang="ar">التقنية</i><b>Technology</b><span>Computer basics, digital safety, web design and programming.</span></a>
+<a class="tile" href="library.html?category=quran"><i dir="rtl" lang="ar">القرآن</i><b>Qur'an</b><span>Read all 114 surahs. Listen to male and female reciters from around the world.</span></a>
+<a class="tile" href="library.html?category=hadith"><i dir="rtl" lang="ar">الحديث</i><b>Hadith</b><span>The major collections, with Arabic and English side by side.</span></a>
+<a class="tile" href="library.html?category=islamic"><i dir="rtl" lang="ar">الكتب</i><b>Arabic and Islamic books</b><span>One book for each class, from Rawdatul Atfal to Thanawi.</span></a>
+<a class="tile" href="library.html?category=western"><i dir="rtl" lang="ar">الغربية</i><b>Western books</b><span>One book for each class, from KG to SSS 3.</span></a>
+<a class="tile" href="library.html?category=tech"><i dir="rtl" lang="ar">التقنية</i><b>Technology books</b><span>One book for each stage, from Beginner to Advanced.</span></a>
+<a class="tile" href="library.html?category=free"><i dir="rtl" lang="ar">مجاني</i><b>Free worldwide books</b><span>Thousands of free books on every subject.</span></a>
 </div>
 
 <div class="reader" data-cat="quran">
 <h2>The Holy Qur'an <span dir="rtl" lang="ar">· القرآن الكريم</span></h2>
 <p class="lead" style="margin-bottom:6px">Read every surah from Al-Fatiha to An-Nas, and listen to a recitation ayah by ayah.</p>
+<div class="seg" id="gseg"><button type="button" data-g="male" class="on">Male reciters</button><button type="button" data-g="female">Female reciters</button></div>
+<p class="hnote" id="gmsg"></p>
 <div class="bar">
   <div><label for="sur">Surah</label><select id="sur" style="width:100%"></select></div>
   <div><label for="rec">Reciter</label><select id="rec" style="width:100%"><option value="ar.alafasy">Loading reciters...</option></select></div>
@@ -88,23 +111,23 @@
   <div><label for="hsec">Chapter</label><select id="hsec" style="width:100%"></select></div>
 </div>
 <div class="tools">
-  <label><input type="checkbox" id="htr" checked> English translation</label>
+  
   <button id="hsm" type="button">A-</button><button id="hlg" type="button">A+</button>
   <button id="hps" type="button">Previous chapter</button><button id="hns" type="button">Next chapter</button>
 </div>
 <div class="tools">
-  <label for="hlang">Listen in</label>
-  <select id="hlang" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px"><option value="ar">Arabic</option><option value="en">English</option></select>
-  <button id="hlisten" type="button" style="background:var(--night);color:#fff">Listen to chapter</button>
+  <button id="hlistenAr" type="button" style="background:var(--night);color:#fff">Listen to chapter in Arabic</button>
+  <button id="hlistenEn" type="button" style="background:var(--night);color:#fff">Listen to chapter in English</button>
   <button id="hstop" type="button">Stop</button>
 </div>
-<p class="hnote">Listening uses your phone's built-in voice (text-to-speech), not a recorded reciter. If Arabic does not play, install an Arabic voice in your phone's text-to-speech settings, or listen in English.</p>
+<p class="hnote">Arabic is on the right and English on the left of each hadith. Each side has its own listen button. Listening uses your phone's built-in voice (text-to-speech), not a recorded reciter.</p>
 <div id="herr" role="alert"></div>
 <div id="hout"><p>Loading...</p></div>
 </div>
-<div data-cat="books"><h2>Arabic and Islamic books <span dir="rtl" lang="ar">· الكتب العربية والإسلامية</span></h2><p class="lead">Free and legal sources for Tafsir, Hadith, Fiqh, Aqeedah, Seerah and the Arabic language.</p><div id="cat-books"></div></div>
-<div data-cat="western"><h2>Western studies <span dir="rtl" lang="ar">· العلوم الغربية</span></h2><p class="lead">Free textbooks and lessons from kindergarten to university.</p><div id="cat-western"></div></div>
-<div data-cat="tech"><h2>Technology <span dir="rtl" lang="ar">· التقنية</span></h2><p class="lead">Free books and courses from computer basics to programming.</p><div id="cat-tech"></div></div>
+<div data-cat="islamic"><h2>Arabic and Islamic books <span dir="rtl" lang="ar">· الكتب العربية والإسلامية</span></h2><p class="lead">One book for each class, from Rawdatul Atfal to Thanawi. Unlock each book once, then read it as often as you like.</p><div id="shelf-islamic"><p>Loading...</p></div></div>
+<div data-cat="western"><h2>Western books <span dir="rtl" lang="ar">· الكتب الغربية</span></h2><p class="lead">One book for each class, from KG to SSS 3. Unlock each book once, then read it as often as you like.</p><div id="shelf-western"><p>Loading...</p></div></div>
+<div data-cat="tech"><h2>Technology books <span dir="rtl" lang="ar">· كتب التقنية</span></h2><p class="lead">One book for each stage, from Beginner to Advanced. Unlock each book once, then read it as often as you like.</p><div id="shelf-tech"><p>Loading...</p></div></div>
+<div data-cat="free"><h2>Free worldwide books</h2><p class="lead">Thousands of free books on Islam, Arabic, school subjects and technology. Everything here is free to read.</p><div id="cat-free"></div></div>
 </main>
 <div class="pl" data-cat="quran">
   <button id="pa" type="button" aria-label="Previous ayah">&laquo;</button>
@@ -122,16 +145,29 @@ const fail=m=>{$("err").style.display="block";$("err").textContent=m+" Check you
 const ok=()=>$("err").style.display="none";
 const https=u=>(u||"").replace(/^http:/,"https:");
 
+let RE={male:"",female:""},gen="male";
 async function loadReciters(){
-  const g={ar:[],oth:[]};
+  const ar=[],oth=[];
   try{
     const j=await (await fetch(API+"/edition?format=audio")).json();
-    (j.data||[]).forEach(e=>(e.language==="ar"?g.ar:g.oth).push(`<option value="${e.identifier}">${e.englishName}${e.language==="ar"?"":" ("+e.language+")"}</option>`));
+    (j.data||[]).forEach(e=>(e.language==="ar"?ar:oth).push(`<option value="${e.identifier}">${e.englishName}${e.language==="ar"?"":" ("+e.language+")"}</option>`));
   }catch(e){}
-  if(!g.ar.length)g.ar.push('<option value="ar.alafasy">Mishary Alafasy</option>');
-  const ex=(window.EXTRA_RECITERS||[]).map(r=>`<option value="x:${r.id}">${r.name}</option>`).join("");
-  $("rec").innerHTML=(ex?`<optgroup label="More reciters">${ex}</optgroup>`:"")+`<optgroup label="Arabic recitations">${g.ar.join("")}</optgroup>`+(g.oth.length?`<optgroup label="Other languages">${g.oth.join("")}</optgroup>`:"");
+  if(!ar.length)ar.push('<option value="ar.alafasy">Mishary Alafasy</option>');
+  const ex=window.EXTRA_RECITERS||[];
+  const opt=r=>`<option value="x:${r.id}">${r.name}</option>`;
+  const exm=ex.filter(r=>r.gender!=="female").map(opt).join(""),exf=ex.filter(r=>r.gender==="female").map(opt).join("");
+  RE.male=(exm?`<optgroup label="Added reciters">${exm}</optgroup>`:"")+`<optgroup label="Arabic recitations">${ar.join("")}</optgroup>`+(oth.length?`<optgroup label="Other languages">${oth.join("")}</optgroup>`:"");
+  RE.female=exf;
+  setGender("male");
+}
+function setGender(g){
+  gen=g;
+  document.querySelectorAll("#gseg button").forEach(b=>b.classList.toggle("on",b.dataset.g===g));
+  const html=RE[g];
+  if(!html){$("rec").innerHTML='<option value="">No female reciters added yet</option>';$("rec").disabled=true;$("gmsg").textContent="Female reciters will appear here as soon as they are added.";return false}
+  $("rec").disabled=false;$("gmsg").textContent="";$("rec").innerHTML=html;
   $("rec").value=[...$("rec").options].some(o=>o.value==="ar.alafasy")?"ar.alafasy":$("rec").options[0].value;
+  return true;
 }
 async function init(){
   try{
@@ -203,6 +239,7 @@ $("rec").onchange=()=>{store.set("q_rec",$("rec").value);openSurah(n,idx>=0?idx:
 $("tr").onchange=()=>document.querySelectorAll(".ay .en").forEach(e=>e.hidden=!$("tr").checked);
 $("lg").onclick=()=>{fs=Math.min(3.4,fs+.2);document.documentElement.style.setProperty("--fs",fs+"rem")};
 $("sm").onclick=()=>{fs=Math.max(1.4,fs-.2);document.documentElement.style.setProperty("--fs",fs+"rem")};
+document.querySelectorAll("#gseg button").forEach(b=>b.onclick=()=>{if(setGender(b.dataset.g))$("rec").onchange()});
 const CAT=new URLSearchParams(location.search).get("category");
 if(CAT==="quran")init();
 
@@ -245,24 +282,24 @@ async function openSec(k){
     rows=(a.hadiths||[]).map(h=>{const x=em[h.hadithnumber]||{};const g=(x.grades||[])[0];
       return{no:h.hadithnumber,ar:h.text||"",en:x.text||"",gr:g?`${g.grade}${g.name?" ("+g.name+")":""}`:""}});
     if(!rows.length){$("hout").innerHTML="<p>No hadith found in this chapter.</p>";return}
-    $("hout").innerHTML=rows.map((r,i)=>`<div class="hy" data-i="${i}"><p class="ar"><span class="no">${esc(r.no)}</span>${esc(r.ar)}</p><p class="en"${$("htr").checked?"":" hidden"}>${esc(r.en)}</p>${r.gr?`<div class="gr">Grade: ${esc(r.gr)}</div>`:""}<button type="button" data-l="${i}">Listen</button></div>`).join("");
-    document.querySelectorAll("#hout [data-l]").forEach(b=>b.onclick=()=>speak(+b.dataset.l,false));
+    $("hout").innerHTML='<div class="hy hh"><b>Arabic reciter · العربية</b><b>English reciter</b></div>'+rows.map((r,i)=>`<div class="hy" data-i="${i}"><div class="hc"><p class="ar"><span class="no">${esc(r.no)}</span>${esc(r.ar)}</p><button type="button" data-l="${i}" data-lg="ar">Listen in Arabic</button></div><div class="hc"><p class="en">${esc(r.en)}</p>${r.gr?`<div class="gr">Grade: ${esc(r.gr)}</div>`:""}<button type="button" data-l="${i}" data-lg="en">Listen in English</button></div></div>`).join("");
+    document.querySelectorAll("#hout [data-l]").forEach(b=>b.onclick=()=>speak(+b.dataset.l,false,b.dataset.lg));
   }catch(err){console.error(err);herr("Could not load this chapter. Check your internet and try again.")}
 }
 
 function chunk(t,max){const w=t.split(/\s+/),o=[];let c="";for(const x of w){if((c+" "+x).length>max&&c){o.push(c);c=x}else c=c?c+" "+x:x}if(c)o.push(c);return o}
 function mark(){document.querySelectorAll("#hout .hy").forEach((d,i)=>d.classList.toggle("on",i===hi));const el=document.querySelector("#hout .hy.on");if(el)el.scrollIntoView({behavior:"smooth",block:"center"})}
 function stopSpeak(){tok++;hi=-1;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}document.querySelectorAll("#hout .hy").forEach(d=>d.classList.remove("on"))}
-function speak(i,cont){
+function speak(i,cont,lang){
   if(!window.speechSynthesis){return herr("Your browser cannot read aloud.")}
   const my=++tok;try{speechSynthesis.cancel()}catch(e){}
   hi=i;mark();herr("");
-  const ar=$("hlang").value==="ar";
+  const ar=lang==="ar";
   const parts=chunk(ar?rows[i].ar:rows[i].en,170);let p=0;
   const next=()=>{
     if(my!==tok)return;
     if(p>=parts.length){
-      if(cont&&i<rows.length-1)speak(i+1,true);else{hi=-1;mark()}
+      if(cont&&i<rows.length-1)speak(i+1,true,lang);else{hi=-1;mark()}
       return;
     }
     const u=new SpeechSynthesisUtterance(parts[p++]);
@@ -276,9 +313,9 @@ function speak(i,cont){
 
 $("hbk").onchange=()=>loadBook($("hbk").value);
 $("hsec").onchange=()=>openSec($("hsec").value);
-$("hlisten").onclick=()=>rows.length&&speak(0,true);
+$("hlistenAr").onclick=()=>rows.length&&speak(0,true,"ar");
+$("hlistenEn").onclick=()=>rows.length&&speak(0,true,"en");
 $("hstop").onclick=stopSpeak;
-$("htr").onchange=()=>document.querySelectorAll("#hout .en").forEach(e=>e.hidden=!$("htr").checked);
 $("hlg").onclick=()=>{hfs=Math.min(3,hfs+.2);document.documentElement.style.setProperty("--hfs",hfs+"rem")};
 $("hsm").onclick=()=>{hfs=Math.max(1.2,hfs-.2);document.documentElement.style.setProperty("--hfs",hfs+"rem")};
 const move=d=>{const i=secs.findIndex(s=>s.k===sk)+d;if(i>=0&&i<secs.length){openSec(secs[i].k);window.scrollTo({top:$("hbk").offsetTop-80,behavior:"smooth"})}};
@@ -297,6 +334,8 @@ const G={
  western:[["Mathematics",'subject:(mathematics OR algebra OR geometry OR arithmetic)'],["Science",'subject:(physics OR chemistry OR biology OR science)'],["English language",'subject:("english language" OR grammar OR "english literature")'],["History and geography",'subject:(history OR geography OR "social studies")'],["Commerce and economics",'subject:(economics OR accounting OR commerce OR business)'],["Art",'subject:(art OR painting OR drawing OR design)'],["Children",'subject:(children OR juvenile)'],["Literature and classics",'collection:gutenberg']],
  tech:[["Computer basics",'subject:("computer science" OR "computer literacy" OR computers OR "information technology")'],["Programming",'subject:(programming OR "computer programming" OR python OR javascript OR java)'],["Web design",'subject:("web design" OR html OR css OR "web development")'],["Networks and security",'subject:(networking OR "computer security" OR cybersecurity OR "computer networks")'],["Databases",'subject:(database OR sql OR databases)'],["Artificial intelligence",'subject:("artificial intelligence" OR "machine learning")']]
 };
+G.free=[...G.books.map(g=>["Islamic · "+g[0],g[1]]),...G.western.map(g=>["Western · "+g[0],g[1]]),...G.tech.map(g=>["Technology · "+g[0],g[1]])];
+delete G.books;delete G.western;delete G.tech;
 if(!G[c])return;
 const box=document.getElementById("cat-"+c);
 let gi=0,q="",page=1,total=0,busy=false;
@@ -323,6 +362,63 @@ let tm;inp.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{q=inp.value.trim();l
 chipsDraw();load(true);
 })();
 </script>
-  <script src="reciters-arrange.js" defer></script>
-<script type="module" src="class-books.js"></script>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const C = new URLSearchParams(location.search).get("category");
+const CL = {
+  islamic: [["Rawdatul Atfal", "روضة الأطفال"], ["Ibtidai", "الابتدائي"], ["I'dadi", "الإعدادي"], ["Thanawi", "الثانوي"]],
+  western: [["Kindergarten (KG)"], ...[1,2,3,4,5,6].map(n => ["Primary " + n]), ...[1,2,3].map(n => ["JSS " + n]), ...[1,2,3].map(n => ["SSS " + n])],
+  tech: [["Beginner"], ["Intermediate"], ["Advanced"]]
+};
+if (CL[C]) {
+  const box = document.getElementById("shelf-" + C);
+  const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+  let user, coins = 0, books = [], mine = new Set();
+  onAuthStateChanged(auth, async u => {
+    if (!u) return; user = u;
+    try {
+      const [bs, es, st] = await Promise.all([
+        getDocs(query(collection(db, "courses"), where("kind", "==", "book"), where("published", "==", true))),
+        getDocs(query(collection(db, "enrollments"), where("uid", "==", u.uid))),
+        getDoc(doc(db, "students", u.uid))
+      ]);
+      books = bs.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => b.section === C);
+      mine = new Set(es.docs.map(d => d.data().courseId));
+      coins = st.exists() ? (st.data().coins || 0) : 0;
+      draw();
+    } catch (e) { console.error(e); box.innerHTML = `<p>Could not load the books (${esc(e.code || e.message)}).</p>`; }
+  });
+  const act = b => {
+    const p = Number(b.price) || 0;
+    if (mine.has(b.id)) return `<a class="btn" href="pdf.html?id=${encodeURIComponent(b.id)}&c=${C}">Open book</a>`;
+    return `<button type="button" class="u" data-u="${esc(b.id)}" ${coins < p ? "disabled" : ""}>${coins < p ? "Need " + p + " coins" : "Unlock for " + p + " coins"}</button>`;
+  };
+  function draw() {
+    const rows = CL[C].map(([name, ar]) => {
+      const bs = books.filter(b => b.level === name).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const cl = `<td class="cl">${esc(name)}${ar ? ` <span dir="rtl" lang="ar">· ${ar}</span>` : ""}</td>`;
+      if (!bs.length) return `<tr>${cl}<td class="soon" colspan="3">Book coming soon</td></tr>`;
+      return bs.map((b, i) => `<tr>${i ? "<td></td>" : cl}<td><b>${esc(b.title)}</b></td><td>${Number(b.price) || 0} coins</td><td>${act(b)}</td></tr>`).join("");
+    }).join("");
+    box.innerHTML = `<div class="sh2"><span class="bal">Your coins: <b>${coins}</b></span><a href="wallet.html">Buy coins</a></div>
+      <table class="bt"><thead><tr><th>Class</th><th>Book</th><th>Price</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    box.querySelectorAll("[data-u]").forEach(b => b.onclick = () => unlock(b.dataset.u, b));
+  }
+  async function unlock(id, btn) {
+    const b = books.find(x => x.id === id), p = Number(b.price) || 0;
+    if (coins < p) return alert("You do not have enough coins.");
+    if (!confirm(`Unlock "${b.title}" for ${p} coins?`)) return;
+    btn.disabled = true; btn.textContent = "Please wait...";
+    try {
+      const w = writeBatch(db);
+      w.update(doc(db, "students", user.uid), { coins: coins - p, lastPurchase: id });
+      w.set(doc(db, "enrollments", user.uid + "_" + id), { uid: user.uid, courseId: id, createdAt: serverTimestamp() });
+      await w.commit();
+      location.href = "pdf.html?id=" + encodeURIComponent(id) + "&c=" + C;
+    } catch (e) { console.error(e); alert("Could not unlock this book. Refresh and try again. (" + (e.code || e.message) + ")"); }
+  }
+}
+</script>
 </body></html>
