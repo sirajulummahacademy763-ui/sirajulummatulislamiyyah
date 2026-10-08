@@ -16,13 +16,17 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;font
 h1{font-family:Amiri,serif;font-size:2rem;margin:0 0 20px;text-align:center}
 label{display:block;font-size:.9rem;font-weight:500;margin:14px 0 4px}
 input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-input:focus,button:focus-visible{outline:3px solid var(--lamp);outline-offset:1px}
+input:focus,button:focus-visible,.create:focus-visible{outline:3px solid var(--lamp);outline-offset:1px}
 button{width:100%;margin-top:20px;padding:14px;border:0;border-radius:10px;background:var(--night);color:#fff;font:700 1.05rem Figtree,sans-serif;cursor:pointer}
 button:disabled{opacity:.6}
 .link{background:none;color:var(--deep);text-decoration:underline;font:500 .9rem Figtree;margin-top:12px;padding:4px}
 #msg{margin-top:14px;padding:11px 13px;border-radius:8px;display:none;font-weight:500}
 #msg.err{display:block;background:#fdecea;color:#b3261e}#msg.ok{display:block;background:#e6f4ec;color:#1c7a4d}
 p{text-align:center;margin:18px 0 0}
+.new{text-align:center;margin-top:22px;padding-top:18px;border-top:1.5px solid var(--line)}
+.new span{display:block;color:#4b5072;font-size:.92rem}
+.create{display:block;margin-top:10px;padding:13px;background:var(--lamp);color:var(--night);border-radius:10px;font-weight:700;font-size:1.05rem;text-decoration:none;text-align:center}
+.create:hover{background:#ffcb6b}
 </style>
 </head>
 <body>
@@ -36,7 +40,7 @@ p{text-align:center;margin:18px 0 0}
     <button id="btn" type="submit">Log in</button>
     <button id="reset" class="link" type="button">Forgot your password?</button>
   </form>
-  <p>New here? <a href="register.html">Create an account</a></p>
+  <div class="new"><span>New here?</span><a class="create" href="register.html">Create an account</a></div>
 </div>
 <script type="module">
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
