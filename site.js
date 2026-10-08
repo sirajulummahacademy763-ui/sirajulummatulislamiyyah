@@ -44,3 +44,5 @@ document.body.insertAdjacentHTML("beforeend",
  '<div style="background:var(--night,#12163b);color:#c9ccdf;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.</div>');
 // Help bot
 if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
+// Exams and certificates links
+if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
