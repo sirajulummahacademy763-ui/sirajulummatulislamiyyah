@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tests and exams | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ex{max-width:900px}
+.xc{background:#fff;border:1.5px solid #cfd3e8;border-left:5px solid #f5b94a;border-radius:14px;padding:18px;margin-bottom:16px}
+.xc h3{margin:0 0 4px;font-family:Amiri,serif;font-size:1.5rem}
+.xc small{color:#4b5072;display:block;line-height:1.6}
+.bd{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:#12163a;color:#f5b94a;margin-left:6px;vertical-align:middle}
+.st{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:999px;font-weight:700;font-size:.85rem;background:#eef0f8;color:#12163a}
+.st.ok{background:#e6f4ec;color:#1c7a4d}.st.no{background:#fdecea;color:#b3261e}
+.xb{font:inherit;font-weight:700;padding:10px 20px;border:0;border-radius:10px;background:#12163a;color:#f5b94a;cursor:pointer;margin-top:10px}
+a.xb{display:inline-block;text-decoration:none}
+.tm{position:sticky;top:0;z-index:5;background:#12163a;color:#f5b94a;font-weight:700;padding:12px 16px;border-radius:12px;margin-bottom:14px;display:flex;justify-content:space-between}
+.q{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:16px;margin-bottom:12px}
+.q label{display:block;padding:5px 0}
+.q textarea{width:100%;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit}
+.er{color:#b3261e;font-weight:500}
+</style></head><body>
+<main class="page ex">
+<h1>Tests and exams</h1>
+<p class="lead">Tests and exams for the courses you unlocked. Each one opens and closes at a set time, and has a time limit once you start.</p>
+<div id="app"><p>Loading...</p></div>
+</main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const fmt = t => t && t.toDate ? t.toDate().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+let me = null, items = [], timer = null;
+
+onAuthStateChanged(auth, async u => { if (!u) return; me = u; loadList(); });
+
+async function loadList() {
+  clearInterval(timer); window.onbeforeunload = null;
+  $("app").innerHTML = "<p>Loading...</p>";
+  items = [];
+  try {
+    const en = await getDocs(query(collection(db, "enrollments"), where("uid", "==", me.uid)));
+    const cids = [...new Set(en.docs.map(d => d.data().courseId))];
+    for (const cid of cids) {
+      let c; try { c = await getDoc(doc(db, "courses", cid)); } catch (e) { continue; }
+      if (!c.exists()) continue;
+      let ex = []; try { ex = (await getDocs(collection(db, "courses", cid, "exams"))).docs; } catch (e) {}
+      const res = {};
+      try { (await getDocs(query(collection(db, "courses", cid, "examResults"), where("uid", "==", me.uid)))).docs.forEach(d => res[d.data().examId] = d.data()); } catch (e) {}
+      for (const d of ex) items.push({ cid, course: c.data().title, id: d.id, ...d.data(), res: res[d.id] });
+    }
+    await Promise.all(items.map(async it => {
+      if (it.res && it.res.status === "graded" && it.res.score >= it.passMark) { try { it.cert = (await getDoc(doc(db, "certificates", me.uid + "_" + it.id))).exists(); } catch (e) {} }
+    }));
+  } catch (e) { $("app").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
+  items.sort((a, b) => a.opensAt.seconds - b.opensAt.seconds);
+  if (!items.length) { $("app").innerHTML = "<p>No tests or exams yet. Unlock a course to see its tests here.</p>"; return; }
+  $("app").innerHTML = items.map(it => {
+    const now = Date.now(), o = it.opensAt.toMillis(), c = it.closesAt.toMillis(), r = it.res;
+    let st = "", btn = "";
+    if (r) {
+      if (r.status === "graded") {
+        const ok = r.score >= it.passMark;
+        st = `<span class="st ${ok ? "ok" : "no"}">Score: ${r.score} / ${it.maxScore} · ${ok ? "Passed" : "Not passed"}</span>${r.feedback ? `<small>Teacher's comment: ${esc(r.feedback)}</small>` : ""}`;
+        if (it.cert) btn = `<a class="xb" href="certificate.html?id=${me.uid}_${it.id}">View my certificate</a>`;
+      } else st = '<span class="st">Submitted. Waiting for your teacher to mark it.</span>';
+    } else if (now < o) st = `<span class="st">Opens ${fmt(it.opensAt)}</span>`;
+    else if (now > c) st = '<span class="st no">Closed</span>';
+    else { st = '<span class="st ok">Open now</span>'; btn = `<button class="xb" data-s="${it.id}">Start</button>`; }
+    return `<div class="xc"><h3>${esc(it.title)}<span class="bd">${it.kind === "exam" ? "Exam" : "Test"}</span></h3><small>${esc(it.course)}</small>
+      <small>Opens ${fmt(it.opensAt)} · Closes ${fmt(it.closesAt)} · ${it.durationMin} minutes · ${it.maxScore} marks · Pass mark ${it.passMark}</small>${st}<br>${btn}</div>`;
+  }).join("");
+  $("app").querySelectorAll("[data-s]").forEach(b => b.onclick = () => start(items.find(x => x.id === b.dataset.s)));
+}
+
+async function start(it) {
+  const sref = doc(db, "courses", it.cid, "examStarts", me.uid + "_" + it.id);
+  let st = null;
+  try { const s = await getDoc(sref); if (s.exists()) st = s.data(); } catch (e) {}
+  if (!st) {
+    if (!confirm("Start now? You will have " + it.durationMin + " minutes. The timer cannot be paused and you can submit only once.")) return;
+    try { await setDoc(sref, { uid: me.uid, examId: it.id, startedAt: serverTimestamp() }); st = (await getDoc(sref)).data(); }
+    catch (e) { return alert("Could not start: " + (e.code || e.message)); }
+  }
+  const started = st.startedAt ? st.startedAt.toMillis() : Date.now();
+  const deadline = Math.min(started + it.durationMin * 60000, it.closesAt.toMillis());
+  if (Date.now() > deadline + 20000) return alert("Your time for this test is over.");
+  let q;
+  try { q = (await getDoc(doc(db, "courses", it.cid, "examQuestions", it.id))).data(); }
+  catch (e) { return alert("This test is not open now."); }
+  const mcq = it.type === "mcq";
+  $("app").innerHTML = `<div class="tm"><span>${esc(it.title)}</span><span id="cd">--:--</span></div>` +
+    (mcq ? (q.questions || []).map((x, i) => `<div class="q"><b>${i + 1}. ${esc(x.q)}</b>${(x.options || []).map((o, k) => `<label><input type="radio" name="q${i}" value="${k}"> ${esc(o)}</label>`).join("")}</div>`).join("")
+      : `<div class="q"><p style="white-space:pre-wrap">${esc(q.prompt)}</p><textarea id="tx" rows="12" placeholder="Write your answer here"></textarea></div>`) +
+    '<button class="xb" id="sb">Submit</button> <span class="er" id="er"></span>';
+  window.onbeforeunload = () => "Your test is running.";
+  let done = false;
+  const send = async auto => {
+    if (done) return;
+    if (!auto && !confirm("Submit now? You cannot change your answers afterwards.")) return;
+    done = true; clearInterval(timer);
+    const data = { uid: me.uid, examId: it.id, status: "submitted", createdAt: serverTimestamp() };
+    if (mcq) data.answers = (q.questions || []).map((x, i) => { const r = document.querySelector(`input[name="q${i}"]:checked`); return r ? +r.value : -1; });
+    else data.text = $("tx").value.trim();
+    try { data.studentName = (await getDoc(doc(db, "students", me.uid))).data().name || ""; } catch (e) { data.studentName = ""; }
+    try { await setDoc(doc(db, "courses", it.cid, "examResults", me.uid + "_" + it.id), data); alert(auto ? "Time is up. Your answers were submitted." : "Submitted. Good luck!"); loadList(); }
+    catch (e) { done = false; $("er").textContent = "Could not submit: " + (e.code || e.message); }
+  };
+  $("sb").onclick = () => send(false);
+  const tick = () => {
+    const left = deadline - Date.now();
+    if (left <= 0) { $("cd").textContent = "00:00"; send(true); return; }
+    const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
+    $("cd").textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  };
+  tick(); timer = setInterval(tick, 1000);
+}
+</script>
+</body></html>
