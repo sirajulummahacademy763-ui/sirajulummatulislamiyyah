@@ -61,14 +61,14 @@ function build() {
     <button id="tb" type="button">Assign teacher</button> <span id="tm"></span></div>
   <div class="cd"><h2>Lessons</h2><label>Course</label><select id="ls"></select>
     <label>Lesson title</label><input id="lt">
-    <div class="row"><div><label>Type</label><select id="ly"><option value="video">Video (YouTube link)</option><option value="text">Written lesson</option><option value="live">Live class (meeting link)</option></select></div><div><label>Order (1, 2, 3...)</label><input id="lo" type="number" value="1"></div></div>
+    <div class="row"><div><label>Type</label><select id="ly"><option value="video">Video (YouTube link)</option><option value="text">Written lesson</option><option value="jitsi">Live class on the website (Jitsi)</option><option value="live">Live class (Zoom or Meet link)</option></select></div><div><label>Order (1, 2, 3...)</label><input id="lo" type="number" value="1"></div></div>
     <label id="lcl">YouTube link</label><textarea id="lc" rows="4"></textarea>
     <div id="lwb" hidden><label>Date and time (for live class)</label><input id="lw" placeholder="Saturday 5:00 PM"></div>
     <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
     <div id="ll" style="margin-top:14px"></div></div>`;
   $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
-  $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : "Lesson text"; $("lwb").hidden = t !== "live"; };
+  $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : t === "jitsi" ? "Room name (leave empty to create a secret one automatically)" : "Lesson text"; $("lwb").hidden = !(t === "live" || t === "jitsi"); };
 }
 
 async function loadTeachers() {
@@ -141,7 +141,9 @@ async function loadCourses() {
 }
 
 async function addLesson() {
-  const title = $("lt").value.trim(), content = $("lc").value.trim();
+  const title = $("lt").value.trim();
+  let content = $("lc").value.trim();
+  if ($("ly").value === "jitsi" && !content) content = "siraj-" + Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8);
   if (!sel || !title || !content) return say("lm", "Choose a course, then enter the title and content.");
   try {
     await addDoc(collection(db, "courses", sel, "lessons"), { title, type: $("ly").value, content, when: $("lw").value.trim(), order: parseInt($("lo").value, 10) || 1 });
