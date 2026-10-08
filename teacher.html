@@ -22,7 +22,7 @@
 <main class="page ad" id="app"><p>Checking access...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -49,9 +49,23 @@ function build(name) {
     <textarea id="ax" rows="6" placeholder="What is 2+2? | 3 | 4 | 5 | 2"></textarea>
     <button id="ab" type="button">Create assignment</button> <span id="am2"></span></div>
   <div class="cd"><h2>Assignments</h2><div id="al2">Loading...</div></div>
+  <div class="cd"><h2>Tests and exams</h2>
+    <p style="margin-top:0">Students can start only between the opening and closing time, and then have the minutes you set.</p>
+    <label>Title</label><input id="xt">
+    <div class="row"><div><label>Kind</label><select id="xk"><option value="test">Test</option><option value="exam">Exam</option></select></div>
+    <div><label>Type</label><select id="xy"><option value="mcq">Multiple choice (marked automatically)</option><option value="written">Written (you mark it)</option></select></div></div>
+    <div class="row"><div><label>Opens</label><input id="xo" type="datetime-local"></div><div><label>Closes</label><input id="xc" type="datetime-local"></div></div>
+    <div class="row"><div><label>Duration (minutes)</label><input id="xd" type="number" min="1" value="30"></div><div><label>Total marks</label><input id="xmk" type="number" min="1" value="20"></div></div>
+    <label>Pass mark</label><input id="xp" type="number" min="0" value="10">
+    <label id="xl">Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option</label>
+    <textarea id="xq" rows="6" placeholder="What is 2+2? | 3 | 4 | 5 | 2"></textarea>
+    <button id="xb" type="button">Create</button> <span id="xm2"></span>
+    <div id="xl2" style="margin-top:14px"></div></div>
+  <div class="cd"><h2>Exam results and certificates</h2><div id="xr"><p>Choose an exam above.</p></div></div>
   <div class="cd"><h2>Student submissions</h2><div id="sl"><p>Choose an assignment above.</p></div></div>`;
-  $("ab").onclick = addAsg;
-  $("cs").onchange = () => { sel = $("cs").value; loadAsgs(); };
+  $("ab").onclick = addAsg; $("xb").onclick = addExam;
+  $("xy").onchange = () => { $("xl").textContent = $("xy").value === "mcq" ? "Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option" : "Write the question or task for students"; };
+  $("cs").onchange = () => { sel = $("cs").value; loadAsgs(); loadExams(); $("xr").innerHTML = "<p>Choose an exam above.</p>"; };
   $("ay").onchange = () => {
     const m = $("ay").value === "mcq";
     $("al").textContent = m ? "Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option" : "Write the question or task for students";
@@ -63,7 +77,7 @@ async function loadCourses() {
   courses = s.docs.map(d => ({ id: d.id, ...d.data() }));
   if (!courses.length) { $("cs").hidden = true; $("cm0").innerHTML = "<p>No course has been assigned to you yet. Please contact the admin.</p>"; return; }
   $("cs").innerHTML = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
-  sel = courses[0].id; loadAsgs();
+  sel = courses[0].id; loadAsgs(); loadExams();
 }
 
 async function addAsg() {
@@ -128,6 +142,100 @@ async function showSubs(aid) {
       }
       say("auto2", c + " marked.", true); showSubs(aid);
     } catch (e) { say("auto2", "Failed: " + (e.code || e.message)); }
+  };
+}
+
+let exs = [];
+const fmt = t => t && t.toDate ? t.toDate().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+
+async function addExam() {
+  const title = $("xt").value.trim(), kind = $("xk").value, type = $("xy").value, o = $("xo").value, c = $("xc").value;
+  const dur = parseInt($("xd").value, 10), max = Math.max(1, parseInt($("xmk").value, 10) || 20), pass = Math.max(0, parseInt($("xp").value, 10) || 0), txt = $("xq").value.trim();
+  if (!sel || !title || !o || !c || !(dur > 0) || !txt) return say("xm2", "Please fill in every box, including the opening and closing time.");
+  const od = new Date(o), cd = new Date(c);
+  if (!(cd > od)) return say("xm2", "The closing time must be after the opening time.");
+  let qdoc, key = null;
+  if (type === "mcq") {
+    const qs = [], ans = [];
+    for (const line of txt.split("\n").map(x => x.trim()).filter(Boolean)) {
+      const p = line.split("|").map(x => x.trim()), n = parseInt(p[p.length - 1], 10), opts = p.slice(1, -1);
+      if (p.length < 4 || !p[0] || opts.length < 2 || !(n >= 1 && n <= opts.length)) return say("xm2", "Check this line: " + line);
+      qs.push({ q: p[0], options: opts }); ans.push(n - 1);
+    }
+    qdoc = { questions: qs }; key = ans;
+  } else qdoc = { prompt: txt };
+  try {
+    const r = await addDoc(collection(db, "courses", sel, "exams"), { title, kind, type, opensAt: Timestamp.fromDate(od), closesAt: Timestamp.fromDate(cd), durationMin: dur, maxScore: max, passMark: pass, teacherId: uid, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "courses", sel, "examQuestions", r.id), qdoc);
+    if (key) await setDoc(doc(db, "courses", sel, "examKeys", r.id), { answers: key });
+    say("xm2", "Created.", true); $("xt").value = ""; $("xq").value = ""; loadExams();
+  } catch (e) { say("xm2", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadExams() {
+  if (!sel) return;
+  const s = await getDocs(collection(db, "courses", sel, "exams"));
+  exs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.opensAt.seconds - b.opensAt.seconds);
+  $("xl2").innerHTML = exs.length ? exs.map(x => `<div class="it"><div><b>${esc(x.title)}</b> <small>(${x.kind})</small><br><small>${fmt(x.opensAt)} to ${fmt(x.closesAt)} · ${x.durationMin} min · ${x.maxScore} marks · pass ${x.passMark}</small></div>
+    <div><button class="sm" data-xv="${x.id}">Results</button><button class="sm" data-xd="${x.id}">Delete</button></div></div>`).join("") : "<p>No tests or exams yet.</p>";
+  $("xl2").querySelectorAll("[data-xv]").forEach(b => b.onclick = () => showRes(b.dataset.xv));
+  $("xl2").querySelectorAll("[data-xd]").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete this test or exam?")) return;
+    for (const k of ["examQuestions", "examKeys"]) { try { await deleteDoc(doc(db, "courses", sel, k, b.dataset.xd)); } catch (e) {} }
+    await deleteDoc(doc(db, "courses", sel, "exams", b.dataset.xd)); loadExams(); $("xr").innerHTML = "<p>Choose an exam above.</p>";
+  });
+}
+
+async function issue(x, r) {
+  const pct = Math.round(r.score / x.maxScore * 100), grade = pct >= 80 ? "Distinction" : pct >= 65 ? "Merit" : "Pass";
+  const c = courses.find(k => k.id === sel);
+  await setDoc(doc(db, "certificates", r.id), { uid: r.uid, studentName: r.studentName || "Student", courseId: sel, courseTitle: c ? c.title : "", examId: x.id, examTitle: x.title, score: r.score, maxScore: x.maxScore, grade, issuedAt: serverTimestamp(), issuedBy: uid });
+}
+
+async function showRes(eid) {
+  const x = exs.find(e => e.id === eid);
+  const s = await getDocs(query(collection(db, "courses", sel, "examResults"), where("examId", "==", eid)));
+  const subs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  let qs = [];
+  if (x.type === "mcq") { try { qs = (await getDoc(doc(db, "courses", sel, "examQuestions", eid))).data().questions || []; } catch (e) {} }
+  const issued = {};
+  await Promise.all(subs.map(async r => { try { issued[r.id] = (await getDoc(doc(db, "certificates", r.id))).exists(); } catch (e) {} }));
+  const passed = r => r.status === "graded" && r.score >= x.passMark;
+  const show = r => x.type === "mcq" ? qs.map((q, i) => `${i + 1}. ${esc(q.q)}\n   Answer: ${esc((q.options || [])[(r.answers || [])[i]] || "-")}`).join("\n") : esc(r.text);
+  $("xr").innerHTML = `<h3 style="margin-top:0">${esc(x.title)}</h3>` + (x.type === "mcq" ? '<button id="xauto" type="button">Mark all automatically</button> ' : "") +
+    (subs.length ? '<button id="xall" type="button">Issue certificates to all who passed</button> <span id="xmsg"></span>' : "") +
+    (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}${issued[r.id] ? " · Certificate issued" : ""}
+      <pre>${show(r)}</pre>
+      <div class="row"><div><label>Score (out of ${x.maxScore})</label><input type="number" min="0" max="${x.maxScore}" id="xs-${r.id}" value="${r.score == null ? "" : r.score}"></div>
+      <div><label>Comment</label><input id="xf-${r.id}" value="${esc(r.feedback || "")}"></div></div>
+      <button class="sm" data-xs="${r.id}" type="button">Save mark</button>${passed(r) && !issued[r.id] ? `<button class="sm" data-xc="${r.id}" type="button">Issue certificate</button>` : ""} <span id="xx-${r.id}"></span></div>`).join("") : "<p>No submissions yet.</p>");
+  $("xr").querySelectorAll("[data-xs]").forEach(b => b.onclick = async () => {
+    const id = b.dataset.xs, v = parseInt($("xs-" + id).value, 10);
+    if (!(v >= 0 && v <= x.maxScore)) return say("xx-" + id, "Enter a score from 0 to " + x.maxScore);
+    try { await updateDoc(doc(db, "courses", sel, "examResults", id), { score: v, feedback: $("xf-" + id).value.trim(), status: "graded", gradedAt: serverTimestamp() }); showRes(eid); }
+    catch (e) { say("xx-" + id, "Failed: " + (e.code || e.message)); }
+  });
+  $("xr").querySelectorAll("[data-xc]").forEach(b => b.onclick = async () => {
+    const r = subs.find(k => k.id === b.dataset.xc);
+    try { await issue(x, r); showRes(eid); } catch (e) { say("xx-" + r.id, "Failed: " + (e.code || e.message)); }
+  });
+  if ($("xauto")) $("xauto").onclick = async () => {
+    try {
+      const key = (await getDoc(doc(db, "courses", sel, "examKeys", eid))).data().answers, n = key.length;
+      for (const r of subs) {
+        if (r.status === "graded") continue;
+        const right = (r.answers || []).filter((v, i) => v === key[i]).length;
+        await updateDoc(doc(db, "courses", sel, "examResults", r.id), { score: Math.round(right / n * x.maxScore), status: "graded", gradedAt: serverTimestamp() });
+      }
+      showRes(eid);
+    } catch (e) { say("xmsg", "Failed: " + (e.code || e.message)); }
+  };
+  if ($("xall")) $("xall").onclick = async () => {
+    try {
+      let c = 0;
+      for (const r of subs) if (passed(r) && !issued[r.id]) { await issue(x, r); c++; }
+      showRes(eid); setTimeout(() => say("xmsg", c + " certificate(s) issued.", true), 400);
+    } catch (e) { say("xmsg", "Failed: " + (e.code || e.message)); }
   };
 }
 </script>
