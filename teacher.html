@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ad{max-width:900px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+.cd h2{margin-top:0}
+.cd label{display:block;font-size:.88rem;font-weight:500;margin:10px 0 3px}
+.cd input,.cd select,.cd textarea{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.cd .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cd button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer;margin-top:14px}
+.cd button.sm{padding:5px 10px;font-size:.82rem;margin:0 4px 0 0;background:#fff;color:var(--night);border:1.5px solid var(--line)}
+.it{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.sb{border-top:1px solid var(--line);padding:12px 0}
+.sb pre{white-space:pre-wrap;font:inherit;background:#f4f5fb;padding:10px;border-radius:8px;margin:6px 0}
+.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
+@media(max-width:600px){.cd .row{grid-template-columns:1fr}}
+</style></head><body>
+<main class="page ad" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const say = (id, t, ok) => { $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
+let uid = "", courses = [], sel = "", asgs = [];
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  uid = u.uid;
+  let t = null;
+  try { const s = await getDoc(doc(db, "teachers", u.uid)); if (s.exists()) t = s.data(); } catch (e) {}
+  if (!t) return $("app").innerHTML = "<h1>Teacher</h1><p>You do not have access to this page.</p>";
+  build(t.name || ""); loadCourses();
+});
+
+function build(name) {
+  $("app").innerHTML = `<h1>Teacher dashboard</h1><p class="lead">Welcome ${esc(name)}</p>
+  <div class="cd"><h2>Your course</h2><div id="cm0"></div><select id="cs"></select></div>
+  <div class="cd"><h2>New assignment</h2>
+    <label>Title</label><input id="at">
+    <div class="row"><div><label>Type</label><select id="ay"><option value="mcq">Multiple choice (marked automatically)</option><option value="written">Written (you mark it)</option></select></div>
+    <div><label>Total marks</label><input id="am" type="number" min="1" value="10"></div></div>
+    <label id="al">Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option</label>
+    <textarea id="ax" rows="6" placeholder="What is 2+2? | 3 | 4 | 5 | 2"></textarea>
+    <button id="ab" type="button">Create assignment</button> <span id="am2"></span></div>
+  <div class="cd"><h2>Assignments</h2><div id="al2">Loading...</div></div>
+  <div class="cd"><h2>Student submissions</h2><div id="sl"><p>Choose an assignment above.</p></div></div>`;
+  $("ab").onclick = addAsg;
+  $("cs").onchange = () => { sel = $("cs").value; loadAsgs(); };
+  $("ay").onchange = () => {
+    const m = $("ay").value === "mcq";
+    $("al").textContent = m ? "Questions: one per line, like this: Question | option 1 | option 2 | option 3 | number of the correct option" : "Write the question or task for students";
+  };
+}
+
+async function loadCourses() {
+  const s = await getDocs(query(collection(db, "courses"), where("teacherId", "==", uid)));
+  courses = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!courses.length) { $("cs").hidden = true; $("cm0").innerHTML = "<p>No course has been assigned to you yet. Please contact the admin.</p>"; return; }
+  $("cs").innerHTML = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
+  sel = courses[0].id; loadAsgs();
+}
+
+async function addAsg() {
+  const title = $("at").value.trim(), type = $("ay").value, max = Math.max(1, parseInt($("am").value, 10) || 10), txt = $("ax").value.trim();
+  if (!sel || !title || !txt) return say("am2", "Enter the title and the questions or task.");
+  const data = { title, type, maxScore: max, teacherId: uid, createdAt: serverTimestamp() };
+  let key = null;
+  if (type === "mcq") {
+    const qs = [], ans = [];
+    for (const line of txt.split("\n").map(x => x.trim()).filter(Boolean)) {
+      const p = line.split("|").map(x => x.trim()), n = parseInt(p[p.length - 1], 10), opts = p.slice(1, -1);
+      if (p.length < 4 || !p[0] || opts.length < 2 || !(n >= 1 && n <= opts.length)) return say("am2", "Check this line: " + line);
+      qs.push({ q: p[0], options: opts }); ans.push(n - 1);
+    }
+    data.questions = qs; key = ans;
+  } else data.prompt = txt;
+  try {
+    const r = await addDoc(collection(db, "courses", sel, "assignments"), data);
+    if (key) await setDoc(doc(db, "courses", sel, "keys", r.id), { answers: key });
+    say("am2", "Assignment created.", true); $("at").value = ""; $("ax").value = ""; loadAsgs();
+  } catch (e) { say("am2", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadAsgs() {
+  const s = await getDocs(collection(db, "courses", sel, "assignments"));
+  asgs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  $("al2").innerHTML = asgs.length ? asgs.map(a => `<div class="it"><div><b>${esc(a.title)}</b><br><small>${a.type === "mcq" ? "Multiple choice" : "Written"} · ${a.maxScore} marks</small></div>
+    <div><button class="sm" data-v="${a.id}">Submissions</button><button class="sm" data-d="${a.id}">Delete</button></div></div>`).join("") : "<p>No assignments yet.</p>";
+  $("al2").querySelectorAll("[data-v]").forEach(b => b.onclick = () => showSubs(b.dataset.v));
+  $("al2").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete this assignment?")) return;
+    try { await deleteDoc(doc(db, "courses", sel, "keys", b.dataset.d)); } catch (e) {}
+    await deleteDoc(doc(db, "courses", sel, "assignments", b.dataset.d)); loadAsgs(); $("sl").innerHTML = "<p>Choose an assignment above.</p>";
+  });
+}
+
+async function showSubs(aid) {
+  const a = asgs.find(x => x.id === aid);
+  const s = await getDocs(query(collection(db, "courses", sel, "submissions"), where("assignmentId", "==", aid)));
+  const subs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  const show = x => a.type === "mcq" ? (a.questions || []).map((q, i) => `${i + 1}. ${q.q}\n   Answer: ${esc((q.options || [])[(x.answers || [])[i]] || "-")}`).join("\n") : esc(x.text);
+  $("sl").innerHTML = `<h3 style="margin-top:0">${esc(a.title)}</h3>` + (a.type === "mcq" ? '<button id="auto" type="button">Mark all automatically</button> <span id="auto2"></span>' : "") +
+    (subs.length ? subs.map(x => `<div class="sb"><b>${esc(x.studentName || "Student")}</b> · ${x.status === "graded" ? "Score: " + x.score + " / " + a.maxScore : "Not marked"}
+      <pre>${show(x)}</pre>
+      <div class="row"><div><label>Score (out of ${a.maxScore})</label><input type="number" min="0" max="${a.maxScore}" id="sc-${x.id}" value="${x.score == null ? "" : x.score}"></div>
+      <div><label>Comment</label><input id="fb-${x.id}" value="${esc(x.feedback || "")}"></div></div>
+      <button class="sm" data-s="${x.id}" type="button">Save mark</button> <span id="ms-${x.id}"></span></div>`).join("") : "<p>No submissions yet.</p>");
+  $("sl").querySelectorAll("[data-s]").forEach(b => b.onclick = async () => {
+    const id = b.dataset.s, v = parseInt($("sc-" + id).value, 10);
+    if (!(v >= 0 && v <= a.maxScore)) return say("ms-" + id, "Enter a score from 0 to " + a.maxScore);
+    try { await updateDoc(doc(db, "courses", sel, "submissions", id), { score: v, feedback: $("fb-" + id).value.trim(), status: "graded", gradedAt: serverTimestamp() }); say("ms-" + id, "Saved.", true); }
+    catch (e) { say("ms-" + id, "Failed: " + (e.code || e.message)); }
+  });
+  if ($("auto")) $("auto").onclick = async () => {
+    try {
+      const key = (await getDoc(doc(db, "courses", sel, "keys", aid))).data().answers, n = key.length;
+      let c = 0;
+      for (const x of subs) {
+        if (x.status === "graded") continue;
+        const right = (x.answers || []).filter((v, i) => v === key[i]).length;
+        await updateDoc(doc(db, "courses", sel, "submissions", x.id), { score: Math.round(right / n * a.maxScore), status: "graded", gradedAt: serverTimestamp() }); c++;
+      }
+      say("auto2", c + " marked.", true); showSubs(aid);
+    } catch (e) { say("auto2", "Failed: " + (e.code || e.message)); }
+  };
+}
+</script>
+</body></html>
