@@ -26,14 +26,14 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const say = (id, t, ok) => { $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
 const LEVELS = ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi", "Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3", "Beginner", "Intermediate", "Advanced"];
-let courses = [], sel = "";
+let courses = [], sel = "", teachers = [];
 
 onAuthStateChanged(auth, async u => {
   if (!u) return;
   let ok = false;
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!ok) return $("app").innerHTML = "<h1>Admin</h1><p>You do not have access to this page.</p>";
-  build(); loadCourses();
+  build(); await loadTeachers(); loadCourses();
 });
 
 function build() {
@@ -50,6 +50,11 @@ function build() {
     <label><input id="npub" type="checkbox" style="width:auto"> Publish now (students can see it)</label>
     <button id="nb" type="button">Create course</button> <span id="nm"></span></div>
   <div class="cd"><h2>Your courses</h2><div id="cl">Loading...</div></div>
+  <div class="cd"><h2>Assign a teacher to a course</h2>
+    <p style="margin-top:0">A teacher must first be added in Firebase: Firestore, collection <b>teachers</b>, document ID = the teacher's UID, field <b>name</b>.</p>
+    <label>Course</label><select id="tc"></select>
+    <label>Teacher</label><select id="tt"></select>
+    <button id="tb" type="button">Assign teacher</button> <span id="tm"></span></div>
   <div class="cd"><h2>Lessons</h2><label>Course</label><select id="ls"></select>
     <label>Lesson title</label><input id="lt">
     <div class="row"><div><label>Type</label><select id="ly"><option value="video">Video (YouTube link)</option><option value="text">Written lesson</option><option value="live">Live class (meeting link)</option></select></div><div><label>Order (1, 2, 3...)</label><input id="lo" type="number" value="1"></div></div>
@@ -57,9 +62,26 @@ function build() {
     <div id="lwb" hidden><label>Date and time (for live class)</label><input id="lw" placeholder="Saturday 5:00 PM"></div>
     <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
     <div id="ll" style="margin-top:14px"></div></div>`;
-  $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson;
+  $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : "Lesson text"; $("lwb").hidden = t !== "live"; };
+}
+
+async function loadTeachers() {
+  try {
+    const s = await getDocs(collection(db, "teachers"));
+    teachers = s.docs.map(d => ({ id: d.id, name: d.data().name || d.id }));
+  } catch (e) { teachers = []; }
+  $("tt").innerHTML = teachers.length ? teachers.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("") : '<option value="">No teachers added yet</option>';
+}
+
+async function assignTeacher() {
+  const cid = $("tc").value, tid = $("tt").value, t = teachers.find(x => x.id === tid);
+  if (!cid || !t) return say("tm", "Choose a course and a teacher.");
+  try {
+    await updateDoc(doc(db, "courses", cid), { teacherId: t.id, teacherName: t.name });
+    say("tm", "Teacher assigned.", true); loadCourses();
+  } catch (e) { say("tm", "Failed: " + (e.code || e.message)); }
 }
 
 async function addCoins() {
@@ -86,12 +108,13 @@ async function addCourse() {
 async function loadCourses() {
   const s = await getDocs(collection(db, "courses"));
   courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
-  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"}</small></div>
+  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"} · Teacher: ${esc(c.teacherName || "none")}</small></div>
     <div><button class="sm" data-p="${c.id}">${c.published ? "Hide" : "Publish"}</button><button class="sm" data-e="${c.id}">Price</button><button class="sm" data-d="${c.id}">Delete</button></div></div>`).join("") : "<p>No courses yet.</p>";
   $("cl").querySelectorAll("[data-p]").forEach(b => b.onclick = async () => { const c = courses.find(x => x.id === b.dataset.p); await updateDoc(doc(db, "courses", c.id), { published: !c.published }); loadCourses(); });
   $("cl").querySelectorAll("[data-e]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "courses", b.dataset.e), { price: Math.max(0, parseInt(v, 10) || 0) }); loadCourses(); });
   $("cl").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => { if (!confirm("Delete this course and its lessons?")) return; const ls = await getDocs(collection(db, "courses", b.dataset.d, "lessons")); for (const l of ls.docs) await deleteDoc(l.ref); await deleteDoc(doc(db, "courses", b.dataset.d)); loadCourses(); });
-  $("ls").innerHTML = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
+  const opts = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
+  $("ls").innerHTML = opts; $("tc").innerHTML = opts;
   if (!courses.find(c => c.id === sel)) sel = courses[0] ? courses[0].id : "";
   $("ls").value = sel; loadLessons();
 }
