@@ -1,8 +1,9 @@
-const PUBLIC=["privacy.html","terms.html"];
-const page=location.pathname.split("/").pop()||"index.html";
+// Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
+const PUBLIC=["about","contact","privacy","terms"];
+const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
 if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
-const nav=isPub?[["login.html","Log in"]]:[["index.html","Home"],["courses.html","Courses"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["wallet.html","My wallet"]];
+const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["login.html","Log in"]]:[["index.html","Home"],["courses.html","Courses"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["wallet.html","My wallet"]];
 const cta=isPub?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML("beforeend",'<link rel="icon" href="logo.svg">');
 document.body.insertAdjacentHTML("afterbegin",
