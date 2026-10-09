@@ -94,7 +94,7 @@ onAuthStateChanged(auth, async u => {
         <div class="nm">${esc(String(c.studentName || "").toLowerCase())}</div>
         <p class="tx">for successfully completing the course <b>${esc(c.courseTitle)}</b><br>with a score of <b>${c.score} / ${c.maxScore} (${pct}%)</b> and a grade of <span class="gd">${esc(c.grade)}</span>${sameTitle ? "" : `<span class="ex" dir="auto">Assessment: ${esc(c.examTitle)}</span>`}</p>
         <p class="dt">Issued on ${day(c.issuedAt)}</p>
-        <div class="sg"><div class="ln">Supervisor</div>${SEAL}<div class="ln dr"><img src="director-signature.png" alt="Director's signature">Director</div></div>
+        <div class="sg"><div class="ln dr"><img src="supervisor-signature.png" alt="Supervisor's signature" style="width:11cqw">Supervisor</div>${SEAL}<div class="ln dr"><img src="director-signature.png" alt="Director's signature">Director</div></div>
         <p class="fp">Certificate no. ${esc(no)} &middot; Verify at ${esc(link)}</p>
         <div class="qr"><div id="qr"></div>Scan to verify</div>
       </div></div></div>`;
