@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notice board | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.an{max-width:860px}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:20px;margin-bottom:18px}
+.cd h2{font-family:Amiri,serif;margin:0 0 10px;font-size:1.6rem}
+.tr{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 0;border-top:1px solid #e3e6f3}
+.tr small{color:#4b5072;display:block}
+.st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:#eef0f8;color:#12163a}
+.st.cu{background:#e6f4ec;color:#1c7a4d}.st.up{background:#fff3d6;color:#8a5d00}
+.nt{border-left:5px solid #f5b94a}
+.nt h3{margin:0 0 2px;font-size:1.15rem}
+.nt small{color:#4b5072}
+.nt p{white-space:pre-wrap;line-height:1.7;margin:10px 0 0}
+.pin{background:#12163a;color:#f5b94a;border-radius:999px;padding:1px 10px;font-size:.75rem;font-weight:700;margin-left:6px}
+</style></head><body>
+<main class="page an">
+<h1>Notice board</h1>
+<p class="lead">Term dates and messages from the institute.</p>
+<div id="app"><p>Loading...</p></div>
+</main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const pad = n => String(n).padStart(2, "0");
+const n0 = new Date(), today = n0.getFullYear() + "-" + pad(n0.getMonth() + 1) + "-" + pad(n0.getDate());
+const fd = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }); };
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  let terms = [], anns = [];
+  try {
+    terms = (await getDocs(collection(db, "terms"))).docs.map(d => d.data()).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    anns = (await getDocs(collection(db, "announcements"))).docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { return $("app").innerHTML = "<p>Could not load: " + esc(e.code || e.message) + "</p>"; }
+  anns.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.createdAt ? b.createdAt.seconds : 0) - (a.createdAt ? a.createdAt.seconds : 0));
+  const mx = anns.reduce((m, a) => Math.max(m, a.createdAt ? a.createdAt.seconds : 0), 0);
+  try { localStorage.setItem("ann_seen", String(mx)); } catch (e) {}
+  $("app").innerHTML =
+    `<div class="cd"><h2>Terms</h2>${terms.length ? terms.map(t => {
+      const s = today < t.startDate ? ["Upcoming", "up"] : today > t.endDate ? ["Ended", ""] : ["Current term", "cu"];
+      return `<div class="tr"><div><b>${esc(t.name)}</b> · ${esc(t.session)}<small>${fd(t.startDate)} to ${fd(t.endDate)}</small></div><span class="st ${s[1]}">${s[0]}</span></div>`;
+    }).join("") : "<p>No term dates have been published yet.</p>"}</div>` +
+    `<h2 style="font-family:Amiri,serif;font-size:1.6rem;margin:22px 0 10px">Notices</h2>` +
+    (anns.length ? anns.map(a => `<div class="cd nt"><h3>${esc(a.title)}${a.pinned ? '<span class="pin">PINNED</span>' : ""}</h3><small>${a.createdAt ? a.createdAt.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : ""}</small><p>${esc(a.body)}</p></div>`).join("") : "<p>No notices yet.</p>");
+});
+</script>
+</body></html>
