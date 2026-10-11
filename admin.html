@@ -25,7 +25,8 @@ import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const say = (id, t, ok) => { $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
-const LEVELS = ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi", "Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3", "Beginner", "Intermediate", "Advanced"];
+const LEVELS = ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi", "Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3", "Beginner", "Intermediate", "Advanced", "All classes"];
+const BC = { islamic: ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi"], western: ["Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3"], tech: ["Beginner", "Intermediate", "Advanced"] };
 let courses = [], sel = "", teachers = [];
 
 onAuthStateChanged(auth, async u => {
@@ -33,7 +34,7 @@ onAuthStateChanged(auth, async u => {
   let ok = false;
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!ok) return $("app").innerHTML = "<h1>Admin</h1><p>You do not have access to this page.</p>";
-  build(); await loadTeachers(); loadCourses(); libInit(); loadLib();
+  build(); await loadTeachers(); loadCourses();
 });
 
 function build() {
@@ -41,15 +42,29 @@ function build() {
   <div class="cd"><h2>Add coins to a student</h2>
     <label>Student email</label><input id="ce" type="email"><label>Coins to add</label><input id="ca" type="number" min="1">
     <button id="cb" type="button">Add coins</button> <span id="cm"></span></div>
+  <div class="cd"><h2>Change a student's classes</h2>
+    <p style="margin-top:0">Students choose their classes once. Use this if a student needs a different class.</p>
+    <label>Student email</label><input id="se" type="email">
+    <div class="row"><div><label>Arabic and Islamic class</label><select id="si"></select></div><div><label>Western class</label><select id="sw"></select></div></div>
+    <label>Technology level</label><select id="stl"></select>
+    <button id="sbn" type="button">Save classes</button> <span id="smg"></span></div>
   <div class="cd"><h2>New course</h2>
     <label>Title</label><input id="nt">
     <div class="row"><div><label>Section</label><select id="ns"><option value="islamic">Qur'an and Islamic</option><option value="western">Western studies</option><option value="tech">Technology</option></select></div>
-    <div><label>Level</label><input id="nl" list="lv"><datalist id="lv">${LEVELS.map(l => `<option value="${l}">`).join("")}</datalist></div></div>
+    <div><label>Level (type "All classes" to show it to every student of the section)</label><input id="nl" list="lv"><datalist id="lv">${LEVELS.map(l => `<option value="${l}">`).join("")}</datalist></div></div>
     <label>Description</label><textarea id="nd" rows="3"></textarea>
     <div class="row"><div><label>Price in coins (0 = free)</label><input id="np" type="number" min="0" value="0"></div><div><label>Order (1, 2, 3...)</label><input id="no" type="number" value="1"></div></div>
     <label><input id="npub" type="checkbox" style="width:auto"> Publish now (students can see it)</label>
     <button id="nb" type="button">Create course</button> <span id="nm"></span></div>
-  <div class="cd"><h2>Your courses</h2><div id="cl">Loading...</div></div>
+  <div class="cd"><h2>New syllabus book (PDF)</h2>
+    <p style="margin-top:0">One book for one class. Students unlock it with coins in the library.</p>
+    <div class="row"><div><label>Section</label><select id="bs"><option value="islamic">Arabic and Islamic</option><option value="western">Western studies</option><option value="tech">Technology</option></select></div>
+    <div><label>Class</label><select id="bc"></select></div></div>
+    <label>Book title</label><input id="bt">
+    <label>PDF link (a file in your site such as books/ibtidai-1.pdf, or a full https link)</label><input id="bu">
+    <div class="row"><div><label>Price in coins</label><input id="bp" type="number" min="0" value="2"></div><div><label>Order (1, 2, 3...)</label><input id="bo" type="number" value="1"></div></div>
+    <button id="bb" type="button">Add book</button> <span id="bm"></span></div>
+  <div class="cd"><h2>Your courses and books</h2><div id="cl">Loading...</div></div>
   <div class="cd"><h2>Teachers</h2>
     <p style="margin-top:0">The teacher must first register on the site. Then enter the email they registered with.</p>
     <label>Teacher email</label><input id="te" type="email">
@@ -59,16 +74,6 @@ function build() {
     <label>Course</label><select id="tc"></select>
     <label>Teacher</label><select id="tt"></select>
     <button id="tb" type="button">Assign teacher</button> <span id="tm"></span></div>
-  <div class="cd"><h2>Library</h2>
-    <label>Section</label><select id="bs"><option value="quran">Qur'an recitation</option><option value="hadith">Hadith recitation</option><option value="islamic">Islamic and Arabic books</option><option value="western">Western books</option><option value="tech">Technology books</option><option value="free">World books (free)</option></select>
-    <label id="bgl">Group</label><select id="bg"></select><input id="bgt" hidden placeholder="Category, for example Health, Business, History">
-    <label>Title</label><input id="bt">
-    <label>Author or reciter (optional)</label><input id="ba">
-    <div class="row"><div><label>Type</label><select id="by"><option value="audio">Audio</option><option value="pdf">PDF book</option><option value="video">Video</option></select></div><div><label>Price in coins (0 = free)</label><input id="bp" type="number" min="0" value="0"></div></div>
-    <label>Link (Google Drive, YouTube or a direct file link)</label><input id="bu" placeholder="https://...">
-    <label>Order (1, 2, 3...)</label><input id="bo" type="number" value="1">
-    <button id="bb" type="button">Add to library</button> <span id="bm"></span>
-    <div id="bl" style="margin-top:14px"></div></div>
   <div class="cd"><h2>Certificates</h2>
     <p style="margin-top:0">Choose a course and a test or exam. Students who passed appear here, and you issue their certificates.</p>
     <label>Course</label><select id="kc"></select>
@@ -82,50 +87,34 @@ function build() {
     <button id="lb" type="button">Add lesson</button> <span id="lm"></span>
     <div id="ll" style="margin-top:14px"></div></div>`;
   $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher; $("kc").onchange = certExams; $("kx").onchange = certList;
+  const fillC = (id, a) => { $(id).innerHTML = a.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join("") + '<option value="none">None</option>'; };
+  fillC("si", BC.islamic); fillC("sw", BC.western); fillC("stl", BC.tech);
+  $("sbn").onclick = setClasses;
+  const fillBC = () => { $("bc").innerHTML = BC[$("bs").value].map(c => `<option>${esc(c)}</option>`).join(""); };
+  $("bs").onchange = fillBC; fillBC(); $("bb").onclick = addBook;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : t === "jitsi" ? "Room name (leave empty to create a secret one automatically)" : "Lesson text"; $("lwb").hidden = !(t === "live" || t === "jitsi"); };
 }
 
-const BG = {
-  quran: [["male", "Male reciters"], ["female", "Female reciters"]],
-  hadith: [["arabic", "Arabic reciters"], ["english", "English reciters"]],
-  islamic: ["Rawdatul Atfal", "Ibtidai", "I'dadi", "Thanawi"],
-  western: ["Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3"],
-  tech: ["Beginner", "Intermediate", "Advanced"]
-};
-let libItems = [];
-
-function libInit() {
-  const set = () => {
-    const s = $("bs").value, free = s === "free";
-    $("bg").hidden = free; $("bgt").hidden = !free;
-    $("bgl").textContent = free ? "Category" : s === "quran" || s === "hadith" ? "Group" : "Class";
-    if (!free) $("bg").innerHTML = BG[s].map(g => Array.isArray(g) ? `<option value="${g[0]}">${g[1]}</option>` : `<option value="${esc(g)}">${esc(g)}</option>`).join("");
-    $("by").value = s === "quran" || s === "hadith" ? "audio" : "pdf";
-    $("bp").value = s === "islamic" || s === "western" || s === "tech" ? 2 : 0;
-  };
-  $("bs").onchange = set; set();
-  $("bb").onclick = addLib;
-}
-
-async function addLib() {
-  const s = $("bs").value, title = $("bt").value.trim(), url = $("bu").value.trim();
-  const group = s === "free" ? $("bgt").value.trim() : $("bg").value;
-  if (!title || !group || !/^https?:\/\//i.test(url)) return say("bm", "Enter the title, the group or class, and a link starting with https://");
-  const price = s === "free" ? 0 : Math.max(0, parseInt($("bp").value, 10) || 0);
+async function setClasses() {
+  const email = $("se").value.trim();
+  if (!email) return say("smg", "Enter the student's email.");
   try {
-    const r = await addDoc(collection(db, "library"), { section: s, group, title, author: $("ba").value.trim(), type: $("by").value, price, order: parseInt($("bo").value, 10) || 1, createdAt: serverTimestamp() });
-    await setDoc(doc(db, "libraryFiles", r.id), { url });
-    say("bm", "Added to the library.", true); $("bt").value = ""; $("bu").value = ""; $("ba").value = ""; $("bo").value = (parseInt($("bo").value, 10) || 1) + 1; loadLib();
-  } catch (e) { say("bm", "Failed: " + (e.code || e.message)); }
+    const s = await getDocs(query(collection(db, "students"), where("email", "==", email)));
+    if (s.empty) return say("smg", "No student with that email.");
+    await updateDoc(s.docs[0].ref, { classes: { islamic: $("si").value, western: $("sw").value, tech: $("stl").value } });
+    say("smg", "Saved.", true);
+  } catch (e) { say("smg", "Failed: " + (e.code || e.message)); }
 }
 
-async function loadLib() {
-  const s = await getDocs(collection(db, "library"));
-  libItems = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.section).localeCompare(String(b.section)) || String(a.group).localeCompare(String(b.group)) || (a.order || 0) - (b.order || 0));
-  $("bl").innerHTML = libItems.length ? libItems.map(i => `<div class="it"><span><b>${esc(i.title)}</b><br><small>${esc(i.section)} · ${esc(i.group)} · ${i.price || 0} coins</small></span><span><button class="sm" data-lp="${i.id}">Price</button><button class="sm" data-ld="${i.id}">Delete</button></span></div>`).join("") : "<p>Nothing in the library yet.</p>";
-  $("bl").querySelectorAll("[data-lp]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "library", b.dataset.lp), { price: Math.max(0, parseInt(v, 10) || 0) }); loadLib(); });
-  $("bl").querySelectorAll("[data-ld]").forEach(b => b.onclick = async () => { if (!confirm("Delete this item?")) return; try { await deleteDoc(doc(db, "libraryFiles", b.dataset.ld)); } catch (e) {} await deleteDoc(doc(db, "library", b.dataset.ld)); loadLib(); });
+async function addBook() {
+  const title = $("bt").value.trim(), url = $("bu").value.trim();
+  if (!title || !url) return say("bm", "Enter the book title and the PDF link.");
+  try {
+    const ref = await addDoc(collection(db, "courses"), { title, kind: "book", section: $("bs").value, level: $("bc").value, description: "", price: Math.max(0, parseInt($("bp").value, 10) || 0), order: parseInt($("bo").value, 10) || 1, published: true, createdAt: serverTimestamp() });
+    await addDoc(collection(db, "courses", ref.id, "lessons"), { title: "PDF", type: "pdf", content: url, when: "", order: 1 });
+    say("bm", "Book added.", true); $("bt").value = ""; $("bu").value = ""; loadCourses();
+  } catch (e) { say("bm", "Failed: " + (e.code || e.message)); }
 }
 
 let certEx = [];
@@ -226,7 +215,7 @@ async function addCourse() {
 async function loadCourses() {
   const s = await getDocs(collection(db, "courses"));
   courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
-  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"} · Teacher: ${esc(c.teacherName || "none")}</small></div>
+  $("cl").innerHTML = courses.length ? courses.map(c => `<div class="it"><div><b>${esc(c.title)}</b><br><small>${c.kind === "book" ? "BOOK · " : ""}${esc(c.level || "")} · ${c.price || 0} coins · ${c.published ? "Published" : "Hidden"} · Teacher: ${esc(c.teacherName || "none")}</small></div>
     <div><button class="sm" data-p="${c.id}">${c.published ? "Hide" : "Publish"}</button><button class="sm" data-e="${c.id}">Price</button><button class="sm" data-d="${c.id}">Delete</button></div></div>`).join("") : "<p>No courses yet.</p>";
   $("cl").querySelectorAll("[data-p]").forEach(b => b.onclick = async () => { const c = courses.find(x => x.id === b.dataset.p); await updateDoc(doc(db, "courses", c.id), { published: !c.published }); loadCourses(); });
   $("cl").querySelectorAll("[data-e]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "courses", b.dataset.e), { price: Math.max(0, parseInt(v, 10) || 0) }); loadCourses(); });
