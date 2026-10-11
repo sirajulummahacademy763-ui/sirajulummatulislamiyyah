@@ -47,3 +47,4 @@ document.body.insertAdjacentHTML("beforeend",
 if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
 // Exams and certificates links
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
+if(!isPub)import("./classes-check.js");
