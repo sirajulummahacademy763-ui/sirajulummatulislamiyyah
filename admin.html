@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async u => {
   let ok = false;
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!ok) return $("app").innerHTML = "<h1>Admin</h1><p>You do not have access to this page.</p>";
-  build(); await loadTeachers(); loadCourses();
+  build(); await loadTeachers(); await loadCourses(); loadPeople();
 });
 
 function build() {
@@ -42,6 +42,12 @@ function build() {
   <div class="cd"><h2>Add coins to a student</h2>
     <label>Student email</label><input id="ce" type="email"><label>Coins to add</label><input id="ca" type="number" min="1">
     <button id="cb" type="button">Add coins</button> <span id="cm"></span></div>
+  <div class="cd"><h2>Students and teachers</h2>
+    <p id="pc" style="margin-top:0"></p>
+    <label>Show the students of each</label>
+    <select id="pv"><option value="islamic">Arabic and Islamic class</option><option value="western">Western class</option><option value="tech">Technology level</option></select>
+    <div id="pl" style="margin-top:14px">Loading...</div>
+    <h3 style="margin:24px 0 4px">Teachers</h3><div id="pt"></div></div>
   <div class="cd"><h2>Change a student's classes</h2>
     <p style="margin-top:0">Students choose their classes once. Use this if a student needs a different class.</p>
     <label>Student email</label><input id="se" type="email">
@@ -89,11 +95,42 @@ function build() {
   $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher; $("kc").onchange = certExams; $("kx").onchange = certList;
   const fillC = (id, a) => { $(id).innerHTML = a.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join("") + '<option value="none">None</option>'; };
   fillC("si", BC.islamic); fillC("sw", BC.western); fillC("stl", BC.tech);
-  $("sbn").onclick = setClasses;
+  $("sbn").onclick = setClasses; $("pv").onchange = drawPeople;
   const fillBC = () => { $("bc").innerHTML = BC[$("bs").value].map(c => `<option>${esc(c)}</option>`).join(""); };
   $("bs").onchange = fillBC; fillBC(); $("bb").onclick = addBook;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : t === "jitsi" ? "Room name (leave empty to create a secret one automatically)" : "Lesson text"; $("lwb").hidden = !(t === "live" || t === "jitsi"); };
+}
+
+let people = [];
+
+async function loadPeople() {
+  try { people = (await getDocs(collection(db, "students"))).docs.map(d => ({ id: d.id, ...d.data() })); }
+  catch (e) { $("pl").innerHTML = '<p class="er">Could not load the students: ' + esc(e.code || e.message) + "</p>"; return; }
+  drawPeople();
+}
+
+function drawPeople() {
+  const tids = new Set(teachers.map(t => t.id));
+  const studs = people.filter(p => !tids.has(p.id));
+  const sec = $("pv").value, groups = {};
+  BC[sec].forEach(c => groups[c] = []);
+  const skipped = [], pending = [];
+  studs.forEach(p => {
+    if (!p.classes) pending.push(p);
+    else if (groups[p.classes[sec]]) groups[p.classes[sec]].push(p);
+    else skipped.push(p);
+  });
+  const byName = (a, b) => String(a.name || "").localeCompare(String(b.name || ""));
+  const nm = p => `${esc(p.name || "Student")} <small>(${esc(p.email || "")})</small>`;
+  const blk = (title, arr) => `<div style="margin-bottom:14px"><b>${esc(title)}</b> <small>· ${arr.length} student${arr.length === 1 ? "" : "s"}</small>${arr.length ? "<ol style='margin:6px 0 0 20px;padding:0'>" + arr.slice().sort(byName).map(p => `<li>${nm(p)}</li>`).join("") + "</ol>" : ""}</div>`;
+  $("pc").textContent = studs.length + " students and " + teachers.length + " teachers in total.";
+  $("pl").innerHTML = BC[sec].map(c => blk(c, groups[c])).join("") + blk("Not in this section", skipped) + blk("Has not chosen classes yet", pending);
+  $("pt").innerHTML = teachers.length ? teachers.map(t => {
+    const em = (people.find(p => p.id === t.id) || {}).email || "";
+    const cs = courses.filter(c => c.teacherId === t.id).map(c => c.title);
+    return `<div class="it"><span><b>${esc(t.name)}</b> <small>${esc(em)}</small><br><small>${cs.length ? "Courses: " + cs.map(esc).join(", ") : "No course assigned yet"}</small></span></div>`;
+  }).join("") : "<p>No teachers yet.</p>";
 }
 
 async function setClasses() {
@@ -103,7 +140,7 @@ async function setClasses() {
     const s = await getDocs(query(collection(db, "students"), where("email", "==", email)));
     if (s.empty) return say("smg", "No student with that email.");
     await updateDoc(s.docs[0].ref, { classes: { islamic: $("si").value, western: $("sw").value, tech: $("stl").value } });
-    say("smg", "Saved.", true);
+    say("smg", "Saved.", true); loadPeople();
   } catch (e) { say("smg", "Failed: " + (e.code || e.message)); }
 }
 
@@ -163,6 +200,7 @@ async function loadTeachers() {
     teachers = s.docs.map(d => ({ id: d.id, name: d.data().name || d.id }));
   } catch (e) { teachers = []; }
   $("tt").innerHTML = teachers.length ? teachers.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("") : '<option value="">No teachers added yet</option>';
+  if (people.length) drawPeople();
   $("tl").innerHTML = teachers.length ? teachers.map(t => `<div class="it"><span>${esc(t.name)}</span><button class="sm" data-rt="${t.id}">Remove</button></div>`).join("") : "<p>No teachers yet.</p>";
   $("tl").querySelectorAll("[data-rt]").forEach(b => b.onclick = async () => {
     if (!confirm("Remove this teacher?")) return;
@@ -225,6 +263,7 @@ async function loadCourses() {
   const prevK = $("kc").value; $("kc").innerHTML = opts; if (prevK) $("kc").value = prevK; certExams();
   if (!courses.find(c => c.id === sel)) sel = courses[0] ? courses[0].id : "";
   $("ls").value = sel; loadLessons();
+  if (people.length) drawPeople();
 }
 
 async function addLesson() {
