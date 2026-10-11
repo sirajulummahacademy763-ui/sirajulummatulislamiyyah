@@ -32,7 +32,17 @@ onAuthStateChanged(auth, async u => {
     catch (e) { return msg("Please unlock this book first, in the library."); }
     const l = snap.docs.map(d => d.data()).find(x => x.type === "pdf");
     if (!l) return msg("The PDF for this book is not available yet.");
-    await show(l.content);
+    let src = l.content;
+    if (String(src).startsWith("firestore:")) {
+      msg("Loading the book...");
+      const ps = (await getDocs(collection(db, "courses", id, "pdfParts"))).docs.map(d => d.data()).sort((a, b) => a.i - b.i);
+      if (!ps.length) return msg("The PDF for this book is not available yet.");
+      const bin = atob(ps.map(x => x.data).join(""));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      src = { data: bytes };
+    }
+    await show(src);
   } catch (e) { console.error(e); msg("Could not open this book (" + (e.code || e.message) + ")."); }
 });
 async function show(url) {
