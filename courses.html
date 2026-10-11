@@ -8,6 +8,7 @@
 .pg{max-width:1000px}
 .bal{display:inline-block;background:var(--night);color:#fff;border-radius:999px;padding:6px 16px;font-weight:700;margin-bottom:14px}
 .bal b{color:var(--lamp)}
+.mc{color:#4b5072;font-size:.92rem;margin:0 0 14px}
 .tb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .tb button{font:inherit;padding:8px 16px;border:1.5px solid var(--line);border-radius:999px;background:#fff;cursor:pointer}
 .tb button.on{background:var(--night);color:#fff;border-color:var(--night)}
@@ -25,6 +26,7 @@
 <h1>Courses</h1>
 <p class="lead">Unlock a course with coins and learn at your own pace.</p>
 <div class="bal">Your coins: <b id="coins">...</b></div>
+<p class="mc" id="mycl"></p>
 <div class="tb" id="tabs"></div>
 <div class="grid" id="list"><p>Loading courses...</p></div>
 </main>
@@ -35,7 +37,7 @@ import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const TABS = [["all", "All"], ["islamic", "Qur'an and Islamic"], ["western", "Western studies"], ["tech", "Technology"], ["mine", "My courses"]];
-let user, coins = 0, courses = [], mine = new Set(), tab = "all";
+let user, coins = 0, classes = null, courses = [], mine = new Set(), tab = "all";
 
 onAuthStateChanged(auth, u => { if (u) { user = u; load(); } });
 
@@ -49,6 +51,13 @@ async function load() {
     courses = cs.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.kind !== "book").sort((a, b) => (a.order || 0) - (b.order || 0));
     mine = new Set(es.docs.map(d => d.data().courseId));
     coins = st.exists() ? (st.data().coins || 0) : 0;
+    classes = st.exists() ? (st.data().classes || null) : null;
+    // Show only the courses of the student's chosen classes (courses already unlocked stay visible)
+    if (classes) courses = courses.filter(c => mine.has(c.id) || c.level === "All classes" || (classes[c.section] && classes[c.section] === c.level));
+    if (classes) {
+      const n = v => !v || v === "none" ? "none" : v;
+      $("mycl").textContent = "Your classes: " + n(classes.islamic) + " (Arabic and Islamic) · " + n(classes.western) + " (Western) · " + n(classes.tech) + " (Technology)";
+    }
     draw();
   } catch (e) { console.error(e); $("list").innerHTML = `<p>Could not load courses (${esc(e.code || e.message)}).</p>`; }
 }
@@ -58,7 +67,7 @@ function draw() {
   $("tabs").innerHTML = TABS.map(t => `<button type="button" data-t="${t[0]}" class="${t[0] === tab ? "on" : ""}">${t[1]}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; draw(); });
   const r = courses.filter(c => tab === "all" || (tab === "mine" ? mine.has(c.id) : c.section === tab));
-  if (!r.length) { $("list").innerHTML = `<p>${tab === "mine" ? "You have not unlocked any course yet." : "No courses here yet. Please check back soon."}</p>`; return; }
+  if (!r.length) { $("list").innerHTML = `<p>${tab === "mine" ? "You have not unlocked any course yet." : "No courses for your class here yet. Please check back soon."}</p>`; return; }
   $("list").innerHTML = r.map(c => {
     const p = Number(c.price) || 0, own = mine.has(c.id);
     return `<div class="cc"><small>${esc(c.level || "")}</small><h3>${esc(c.title)}</h3><p>${esc(c.description || "")}</p>
