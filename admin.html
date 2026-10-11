@@ -81,7 +81,8 @@ function build() {
     <div class="row"><div><label>Section</label><select id="bs"><option value="islamic">Arabic and Islamic</option><option value="western">Western studies</option><option value="tech">Technology</option></select></div>
     <div><label>Class</label><select id="bc"></select></div></div>
     <label>Book title</label><input id="bt">
-    <label>PDF link (a file in your site such as books/ibtidai-1.pdf, or a full https link)</label><input id="bu">
+    <label>Choose the PDF from your phone or computer (up to 15 MB)</label><input id="bf" type="file" accept="application/pdf,.pdf">
+    <label>Or paste a PDF link instead (only if you did not choose a file)</label><input id="bu" placeholder="https://...">
     <div class="row"><div><label>Price in coins</label><input id="bp" type="number" min="0" value="2"></div><div><label>Order (1, 2, 3...)</label><input id="bo" type="number" value="1"></div></div>
     <button id="bb" type="button">Add book</button> <span id="bm"></span></div>
   <div class="cd"><h2>Your courses and books</h2><div id="cl">Loading...</div></div>
@@ -213,13 +214,31 @@ async function setClasses() {
 }
 
 async function addBook() {
-  const title = $("bt").value.trim(), url = $("bu").value.trim();
-  if (!title || !url) return say("bm", "Enter the book title and the PDF link.");
+  const title = $("bt").value.trim(), url = $("bu").value.trim(), f = $("bf").files[0];
+  if (!title || (!url && !f)) return say("bm", "Enter the book title and choose a PDF file (or paste a link).");
+  if (f) {
+    if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf") return say("bm", "Please choose a PDF file.");
+    if (f.size > 15 * 1024 * 1024) return say("bm", "The file is too big. The limit is 15 MB.");
+  }
+  $("bb").disabled = true;
   try {
-    const ref = await addDoc(collection(db, "courses"), { title, kind: "book", section: $("bs").value, level: $("bc").value, description: "", price: Math.max(0, parseInt($("bp").value, 10) || 0), order: parseInt($("bo").value, 10) || 1, published: true, createdAt: serverTimestamp() });
-    await addDoc(collection(db, "courses", ref.id, "lessons"), { title: "PDF", type: "pdf", content: url, when: "", order: 1 });
-    say("bm", "Book added.", true); $("bt").value = ""; $("bu").value = ""; loadCourses();
+    const ref = await addDoc(collection(db, "courses"), { title, kind: "book", section: $("bs").value, level: $("bc").value, description: "", price: Math.max(0, parseInt($("bp").value, 10) || 0), order: parseInt($("bo").value, 10) || 1, published: false, createdAt: serverTimestamp() });
+    let content = url;
+    if (f) {
+      say("bm", "Reading the file...", true);
+      const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(new Error("Could not read the file")); r.readAsDataURL(f); });
+      const SZ = 700000, n = Math.ceil(data.length / SZ);
+      for (let k = 0; k < n; k++) {
+        say("bm", "Uploading " + (k + 1) + " of " + n + "...", true);
+        await setDoc(doc(db, "courses", ref.id, "pdfParts", String(k).padStart(4, "0")), { i: k, data: data.slice(k * SZ, (k + 1) * SZ) });
+      }
+      content = "firestore:" + ref.id + ":" + n;
+    }
+    await addDoc(collection(db, "courses", ref.id, "lessons"), { title: "PDF", type: "pdf", content, when: "", order: 1 });
+    await updateDoc(ref, { published: true });
+    say("bm", "Book added.", true); $("bt").value = ""; $("bu").value = ""; $("bf").value = ""; loadCourses();
   } catch (e) { say("bm", "Failed: " + (e.code || e.message)); }
+  $("bb").disabled = false;
 }
 
 let certEx = [];
@@ -325,7 +344,7 @@ async function loadCourses() {
     <div><button class="sm" data-p="${c.id}">${c.published ? "Hide" : "Publish"}</button><button class="sm" data-e="${c.id}">Price</button><button class="sm" data-d="${c.id}">Delete</button></div></div>`).join("") : "<p>No courses yet.</p>";
   $("cl").querySelectorAll("[data-p]").forEach(b => b.onclick = async () => { const c = courses.find(x => x.id === b.dataset.p); await updateDoc(doc(db, "courses", c.id), { published: !c.published }); loadCourses(); });
   $("cl").querySelectorAll("[data-e]").forEach(b => b.onclick = async () => { const v = prompt("New price in coins:"); if (v === null) return; await updateDoc(doc(db, "courses", b.dataset.e), { price: Math.max(0, parseInt(v, 10) || 0) }); loadCourses(); });
-  $("cl").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => { if (!confirm("Delete this course and its lessons?")) return; const ls = await getDocs(collection(db, "courses", b.dataset.d, "lessons")); for (const l of ls.docs) await deleteDoc(l.ref); await deleteDoc(doc(db, "courses", b.dataset.d)); loadCourses(); });
+  $("cl").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => { if (!confirm("Delete this course and its lessons?")) return; const ls = await getDocs(collection(db, "courses", b.dataset.d, "lessons")); for (const l of ls.docs) await deleteDoc(l.ref); const ps = await getDocs(collection(db, "courses", b.dataset.d, "pdfParts")); for (const p of ps.docs) await deleteDoc(p.ref); await deleteDoc(doc(db, "courses", b.dataset.d)); loadCourses(); });
   const opts = courses.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join("");
   $("ls").innerHTML = opts; $("tc").innerHTML = opts;
   const prevK = $("kc").value; $("kc").innerHTML = opts; if (prevK) $("kc").value = prevK; certExams();
