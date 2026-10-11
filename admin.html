@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async u => {
   let ok = false;
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!ok) return $("app").innerHTML = "<h1>Admin</h1><p>You do not have access to this page.</p>";
-  build(); await loadTeachers(); await loadCourses(); loadPeople();
+  build(); await loadTeachers(); await loadCourses(); loadPeople(); loadTerms(); loadAnns();
 });
 
 function build() {
@@ -42,6 +42,20 @@ function build() {
   <div class="cd"><h2>Add coins to a student</h2>
     <label>Student email</label><input id="ce" type="email"><label>Coins to add</label><input id="ca" type="number" min="1">
     <button id="cb" type="button">Add coins</button> <span id="cm"></span></div>
+  <div class="cd"><h2>Terms</h2>
+    <p style="margin-top:0">Set when each term begins and ends. Students see the current term in their portal.</p>
+    <div class="row"><div><label>Term</label><select id="mn"><option>First Term</option><option>Second Term</option><option>Third Term</option></select></div>
+    <div><label>Session (for example 2026/2027)</label><input id="ms" placeholder="2026/2027"></div></div>
+    <div class="row"><div><label>Begins</label><input id="md1" type="date"></div><div><label>Ends</label><input id="md2" type="date"></div></div>
+    <button id="mb" type="button">Save term</button> <span id="mm"></span>
+    <div id="ml" style="margin-top:14px"></div></div>
+  <div class="cd"><h2>Send a notice to all students</h2>
+    <p style="margin-top:0">Every student sees it in their portal, on the notice board and in the banner at the top of their pages.</p>
+    <label>Title</label><input id="gt" placeholder="For example: Mid-term test next week">
+    <label>Message</label><textarea id="gm" rows="5"></textarea>
+    <label><input id="gp" type="checkbox" style="width:auto"> Pin to the top</label>
+    <button id="gb" type="button">Send notice</button> <span id="gs"></span>
+    <div id="gl" style="margin-top:14px"></div></div>
   <div class="cd"><h2>Students and teachers</h2>
     <p id="pc" style="margin-top:0"></p>
     <label>Show the students of each</label>
@@ -95,11 +109,65 @@ function build() {
   $("cb").onclick = addCoins; $("nb").onclick = addCourse; $("lb").onclick = addLesson; $("tb").onclick = assignTeacher; $("tab").onclick = addTeacher; $("kc").onchange = certExams; $("kx").onchange = certList;
   const fillC = (id, a) => { $(id).innerHTML = a.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join("") + '<option value="none">None</option>'; };
   fillC("si", BC.islamic); fillC("sw", BC.western); fillC("stl", BC.tech);
-  $("sbn").onclick = setClasses; $("pv").onchange = drawPeople;
+  $("sbn").onclick = setClasses; $("pv").onchange = drawPeople; $("mb").onclick = addTerm; $("gb").onclick = addAnn;
   const fillBC = () => { $("bc").innerHTML = BC[$("bs").value].map(c => `<option>${esc(c)}</option>`).join(""); };
   $("bs").onchange = fillBC; fillBC(); $("bb").onclick = addBook;
   $("ls").onchange = () => { sel = $("ls").value; loadLessons(); };
   $("ly").onchange = () => { const t = $("ly").value; $("lcl").textContent = t === "video" ? "YouTube link" : t === "live" ? "Meeting link (Zoom, Google Meet...)" : t === "jitsi" ? "Room name (leave empty to create a secret one automatically)" : "Lesson text"; $("lwb").hidden = !(t === "live" || t === "jitsi"); };
+}
+
+const pad2 = n => String(n).padStart(2, "0");
+const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); };
+const fdate = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
+const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+async function addTerm() {
+  const name = $("mn").value, session = $("ms").value.trim(), a = $("md1").value, b = $("md2").value;
+  if (!session || !a || !b) return say("mm", "Enter the session (for example 2026/2027) and both dates.");
+  if (b < a) return say("mm", "The end date must come after the start date.");
+  try {
+    await addDoc(collection(db, "terms"), { name, session, startDate: a, endDate: b, createdAt: serverTimestamp() });
+    say("mm", "Term saved.", true); loadTerms();
+  } catch (e) { say("mm", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadTerms() {
+  let ts = [];
+  try { ts = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((x, y) => String(x.startDate).localeCompare(String(y.startDate))); }
+  catch (e) { $("ml").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
+  const t = todayStr();
+  $("ml").innerHTML = ts.length ? ts.map(x => {
+    const st = t < x.startDate ? "Upcoming" : t > x.endDate ? "Ended" : "Current term";
+    return `<div class="it"><span><b>${esc(x.name)}</b> · ${esc(x.session)} <small>(${st})</small><br><small>${fdate(x.startDate)} to ${fdate(x.endDate)}</small></span>
+      <span><button class="sm" data-me="${x.id}">Change dates</button><button class="sm" data-md="${x.id}">Delete</button></span></div>`;
+  }).join("") : "<p>No terms yet.</p>";
+  $("ml").querySelectorAll("[data-md]").forEach(b => b.onclick = async () => { if (!confirm("Delete this term?")) return; await deleteDoc(doc(db, "terms", b.dataset.md)); loadTerms(); });
+  $("ml").querySelectorAll("[data-me]").forEach(b => b.onclick = async () => {
+    const x = ts.find(k => k.id === b.dataset.me);
+    const a = prompt("Begin date (year-month-day, for example 2026-09-14):", x.startDate); if (a === null) return;
+    const e = prompt("End date (year-month-day, for example 2026-12-18):", x.endDate); if (e === null) return;
+    if (!isDate(a) || !isDate(e) || e < a) return alert("Please use the format 2026-09-14 and make sure the end is after the begin date.");
+    await updateDoc(doc(db, "terms", x.id), { startDate: a, endDate: e }); loadTerms();
+  });
+}
+
+async function addAnn() {
+  const t = $("gt").value.trim(), m = $("gm").value.trim();
+  if (!t || !m) return say("gs", "Enter a title and a message.");
+  try {
+    await addDoc(collection(db, "announcements"), { title: t, body: m, pinned: $("gp").checked, createdAt: serverTimestamp() });
+    say("gs", "Sent. Every student will see it in their portal.", true); $("gt").value = ""; $("gm").value = ""; $("gp").checked = false; loadAnns();
+  } catch (e) { say("gs", "Failed: " + (e.code || e.message)); }
+}
+
+async function loadAnns() {
+  let as = [];
+  try { as = (await getDocs(collection(db, "announcements"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt ? b.createdAt.seconds : 0) - (a.createdAt ? a.createdAt.seconds : 0)); }
+  catch (e) { $("gl").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
+  $("gl").innerHTML = as.length ? as.map(a => `<div class="it"><span><b>${esc(a.title)}</b>${a.pinned ? " · pinned" : ""}<br><small>${a.createdAt ? a.createdAt.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""}</small></span>
+    <span><button class="sm" data-gp="${a.id}">${a.pinned ? "Unpin" : "Pin"}</button><button class="sm" data-gd="${a.id}">Delete</button></span></div>`).join("") : "<p>No notices sent yet.</p>";
+  $("gl").querySelectorAll("[data-gd]").forEach(b => b.onclick = async () => { if (!confirm("Delete this notice?")) return; await deleteDoc(doc(db, "announcements", b.dataset.gd)); loadAnns(); });
+  $("gl").querySelectorAll("[data-gp]").forEach(b => b.onclick = async () => { const a = as.find(k => k.id === b.dataset.gp); await updateDoc(doc(db, "announcements", a.id), { pinned: !a.pinned }); loadAnns(); });
 }
 
 let people = [];
