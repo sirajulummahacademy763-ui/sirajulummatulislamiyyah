@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://sirajul-ummah.com.ng/sitemap.xml
