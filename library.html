@@ -368,7 +368,7 @@ import { collection, query, where, getDocs, doc, getDoc, writeBatch, serverTimes
 import { auth, db } from "./firebase-config.js";
 const C = new URLSearchParams(location.search).get("category");
 const CL = {
-  islamic: [["Rawdatul Atfal", "روضة الأطفال"], ["Ibtidai", "الابتدائي"], ["I'dadi", "الإعدادي"], ["Thanawi", "الثانوي"]],
+  islamic: [["Rawdatul Atfal 1", "روضة الأطفال الأولى"], ["Rawdatul Atfal 2", "روضة الأطفال الثانية"], ["Ibtidai 1", "الابتدائي الأول"], ["Ibtidai 2", "الابتدائي الثاني"], ["Ibtidai 3", "الابتدائي الثالث"], ["I'dadi 1", "الإعدادي الأول"], ["I'dadi 2", "الإعدادي الثاني"], ["I'dadi 3", "الإعدادي الثالث"], ["Thanawi 1", "الثانوي الأول"], ["Thanawi 2", "الثانوي الثاني"], ["Thanawi 3", "الثانوي الثالث"]],
   western: [["Kindergarten (KG)"], ...[1,2,3,4,5,6].map(n => ["Primary " + n]), ...[1,2,3].map(n => ["JSS " + n]), ...[1,2,3].map(n => ["SSS " + n])],
   tech: [["Beginner"], ["Intermediate"], ["Advanced"]]
 };
