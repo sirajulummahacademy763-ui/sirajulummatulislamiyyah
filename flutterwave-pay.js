@@ -3,9 +3,10 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase-config.js";
 
-const FLW_PUBLIC_KEY = "FLWPUBK_TEST-7040a87feb475c96dd5f6049c0956ce7-X"; 
+const FLW_PUBLIC_KEY = "FLWPUBK_TEST-7040a87feb475c96dd5f6049c0956ce7-X";
 const COINS_PER_USD = 10;
 const MIN_COINS = 10, MAX_COINS = 1000, STEP = 10;
+const QUICK_PACKS = [10, 50, 100, 500];
 
 let user = null;
 onAuthStateChanged(auth, u => { user = u; place(); });
@@ -23,14 +24,17 @@ function loadFlutterwave() {
 function boxHtml() {
   let opts = "";
   for (let c = MIN_COINS; c <= MAX_COINS; c += STEP) opts += `<option value="${c}">${c} coins</option>`;
-  return `<h2>Paying from outside Nigeria?</h2>
+  const chips = QUICK_PACKS.map(c => `<button type="button" class="chip" data-c="${c}">${c}</button>`).join("");
+  return `<span class="tag">International · USD</span>
+    <h2>Paying from outside Nigeria?</h2>
     <p>Pay in US dollars with your card. 10 coins = $1. Coins are added automatically after payment.</p>
+    <div class="packs" id="flwPacks">${chips}</div>
     <div class="chooser">
       <select id="flwCoins" aria-label="Number of coins">${opts}</select>
       <div class="price" id="flwPrice">$1</div>
     </div>
-    <button type="button" id="flwPay" style="margin-top:14px;width:100%;padding:14px;border:0;border-radius:8px;background:#f5b94a;color:#12163a;font:700 1rem Figtree,sans-serif;cursor:pointer">Pay in US dollars</button>
-    <p id="flwMsg" role="status" style="margin:14px 0 0;font-weight:500"></p>`;
+    <button type="button" id="flwPay">Pay in US dollars</button>
+    <p id="flwMsg" role="status" style="margin:14px 0 0;font-weight:500;color:#1f8a5b"></p>`;
 }
 
 function place() {
@@ -44,8 +48,14 @@ function place() {
   anchor.insertAdjacentElement("afterend", box);
 
   const sel = box.querySelector("#flwCoins"), price = box.querySelector("#flwPrice"), msg = box.querySelector("#flwMsg");
-  const show = () => { price.textContent = "$" + (Number(sel.value) / COINS_PER_USD); };
-  sel.onchange = show; show();
+  const chips = box.querySelectorAll("#flwPacks .chip");
+  const show = () => {
+    price.textContent = "$" + (Number(sel.value) / COINS_PER_USD);
+    chips.forEach(ch => ch.classList.toggle("on", ch.dataset.c === sel.value));
+  };
+  sel.onchange = show;
+  chips.forEach(ch => ch.onclick = () => { sel.value = ch.dataset.c; show(); });
+  show();
 
   box.querySelector("#flwPay").onclick = async () => {
     const usd = Number(sel.value) / COINS_PER_USD;
