@@ -3,7 +3,7 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase-config.js";
 
-const FLW_PUBLIC_KEY = "FLWPUBK_TEST-7040a87feb475c96dd5f6049c0956ce7-X";
+const FLW_PUBLIC_KEY = "FLWPUBK-bb9274fc861002f2236b26b6ab2fbe4e-X"; // LIVE public key (safe to show). Never put the secret key here.
 const COINS_PER_USD = 10;
 const MIN_COINS = 10, MAX_COINS = 1000, STEP = 10;
 const QUICK_PACKS = [10, 50, 100, 500];
