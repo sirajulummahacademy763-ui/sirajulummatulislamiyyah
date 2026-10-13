@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qur'an Revision (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ra{max-width:760px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.cd select{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+.row{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row b{font-size:1.02rem}
+.row small{display:block;font-family:Amiri,serif;font-size:1.05rem;color:#555}
+.b{font:inherit;font-weight:700;padding:11px 20px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
+@media(max-width:520px){.row{grid-template-columns:1fr;gap:4px}}
+</style></head><body>
+<main class="page ra" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const AR = ["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر","الثالث عشر","الرابع عشر","الخامس عشر","السادس عشر","السابع عشر","الثامن عشر","التاسع عشر","العشرون","الحادي والعشرون","الثاني والعشرون","الثالث والعشرون","الرابع والعشرون","الخامس والعشرون","السادس والعشرون","السابع والعشرون","الثامن والعشرون","التاسع والعشرون","الثلاثون"];
+const rid = n => "revision__Juz-" + n;   // same id style as classroom.html: section + "__" + slug(level)
+let teachers = [], existing = {}, pub = {};
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Qur\'an Revision</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Qur'an Revision</h1><p>You do not have access to this page.</p>";
+  try { await load(); draw(); }
+  catch (e) { $("app").innerHTML = '<h1>Qur\'an Revision</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+async function load() {
+  teachers = (await getDocs(collection(db, "teachers"))).docs.map(d => ({ id: d.id, name: d.data().name || d.id })).sort((a, b) => a.name.localeCompare(b.name));
+  existing = {};
+  (await getDocs(collection(db, "classrooms"))).docs.forEach(d => { if (d.id.indexOf("revision__") === 0) existing[d.id] = d.data(); });
+  pub = {};
+  (await getDocs(collection(db, "revisionJuz"))).docs.forEach(d => { pub[d.id] = d.data(); });
+}
+
+function draw(msg, good) {
+  let h = `<h1>Qur'an Revision · مراجعة القرآن</h1>
+  <p>Choose the teacher who takes each juz. Students pick a juz on the Revision page and enter that teacher's revision class. One teacher per juz. The same teacher can take many juz.</p>
+  ${teachers.length ? "" : '<p class="er">No teachers yet. Add teachers on the Admin page first.</p>'}
+  <div class="cd">`;
+  for (let n = 1; n <= 30; n++) {
+    const cur = (existing[rid(n)] || {}).teacherId || "";
+    h += `<div class="row"><div><b>Juz ${n}</b><small>الجزء ${AR[n - 1]}</small></div>
+      <select id="t-${n}"><option value="">No teacher</option>${teachers.map(t => `<option value="${esc(t.id)}"${t.id === cur ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></div>`;
+  }
+  h += `</div><p><button class="b" id="sv" type="button">Save all</button> <span id="sm" class="${good ? "ok" : "er"}">${esc(msg || "")}</span></p>`;
+  $("app").innerHTML = h;
+  $("sv").onclick = save;
+}
+
+async function save() {
+  $("sv").disabled = true;
+  try {
+    const b = writeBatch(db); let c = 0;
+    for (let n = 1; n <= 30; n++) {
+      const v = $("t-" + n).value, t = teachers.find(x => x.id === v), ex = existing[rid(n)], ref = doc(db, "classrooms", rid(n));
+      const base = { section: "revision", level: "Juz " + n, juz: n, title: "Qur'an Revision \u00b7 Juz " + n, teacherId: t ? t.id : "", teacherName: t ? t.name : "" };
+      const pb = pub[String(n)], pubChanged = pb ? (pb.teacherId || "") !== base.teacherId : !!t;
+      if (ex) {
+        if ((ex.teacherId || "") !== base.teacherId || ex.juz !== n) { b.update(ref, base); c++; }
+      } else if (t) {
+        b.set(ref, { ...base, status: "closed", sessionId: "", sessionTitle: "", studentsCanType: true, note: "", room: "siraj-" + Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8), createdAt: serverTimestamp() });
+        c++;
+      }
+      if (pubChanged || (ex && ex.juz !== n)) { b.set(doc(db, "revisionJuz", String(n)), { juz: n, teacherId: base.teacherId, teacherName: base.teacherName }); c++; }
+    }
+    if (!c) { $("sv").disabled = false; $("sm").textContent = "Nothing changed."; $("sm").className = "ok"; return; }
+    await b.commit(); await load(); draw("Saved.", true);
+  } catch (e) { $("sv").disabled = false; $("sm").textContent = "Failed: " + (e.code || e.message); $("sm").className = "er"; }
+}
+</script>
+</body></html>
