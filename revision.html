@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qur'an Hifz and Revision | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.rv{max-width:860px}
+.rv h1 small{font-family:Figtree,sans-serif;font-size:.5em;font-weight:500;color:#555;display:block}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+.cd h3{margin:0 0 4px;font-size:1.05rem}
+.mine{background:linear-gradient(145deg,#12163a,#1c2150);color:#fff;border:0}
+.mine h2{margin:6px 0 2px;font-family:Amiri,serif;font-size:1.9rem;color:#ffd98a}
+.mine p{margin:4px 0}
+.st{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border-radius:14px;padding:12px;margin-top:10px}
+.st .n{flex:none;width:34px;height:34px;border-radius:50%;background:#f5b94a;color:#12163a;font-weight:700;display:flex;align-items:center;justify-content:center}
+.st .tx{flex:1;min-width:0}
+.st .tx small{color:#d3d6ea}
+.b{display:inline-block;font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:12px;background:#f5b94a;color:#12163a;cursor:pointer;text-decoration:none;white-space:nowrap}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.76rem;font-weight:700;margin-left:6px}
+.on{background:#d7f3e3;color:#1c7a4d}.off{background:#eee;color:#555}
+.tk{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+.tk button{font:inherit;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.tk button .ar{font-family:Amiri,serif;font-size:1.5rem;color:#12163a;line-height:1.2}
+.tk button b{color:#12163a}
+.tk button small{color:#555}
+.tk button.sel{border-color:#f5b94a;background:#fff8e6;box-shadow:0 6px 14px -8px rgba(245,185,74,.9)}
+.jg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.jg button{font:inherit;text-align:center;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;gap:2px;align-items:center}
+.jg button b{font-size:1.5rem;color:#12163a;line-height:1}
+.jg button .ar{font-family:Amiri,serif;font-size:1.15rem;color:#12163a}
+.jg button small{font-size:.8rem;color:#555}
+.jg button.sel{border-color:#f5b94a;background:#fff8e6;box-shadow:0 6px 14px -8px rgba(245,185,74,.9)}
+.jg button.no{opacity:.5;cursor:not-allowed}
+.er{color:#b3261e;font-weight:500}
+@media(max-width:520px){.st{flex-wrap:wrap}}
+</style></head><body>
+<main class="page rv" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const AR = ["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر","الثالث عشر","الرابع عشر","الخامس عشر","السادس عشر","السابع عشر","الثامن عشر","التاسع عشر","العشرون","الحادي والعشرون","الثاني والعشرون","الثالث والعشرون","الرابع والعشرون","الخامس والعشرون","السادس والعشرون","السابع والعشرون","الثامن والعشرون","التاسع والعشرون","الثلاثون"];
+const DL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const TRK = {
+  hifz: { ar: "حفظ", en: "Hifz", d: "Start memorizing a new portion with a teacher." },
+  both: { ar: "مراجعة ثم حفظ", en: "Revise, then memorize", d: "First revise what you know, then take today's new portion." },
+  revision: { ar: "مراجعة", en: "Revision only", d: "Only revise what you have already memorized." }
+};
+const LBL = { revision: { ar: "مراجعة", en: "Revision", hint: "Revise what you know" }, hifz: { ar: "حفظ", en: "Hifz", hint: "Today's new portion" } };
+const need = t => t === "both" ? ["revision", "hifz"] : (t === "hifz" || t === "revision") ? [t] : [];
+const cid = (t, n) => t + "__Juz-" + n;
+let uid = "", myName = "Student", pub = {}, rooms = {}, choice = null, selTrack = "", denied = false;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Qur\'an Hifz and Revision</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  uid = u.uid; myName = u.displayName || u.email || "Student";
+  try { const s = await getDoc(doc(db, "students", uid)); if (s.exists() && s.data().name) myName = s.data().name; } catch (e) {}
+  await Promise.all([loadTeachers(), loadChoice()]);
+  selTrack = choice && TRK[choice.track] ? choice.track : "";
+  await loadMine();
+  draw();
+});
+
+async function loadTeachers() {
+  try { (await getDocs(collection(db, "revisionJuz"))).docs.forEach(d => { const x = d.data(); if (x.juz && x.track) pub[x.track + "-" + x.juz] = x; }); }
+  catch (e) { if (e.code === "permission-denied") denied = true; }
+}
+async function loadChoice() {
+  try { const s = await getDoc(doc(db, "revisionChoices", uid)); if (s.exists()) choice = s.data(); }
+  catch (e) { if (e.code === "permission-denied") denied = true; }
+}
+async function loadMine() {
+  rooms = {};
+  if (!choice || !choice.juz || !TRK[choice.track]) return;
+  await Promise.all(need(choice.track).map(async t => {
+    try { const s = await getDoc(doc(db, "classrooms", cid(t, choice.juz))); if (s.exists()) rooms[t] = s.data(); } catch (e) {}
+  }));
+}
+const teacherOf = (t, n) => (pub[t + "-" + n] && pub[t + "-" + n].teacherId) ? (pub[t + "-" + n].teacherName || "Teacher") : "";
+const ready = n => !!selTrack && need(selTrack).every(t => teacherOf(t, n));
+function tileLine(n) {
+  if (!selTrack) return "";
+  const ts = need(selTrack).map(t => teacherOf(t, n));
+  if (ts.some(x => !x)) return "No teacher yet";
+  return ts[0] === ts[ts.length - 1] ? ts[0] : ts.join(" · ");
+}
+const say = t => { if ($("rm")) $("rm").textContent = t; };
+
+function planCard() {
+  if (!choice || !choice.juz || !TRK[choice.track]) return choice ? '<div class="cd"><b>Please choose what you want to do and your juz again below.</b></div>' : "";
+  const n = choice.juz, T = TRK[choice.track], both = choice.track === "both";
+  let h = `<div class="cd mine"><span>Your plan · خطتك</span><h2>Juz ${n} · الجزء ${AR[n - 1]}</h2><p><b>${esc(T.en)}</b> · ${T.ar}</p>`;
+  need(choice.track).forEach((t, i) => {
+    const r = rooms[t], tn = teacherOf(t, n), L = LBL[t], open = r && r.status === "open";
+    h += `<div class="st"><span class="n">${both ? i + 1 : "✓"}</span><div class="tx"><b>${esc(L.en)} · ${L.ar}</b>${both ? ` <small>(${esc(L.hint)})</small>` : ""}<br>` +
+      (tn ? `<small>Teacher: ${esc(tn)}</small><span class="badge ${open ? "on" : "off"}">${open ? "Live now" : "Closed"}</span>` +
+        (r && r.schedDays && r.schedDays.length ? `<br><small>📅 ${esc(r.schedDays.map(d => DL[d]).join(", "))} at ${esc(r.schedTime || "")}</small>` : "")
+        : "<small>No teacher yet for this class.</small>") + "</div>" +
+      (tn && r ? `<a class="b" href="classroom.html?id=${encodeURIComponent(cid(t, n))}">Enter class</a>` : "") + "</div>";
+  });
+  return h + "</div>";
+}
+
+function draw() {
+  let h = `<h1>حفظ ومراجعة القرآن<small>Qur'an Hifz and Revision</small></h1>
+    <p>Choose what you want to do, then choose your juz. You will see your teacher and enter the class. You follow one juz at a time, and you can change it later.</p>`;
+  if (denied) h += '<p class="er">Some data could not be loaded. Please tell the admin that the Hifz and Revision pages need access rules.</p>';
+  h += planCard();
+  h += `<div class="cd"><h3>1. What do you want to do?</h3><div class="tk">` +
+    ["hifz", "both", "revision"].map(k => `<button type="button" data-t="${k}" class="${selTrack === k ? "sel" : ""}"><span class="ar">${TRK[k].ar}</span><b>${esc(TRK[k].en)}</b><small>${esc(TRK[k].d)}</small></button>`).join("") + `</div></div>`;
+  h += `<div class="cd"><h3>2. Choose your juz</h3><p style="margin:2px 0 0"><small>${selTrack ? "Tap a juz to confirm your plan. A juz with no teacher yet is greyed out." : "Choose what you want to do first."}</small></p><div class="jg">`;
+  for (let n = 1; n <= 30; n++) {
+    const mineHere = choice && choice.juz === n && choice.track === selTrack;
+    h += `<button type="button" data-j="${n}" class="${mineHere ? "sel" : ""}${ready(n) ? "" : " no"}"><b>${n}</b><span class="ar">الجزء ${AR[n - 1]}</span><small>${selTrack ? esc(tileLine(n)) : "&nbsp;"}</small></button>`;
+  }
+  h += `</div><p id="rm" class="er"></p></div>`;
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { selTrack = b.dataset.t; draw(); });
+  $("app").querySelectorAll("[data-j]").forEach(b => b.onclick = () => pick(+b.dataset.j));
+}
+
+async function pick(n) {
+  if (!selTrack) return say("Choose what you want to do first (step 1).");
+  if (!ready(n)) return say("This juz has no teacher yet for your choice.");
+  if (choice && choice.juz === n && choice.track === selTrack) return;
+  if (choice && choice.juz && !confirm("Change your plan to Juz " + n + " (" + TRK[selTrack].en + ")?")) return;
+  try {
+    await setDoc(doc(db, "revisionChoices", uid), { juz: n, track: selTrack, name: myName, updatedAt: serverTimestamp() });
+    choice = { juz: n, track: selTrack, name: myName }; await loadMine(); draw(); window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) { say("Could not save your choice: " + (e.code || e.message)); }
+}
+</script>
+</body></html>
