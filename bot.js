@@ -2,7 +2,7 @@
 (function () {
   if (document.getElementById("sb-fab")) return;
   // After you deploy the Cloudflare Worker, paste its address here (no slash at the end):
-  const BOT_URL = "https://sirajul-bot.YOUR-SUBDOMAIN.workers.dev";
+  const BOT_URL = "https://sirajul-botc.sirajulummahacademy763.workers.dev";
 
   const SK = "sbChat", CK = "sbCtx";
   let lang = "en"; try { lang = localStorage.getItem("siteLang") === "ar" ? "ar" : "en"; } catch (e) {}
