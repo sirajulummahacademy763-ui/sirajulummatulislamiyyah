@@ -8,29 +8,63 @@
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <style>
-:root{--night:#12163a;--deep:#1c2150;--lamp:#f5b94a;--mist:#eef0f8;--ink:#171a33;--line:#cfd3e8}
+:root{--night:#0e1230;--deep:#1c2150;--lamp:#f5b94a;--lamp2:#ffd98a;--mist:#f3f4fa;--ink:#171a33;--muted:#5b6082;--line:#e1e4f2;--ok:#1f8a5b}
 *{box-sizing:border-box}
-body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist)}
-header{background:var(--night);color:#fff;padding:18px clamp(18px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist);-webkit-font-smoothing:antialiased}
+
+/* ===== Header ===== */
+header{background:var(--night);color:#fff;padding:14px clamp(16px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:3px solid var(--lamp)}
 header a{color:#fff;text-decoration:none;font-weight:700}
-button{padding:10px 18px;border:0;border-radius:8px;background:var(--lamp);color:var(--night);font:700 1rem Figtree,sans-serif;cursor:pointer}
+button{padding:11px 18px;border:0;border-radius:12px;background:var(--lamp);color:var(--night);font:700 1rem Figtree,sans-serif;cursor:pointer;transition:transform .12s,box-shadow .12s}
+button:active{transform:scale(.98)}
 button:disabled{opacity:.6;cursor:wait}
-main{max-width:760px;margin:0 auto;padding:40px clamp(18px,5vw,40px)}
-h1{font-family:Amiri,serif;font-size:2.2rem;margin:0 0 24px}
-h2{font-family:Amiri,serif;font-size:1.6rem;margin:0 0 6px}
-.coins{background:radial-gradient(circle at 85% 30%,rgba(245,185,74,.45),transparent 50%),var(--night);color:#fff;border-radius:14px;padding:30px;margin-bottom:28px}
-.coins b{display:block;font-family:Amiri,serif;font-size:4.5rem;line-height:1;color:var(--lamp)}
-.buy{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:28px}
-.buy p{margin:0 0 16px;color:#4b5072}
+#out{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.4);padding:8px 16px}
+
+main{max-width:720px;margin:0 auto;padding:28px clamp(16px,5vw,32px) 60px}
+
+/* ===== Greeting ===== */
+h1{font-family:Amiri,serif;font-size:1.9rem;margin:0 0 18px;color:var(--night)}
+h2{font-family:Amiri,serif;font-size:1.5rem;margin:0 0 4px;color:var(--night)}
+
+/* ===== Balance card ===== */
+.coins{position:relative;overflow:hidden;color:#fff;border-radius:22px;padding:28px 26px;margin-bottom:22px;
+  background:
+    radial-gradient(circle at 92% 12%,rgba(245,185,74,.55),transparent 42%),
+    radial-gradient(circle at 8% 110%,rgba(245,185,74,.18),transparent 45%),
+    linear-gradient(145deg,var(--night),var(--deep));
+  box-shadow:0 14px 30px -12px rgba(14,18,48,.55)}
+.coins::after{content:"";position:absolute;inset:0;opacity:.07;pointer-events:none;
+  background-image:repeating-linear-gradient(45deg,#fff 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,#fff 0 1px,transparent 1px 22px)}
+.coins span{display:block;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.coins .row{display:flex;align-items:center;gap:14px;margin-top:8px;position:relative;z-index:1}
+.coins svg{flex:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+.coins b{display:block;font-family:Amiri,serif;font-size:4.2rem;line-height:1;color:var(--lamp2)}
+.coins small{display:block;margin-top:10px;color:rgba(255,255,255,.7);position:relative;z-index:1}
+
+/* ===== Cards (Paystack + Flutterwave share this style) ===== */
+.buy{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:22px;box-shadow:0 8px 22px -14px rgba(23,26,51,.25)}
+.buy p{margin:0 0 16px;color:var(--muted);line-height:1.5}
+.buy .tag{display:inline-block;font:700 .72rem Figtree,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#fff4dc;color:#8a5a00;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+
+/* quick packs */
+.packs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.chip{padding:9px 16px;border-radius:999px;background:var(--mist);color:var(--ink);border:1.5px solid var(--line);font:700 .95rem Figtree,sans-serif}
+.chip.on{background:var(--night);color:var(--lamp2);border-color:var(--night)}
+
 .chooser{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
-.chooser select{flex:1 1 160px;padding:12px 14px;border:2px solid var(--line);border-radius:8px;background:var(--mist);color:var(--ink);font:500 1.1rem Figtree,sans-serif}
-.price{flex:1 1 120px;display:flex;align-items:center;justify-content:center;border:2px solid var(--lamp);border-radius:8px;padding:12px 14px;font:700 1.5rem Figtree,sans-serif;background:#fff}
-#pay{margin-top:14px;width:100%;padding:14px}
-#msg{margin:14px 0 0;font-weight:500}
-dl{margin:0;border-top:2px solid var(--line)}
+.chooser select{flex:1 1 150px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--mist);color:var(--ink);font:500 1.05rem Figtree,sans-serif}
+.price{flex:1 1 120px;display:flex;align-items:center;justify-content:center;border:2px solid var(--lamp);border-radius:12px;padding:12px 14px;font:700 1.45rem Figtree,sans-serif;background:#fffaf0;color:var(--night)}
+#pay,.buy button[type=button]:not(.chip){margin-top:14px;width:100%;padding:15px;font-size:1.05rem;box-shadow:0 8px 16px -8px rgba(245,185,74,.9)}
+#msg{margin:14px 0 0;font-weight:500;color:var(--ok)}
+#msg:empty{display:none}
+
+/* ===== Account details ===== */
+dl{margin:0;background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 22px;box-shadow:0 8px 22px -14px rgba(23,26,51,.25)}
 dl div{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
-dt{color:#4b5072}dd{margin:0;font-weight:500;text-align:right}
-#load{padding:40px;text-align:center}
+dl div:last-child{border-bottom:0}
+dt{color:var(--muted)}
+dd{margin:0;font-weight:700;text-align:right;word-break:break-word}
+#load{padding:40px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -45,6 +79,7 @@ import { auth, db } from "./firebase-config.js";
 const PAYSTACK_PUBLIC_KEY = "pk_live_8e4d823619421ca423c768f2b22acfdfb1864426";
 const NAIRA_PER_10_COINS = 1300;               // 10 coins = ₦1,300
 const MIN_COINS = 10, MAX_COINS = 1000, STEP = 10;
+const QUICK_PACKS = [10, 50, 100, 500];
 
 const nairaFor = coins => (coins / 10) * NAIRA_PER_10_COINS;
 const fmt = n => "₦" + n.toLocaleString("en-NG");
@@ -92,15 +127,23 @@ function renderInfo(user, d) {
     <div><dt>Technology</dt><dd>${esc(d.technology ? [d.technology.level, (d.technology.areas||[]).join(", ")].filter(Boolean).join(" · ") : "Not joined")}</dd></div>`;
 }
 
+const COIN_SVG = `<svg width="58" height="58" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#f5b94a"/><circle cx="32" cy="32" r="30" fill="none" stroke="#ffd98a" stroke-width="3"/><circle cx="32" cy="32" r="22" fill="none" stroke="#b9801a" stroke-width="2.5"/><text x="32" y="42" text-anchor="middle" font-family="Amiri,serif" font-size="30" font-weight="700" fill="#8a5a00">س</text></svg>`;
+
 onAuthStateChanged(auth, user => {
   if (!user) return location.href = "login.html";
   const app = document.getElementById("app");
 
   app.innerHTML = `<h1 id="hello">Assalamu alaikum</h1>
-    <div class="coins"><span>My coins</span><b id="bal">0</b></div>
+    <div class="coins">
+      <span>My coins</span>
+      <div class="row">${COIN_SVG}<b id="bal">0</b></div>
+      <small>Coins are added automatically after payment.</small>
+    </div>
     <section class="buy">
+      <span class="tag">Nigeria · Naira</span>
       <h2>Buy coins</h2>
       <p>10 coins = ${fmt(NAIRA_PER_10_COINS)}. Pay with your card or bank through Paystack. Use the email you registered with.</p>
+      <div class="packs" id="packs">${QUICK_PACKS.map(c => `<button type="button" class="chip" data-c="${c}">${c}</button>`).join("")}</div>
       <div class="chooser">
         <select id="coinSelect" aria-label="Number of coins">${coinOptions()}</select>
         <div class="price" id="price"></div>
@@ -111,8 +154,13 @@ onAuthStateChanged(auth, user => {
     <dl id="info"></dl>`;
 
   const sel = document.getElementById("coinSelect");
-  const showPrice = () => { document.getElementById("price").textContent = fmt(nairaFor(Number(sel.value))); };
+  const chips = document.querySelectorAll("#packs .chip");
+  const showPrice = () => {
+    document.getElementById("price").textContent = fmt(nairaFor(Number(sel.value)));
+    chips.forEach(ch => ch.classList.toggle("on", ch.dataset.c === sel.value));
+  };
   sel.onchange = showPrice;
+  chips.forEach(ch => ch.onclick = () => { sel.value = ch.dataset.c; showPrice(); });
   showPrice();
   document.getElementById("pay").onclick = () => buyCoins(user, Number(sel.value));
 
