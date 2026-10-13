@@ -35,7 +35,7 @@ if(!isPub){
         l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
         nv.insertBefore(l,nv.querySelector("[data-logout]"));
       };
-      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())add("admin.html","Admin"); }catch(e){}
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Revision (admin)");} }catch(e){}
       try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher"); }catch(e){}
     });
   }).catch(()=>{});
@@ -46,7 +46,7 @@ document.body.insertAdjacentHTML("beforeend",
 // Help bot
 if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
 // Exams, certificates and classroom links
-if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
+if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["revision.html","Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv&&nv.querySelector("[data-logout]");if(nv&&!nv.querySelector('a[href="classroom.html"]')){const a=document.createElement("a");a.href="classroom.html";a.textContent="Classroom";nv.insertBefore(a,lo)}}
 import("./lang.js");
