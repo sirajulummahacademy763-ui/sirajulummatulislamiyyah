@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qur'an Revision | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.rv{max-width:860px}
+.rv h1 small{font-family:Figtree,sans-serif;font-size:.5em;font-weight:500;color:#555;display:block}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+.mine{background:linear-gradient(145deg,#12163a,#1c2150);color:#fff;border:0}
+.mine h2{margin:6px 0;font-family:Amiri,serif;font-size:1.9rem;color:#ffd98a}
+.mine p{margin:6px 0}
+.b{display:inline-block;font:inherit;font-weight:700;padding:11px 20px;border:0;border-radius:12px;background:#f5b94a;color:#12163a;cursor:pointer;text-decoration:none;margin-top:8px}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700;margin-left:6px}
+.on{background:#d7f3e3;color:#1c7a4d}.off{background:#eee;color:#555}
+.jg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.jg button{font:inherit;text-align:center;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;gap:2px;align-items:center}
+.jg button b{font-size:1.5rem;color:#12163a;line-height:1}
+.jg button .ar{font-family:Amiri,serif;font-size:1.15rem;color:#12163a}
+.jg button small{font-size:.8rem;color:#555}
+.jg button.sel{border-color:#f5b94a;background:#fff8e6;box-shadow:0 6px 14px -8px rgba(245,185,74,.9)}
+.jg button.no{opacity:.5;cursor:not-allowed}
+.er{color:#b3261e;font-weight:500}
+</style></head><body>
+<main class="page rv" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const AR = ["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر","الثالث عشر","الرابع عشر","الخامس عشر","السادس عشر","السابع عشر","الثامن عشر","التاسع عشر","العشرون","الحادي والعشرون","الثاني والعشرون","الثالث والعشرون","الرابع والعشرون","الخامس والعشرون","السادس والعشرون","السابع والعشرون","الثامن والعشرون","التاسع والعشرون","الثلاثون"];
+const DL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const rid = n => "revision__Juz-" + n;
+let uid = "", myName = "Student", rooms = {}, choice = null, denied = false;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Qur\'an Revision</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  uid = u.uid; myName = u.displayName || u.email || "Student";
+  try { const s = await getDoc(doc(db, "students", uid)); if (s.exists() && s.data().name) myName = s.data().name; } catch (e) {}
+  await Promise.all([loadRooms(), loadChoice()]);
+  draw();
+});
+
+async function loadRooms() {
+  await Promise.all(Array.from({ length: 30 }, (_, i) => i + 1).map(async n => {
+    try { const s = await getDoc(doc(db, "classrooms", rid(n))); if (s.exists()) rooms[n] = s.data(); }
+    catch (e) { if (e.code === "permission-denied") denied = true; }
+  }));
+}
+async function loadChoice() {
+  try { const s = await getDoc(doc(db, "revisionChoices", uid)); if (s.exists()) choice = s.data(); }
+  catch (e) { if (e.code === "permission-denied") denied = true; }
+}
+const teacherOf = n => (rooms[n] && rooms[n].teacherId) ? (rooms[n].teacherName || "Teacher") : "";
+const say = t => { if ($("rm")) $("rm").textContent = t; };
+
+function draw() {
+  const mine = choice && choice.juz, mt = mine ? teacherOf(mine) : "", r = mine ? rooms[mine] : null;
+  let h = `<h1>مراجعة القرآن<small>Qur'an Revision</small></h1>
+    <p>Choose the juz you want to revise. You will see the teacher who takes that juz, and you can enter their revision class. You follow one juz at a time, and you can change it later.</p>`;
+  if (denied) h += '<p class="er">Some data could not be loaded. Please tell the admin that the revision pages need access rules.</p>';
+  if (mine) {
+    h += `<div class="cd mine"><span>Your revision juz · جزؤك للمراجعة</span><h2>Juz ${mine} · الجزء ${AR[mine - 1]}</h2>` +
+      (mt ? `<p>Teacher: <b>${esc(mt)}</b> <span class="badge ${r && r.status === "open" ? "on" : "off"}">${r && r.status === "open" ? "Live now" : "Closed"}</span></p>` +
+        (r && r.schedDays && r.schedDays.length ? `<p><small>📅 ${esc(r.schedDays.map(i => DL[i]).join(", "))} at ${esc(r.schedTime || "")}</small></p>` : "") +
+        `<a class="b" href="classroom.html?id=${encodeURIComponent(rid(mine))}">Enter revision class</a>`
+        : "<p>This juz has no teacher yet. Please choose another juz or ask the admin.</p>") + "</div>";
+  }
+  h += `<div class="cd"><b>Choose your juz</b><p style="margin:4px 0 12px"><small>Juz 1 to 30. A juz with no teacher yet is greyed out.</small></p><div class="jg">`;
+  for (let n = 1; n <= 30; n++) {
+    const t = teacherOf(n);
+    h += `<button type="button" data-j="${n}" class="${mine === n ? "sel" : ""}${t ? "" : " no"}"><b>${n}</b><span class="ar">الجزء ${AR[n - 1]}</span><small>${t ? esc(t) : "No teacher yet"}</small></button>`;
+  }
+  h += `</div><p id="rm" class="er"></p></div>`;
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-j]").forEach(b => b.onclick = () => pick(+b.dataset.j));
+}
+
+async function pick(n) {
+  if (!teacherOf(n)) return say("This juz has no teacher yet.");
+  if (choice && choice.juz === n) return;
+  if (choice && choice.juz && !confirm("Change your revision juz from Juz " + choice.juz + " to Juz " + n + "?")) return;
+  try {
+    await setDoc(doc(db, "revisionChoices", uid), { juz: n, name: myName, updatedAt: serverTimestamp() });
+    choice = { juz: n, name: myName }; draw(); window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) { say("Could not save your choice: " + (e.code || e.message)); }
+}
+</script>
+</body></html>
