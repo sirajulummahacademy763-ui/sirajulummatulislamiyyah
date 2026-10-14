@@ -22,6 +22,7 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
+import { WORKER_URL } from "./notice-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const say = (id, t, ok) => { $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
@@ -50,7 +51,7 @@ function build() {
     <button id="mb" type="button">Save term</button> <span id="mm"></span>
     <div id="ml" style="margin-top:14px"></div></div>
   <div class="cd"><h2>Send a notice to all students</h2>
-    <p style="margin-top:0">Every student sees it in their portal, on the notice board and in the banner at the top of their pages.</p>
+    <p style="margin-top:0">Every student sees it at once as a pop-up on any page they are on, and gets a phone alert if they turned notifications on. Students can only read it, not reply.</p>
     <label>Title</label><input id="gt" placeholder="For example: Mid-term test next week">
     <label>Message</label><textarea id="gm" rows="5"></textarea>
     <label><input id="gp" type="checkbox" style="width:auto"> Pin to the top</label>
@@ -157,9 +158,29 @@ async function addAnn() {
   const t = $("gt").value.trim(), m = $("gm").value.trim();
   if (!t || !m) return say("gs", "Enter a title and a message.");
   try {
-    await addDoc(collection(db, "announcements"), { title: t, body: m, pinned: $("gp").checked, createdAt: serverTimestamp() });
-    say("gs", "Sent. Every student will see it in their portal.", true); $("gt").value = ""; $("gm").value = ""; $("gp").checked = false; loadAnns();
+    const ref = await addDoc(collection(db, "announcements"), { title: t, body: m, pinned: $("gp").checked, createdAt: serverTimestamp() });
+    $("gt").value = ""; $("gm").value = ""; $("gp").checked = false; loadAnns();
+    say("gs", "Sent. Students on the site see it now. Sending phone alerts...", true);
+    try {
+      const n = await pushAll(ref.id, t, m);
+      say("gs", "Sent. Students on the site see it now" + (n ? ", and " + n + " phone" + (n > 1 ? "s were" : " was") + " alerted." : "."), true);
+    } catch (e) { say("gs", "Notice saved and visible on the site. Phone alerts failed: " + (e.message || e) + " (check the notice-push Worker).", false); }
   } catch (e) { say("gs", "Failed: " + (e.code || e.message)); }
+}
+
+// Ask the notice-push Worker to alert students' phones (it does 20 phones per call)
+async function pushAll(id, title, body) {
+  if (!WORKER_URL || WORKER_URL.indexOf("YOUR-NAME") > -1) throw new Error("Worker address not set yet");
+  const tok = await auth.currentUser.getIdToken();
+  let cursor = null, sent = 0;
+  do {
+    const r = await fetch(WORKER_URL + "/notify", { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ id, title, body: body.slice(0, 160), cursor }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ("error " + r.status));
+    sent += j.sent || 0; cursor = j.next || null;
+    say("gs", "Sending phone alerts... " + sent + " so far.", true);
+  } while (cursor);
+  return sent;
 }
 
 async function loadAnns() {
