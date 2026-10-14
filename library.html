@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Library | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css"><script src="site.js" defer></script><script src="reciters-extra.js"></script><script src="books.js"></script>
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script><script src="reciters-extra.js"></script><script src="reciters-female.js"></script><script src="books.js"></script>
 <style>
 
 .bar{display:grid;grid-template-columns:2fr 2fr;gap:10px;margin:14px 0}
@@ -190,7 +190,9 @@ async function openSurah(num,start,autoplay){
     const j=await (await fetch(`${API}/surah/${n}/editions/quran-uthmani,en.sahih${extra?"":","+rv}`)).json();
     if(my!==token)return;
     const [ar,en,au]=j.data;
-    ays=ar.ayahs.map((a,i)=>({num:a.numberInSurah,ar:a.text,en:en.ayahs[i].text,audio:au?https(au.ayahs[i].audio):""}));
+    // Some reciters only have one audio file for the whole surah (no ayah-by-ayah files).
+    if(!extra&&au&&au.audio&&!(au.ayahs&&au.ayahs[0]&&au.ayahs[0].audio))extra={url:https(au.audio)};
+    ays=ar.ayahs.map((a,i)=>({num:a.numberInSurah,ar:a.text,en:en.ayahs[i].text,audio:au&&au.ayahs[i]&&au.ayahs[i].audio?https(au.ayahs[i].audio):""}));
     let bis="";
     if(n!==1&&n!==9&&ays[0].ar.trim().startsWith("\u0628\u0650\u0633\u0652\u0645\u0650")){
       const w=ays[0].ar.trim().split(/\s+/); bis=w.slice(0,4).join(" "); ays[0].ar=w.slice(4).join(" ");
