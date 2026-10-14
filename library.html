@@ -204,16 +204,20 @@ async function openSurah(num,start,autoplay){
       ays.map((a,i)=>`<div class="ay" data-i="${i}"><p class="ar"><span class="no">${a.num}</span>${a.ar}</p><p class="en"${$("tr").checked?"":" hidden"}>${a.en}</p></div>`).join("");
     document.querySelectorAll(".ay").forEach(d=>d.onclick=()=>play(+d.dataset.i));
     idx=-1; label();
+    if(extra&&!covers(extra,n)){$("err").style.display="block";$("err").textContent=noAudioMsg(extra)}
     window.scrollTo({top:0});
     if(start>=0)play(start); else if(autoplay)play(0);
   }catch(e){console.error(e);fail("Could not load this surah.")}
 }
 
+const covers=(r,k)=>!r||!r.surahs||r.surahs.includes(k);
+const noAudioMsg=r=>(r.name||"This reciter").split(" (")[0]+" does not recite this surah. Choose another surah or another reciter. She recites surah "+r.surahs.join(", ")+".";
 function label(){$("st").textContent=idx<0||extra?`${surahs[n-1]?.englishName||""}`:`${surahs[n-1].englishName} · ayah ${ays[idx].num} / ${ays.length}`}
 function mark(){document.querySelectorAll(".ay").forEach((d,i)=>d.classList.toggle("on",i===idx));const el=document.querySelector(".ay.on");if(el)el.scrollIntoView({behavior:"smooth",block:"center"})}
 
 function play(i){
   if(i<0||i>=ays.length)return;
+  if(extra&&!covers(extra,n)){audio.pause();playing=false;$("pp").textContent="Play";$("err").style.display="block";$("err").textContent=noAudioMsg(extra);return}
   if(extra){idx=i;audio.src=extra.url.replace("{n}",String(n).padStart(3,"0")).replace("{n1}",n);audio.play().then(()=>{playing=true;$("pp").textContent="Pause"}).catch(()=>{playing=false;$("pp").textContent="Play"});label();return}
   idx=i; audio.src=ays[i].audio; audio.play().then(()=>{playing=true;$("pp").textContent="Pause"}).catch(()=>{playing=false;$("pp").textContent="Play"});
   mark(); label(); store.set("q_i",i);
