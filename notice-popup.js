@@ -144,7 +144,8 @@ onAuthStateChanged(auth, async u => {
   try { const s = await getDoc(doc(db, "students", uid)); if (s.exists() && s.data().name) myName = s.data().name; } catch (e) {}
   let admin = false;
   try { admin = (await getDoc(doc(db, "admins", uid))).exists(); } catch (e) {}
-  if (admin) return; // the admin does not need pop-ups for their own notices
+  // The admin also gets pop-ups (so you can test), except on the Admin page where the notice was just sent
+  if (admin && /admin/i.test(location.pathname)) return;
   onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(10)), onNotices, e => console.warn("notices:", e.code));
   setTimeout(pushSetup, 4000);
 });
