@@ -58,10 +58,10 @@ function guessCurrency(list) {
   try {
     const lang = (navigator.language || "").toUpperCase();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-    const map = { GH: "GHS", KE: "KES", UG: "UGX", TZ: "TZS", RW: "RWF", ZA: "ZAR", ZM: "ZMW", GB: "GBP", CA: "CAD", EG: "EGP" };
+    const map = { GH: "GHS", KE: "KES", UG: "UGX", TZ: "TZS", RW: "RWF", ZA: "ZAR", ZM: "ZMW", GB: "GBP", CA: "CAD", EG: "EGP", SA: "SAR", AE: "AED", QA: "QAR" };
     const region = (lang.split("-")[1] || "");
     if (map[region] && list[map[region]]) return map[region];
-    const tzMap = { "Africa/Accra": "GHS", "Africa/Nairobi": "KES", "Africa/Kampala": "UGX", "Africa/Dar_es_Salaam": "TZS", "Africa/Kigali": "RWF", "Africa/Johannesburg": "ZAR", "Africa/Lusaka": "ZMW", "Europe/London": "GBP", "Africa/Cairo": "EGP" };
+    const tzMap = { "Africa/Accra": "GHS", "Africa/Nairobi": "KES", "Africa/Kampala": "UGX", "Africa/Dar_es_Salaam": "TZS", "Africa/Kigali": "RWF", "Africa/Johannesburg": "ZAR", "Africa/Lusaka": "ZMW", "Europe/London": "GBP", "Africa/Cairo": "EGP", "Asia/Riyadh": "SAR", "Asia/Dubai": "AED", "Asia/Qatar": "QAR" };
     if (tzMap[tz] && list[tzMap[tz]]) return tzMap[tz];
   } catch (e) {}
   return "USD";
