@@ -36,7 +36,7 @@ css.textContent = `
 #nt-modal .b2{background:#12163a;color:#fff}
 #nt-modal .b3{background:#fff;color:#12163a;border:1.5px solid #cfd3e8}
 #nt-modal .ms{font-size:.9rem}
-#nt-push{position:fixed;left:12px;bottom:12px;z-index:99990;width:min(340px,calc(100% - 100px));background:#fff;color:#12163a;border:1.5px solid #cfd3e8;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px -12px rgba(0,0,0,.4);font-family:Figtree,system-ui,sans-serif;font-size:.9rem}
+#nt-push{position:fixed;left:10px;right:10px;bottom:10px;z-index:100002;margin:0 auto;max-width:520px;background:#fff;color:#12163a;border:2px solid #f5b94a;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);font-family:Figtree,system-ui,sans-serif;font-size:.95rem;line-height:1.45}
 #nt-push .r{display:flex;gap:8px;margin-top:8px}
 `;
 document.head.appendChild(css);
@@ -113,27 +113,49 @@ async function savePush() {
   await setDoc(doc(db, "pushSubs", id), { uid, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, createdAt: serverTimestamp() });
 }
 
-function pushSetup() {
-  if (!canPush()) return;
-  if (Notification.permission === "granted") { savePush().catch(e => console.warn("push:", e)); return; }
-  if (Notification.permission !== "default") return;
-  const last = Number(store.get("nt_push_no") || 0);
-  if (Date.now() - last < 7 * 86400 * 1000) return;
+function pushCard(html, onMount) {
+  const old = document.getElementById("nt-push"); if (old) old.remove();
   const box = document.createElement("div");
   box.id = "nt-push";
-  box.innerHTML = `<b>Get notices on your phone</b><br>Turn on notifications to receive new notices even when you are not on the site.<div class="r"><button class="nt-b b2" type="button" data-y style="background:#12163a;color:#fff">Turn on</button><button class="nt-b b3" type="button" data-n style="background:#fff;color:#12163a;border:1.5px solid #cfd3e8">Not now</button></div><div id="nt-pm" style="margin-top:6px"></div>`;
+  box.innerHTML = html;
   document.body.appendChild(box);
-  box.querySelector("[data-n]").onclick = () => { store.set("nt_push_no", String(Date.now())); box.remove(); };
-  box.querySelector("[data-y]").onclick = async () => {
-    const pm = box.querySelector("#nt-pm");
-    try {
-      const p = await Notification.requestPermission();
-      if (p !== "granted") { pm.textContent = "Notifications were not allowed."; setTimeout(() => box.remove(), 2500); return; }
-      await savePush();
-      box.innerHTML = "<b>Done.</b> You will now receive new notices on this phone.";
-      setTimeout(() => box.remove(), 3500);
-    } catch (e) { pm.style.color = "#b3261e"; pm.textContent = "Could not turn on: " + (e.message || e.code); }
-  };
+  if (onMount) onMount(box);
+  return box;
+}
+const snoozed = k => Date.now() - Number(store.get(k) || 0) < 86400 * 1000; // hidden for 1 day after "Not now"
+const snooze = k => store.set(k, String(Date.now()));
+
+function pushSetup() {
+  const ua = navigator.userAgent || "";
+  const ios = /iPhone|iPad|iPod/i.test(ua);
+  const standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const inApp = /FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|MicroMessenger|; wv\)|TikTok|Telegram/i.test(ua);
+
+  if (!canPush()) {
+    if (snoozed("nt_help_no")) return;
+    if (inApp) return pushCard(`<b>Open this site in Chrome</b><br>To get notices on your phone, open sirajul-ummah.com.ng in the Chrome browser (tap the menu, then "Open in browser").<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+    if (ios && !standalone) return pushCard(`<b>Get notices on your iPhone</b><br>Tap the Share button, choose <b>Add to Home Screen</b>, then open the site from the new icon and tap Turn on.<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+    return;
+  }
+  if (Notification.permission === "granted") { savePush().catch(e => console.warn("push:", e)); return; }
+  if (Notification.permission === "denied") {
+    if (snoozed("nt_help_no")) return;
+    return pushCard(`<b>Notifications are blocked</b><br>To get notices on this phone: tap the lock icon next to the website address, tap <b>Permissions</b>, then set <b>Notifications</b> to Allow. Then refresh this page.<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+  }
+  if (snoozed("nt_push_no")) return;
+  pushCard(`<b>Get notices on your phone</b><br>Tap <b>Turn on</b>, then choose <b>Allow</b> when your phone asks. You will then get new notices even when the site is closed.<div class="r"><button class="nt-b" type="button" data-y style="background:#12163a;color:#fff">Turn on</button><button class="nt-b" type="button" data-n style="background:#fff;color:#12163a;border:1.5px solid #cfd3e8">Not now</button></div><div id="nt-pm" style="margin-top:6px"></div>`, box => {
+    box.querySelector("[data-n]").onclick = () => { snooze("nt_push_no"); box.remove(); };
+    box.querySelector("[data-y]").onclick = async () => {
+      const pm = box.querySelector("#nt-pm");
+      try {
+        const p = await Notification.requestPermission();
+        if (p !== "granted") { pm.style.color = "#b3261e"; pm.textContent = "Notifications were not allowed. You can allow them later in the lock icon next to the website address."; return; }
+        await savePush();
+        box.innerHTML = "<b>Done.</b> You will now receive new notices on this phone.";
+        setTimeout(() => box.remove(), 3500);
+      } catch (e) { pm.style.color = "#b3261e"; pm.textContent = "Could not turn on: " + (e.message || e.code); }
+    };
+  });
 }
 
 /* ---------- Start when the student is logged in ---------- */
@@ -147,5 +169,5 @@ onAuthStateChanged(auth, async u => {
   // The admin also gets pop-ups (so you can test), except on the Admin page where the notice was just sent
   if (admin && /admin/i.test(location.pathname)) return;
   onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(10)), onNotices, e => console.warn("notices:", e.code));
-  setTimeout(pushSetup, 4000);
+  setTimeout(pushSetup, 2500);
 });
