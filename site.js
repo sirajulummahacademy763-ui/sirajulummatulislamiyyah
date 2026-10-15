@@ -49,5 +49,5 @@ if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.bo
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv&&nv.querySelector("[data-logout]");if(nv&&!nv.querySelector('a[href="classroom.html"]')){const a=document.createElement("a");a.href="classroom.html";a.textContent="Classroom";nv.insertBefore(a,lo)}}
-if(!isPub)import("./notice-popup.js").catch(()=>{});
+if(!isPub)import("./notice-popup.js?v=4").catch(()=>{});
 import("./lang.js");
