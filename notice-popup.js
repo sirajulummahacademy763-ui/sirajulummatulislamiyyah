@@ -13,6 +13,26 @@ const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&am
 
 let uid = "", myName = "Student", started = false;
 
+// Check panel: open any portal page with  ?noticedebug=1  at the end of the address
+const DEBUG = /[?&]noticedebug=1/.test(location.search);
+let dbgBox = null, dbgPre = null; const dstate = {};
+function dlog(k, v) {
+  if (!DEBUG) return;
+  dstate[k] = v;
+  if (!dbgBox) {
+    dbgBox = document.createElement("div");
+    dbgBox.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:100003;background:#000;color:#0f0;font:12px/1.4 monospace;padding:8px;max-height:45vh;overflow:auto";
+    dbgPre = document.createElement("pre"); dbgPre.style.cssText = "margin:0;white-space:pre-wrap";
+    const b1 = document.createElement("button"); b1.textContent = "Test pop-up"; b1.style.cssText = "margin:6px 6px 0 0;padding:6px 10px";
+    const b2 = document.createElement("button"); b2.textContent = "Reset seen and reload"; b2.style.cssText = "margin:6px 0 0;padding:6px 10px";
+    b1.onclick = () => showToast({ id: "test", title: "Test notice", body: "If you can see this, pop-ups work on this phone.", createdAt: { seconds: Date.now() / 1000 } }, 0);
+    b2.onclick = () => { store.set(seenKey || "nt_seen_x", "0"); location.reload(); };
+    dbgBox.append(dbgPre, b1, b2); document.body.appendChild(dbgBox);
+  }
+  dbgPre.textContent = Object.entries(dstate).map(([a, b]) => a + ": " + b).join("\n");
+}
+dlog("script", "loaded");
+
 const css = document.createElement("style");
 css.textContent = `
 #nt-toast{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(520px,calc(100% - 24px));z-index:100000;background:#12163a;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);border:1.5px solid #f5b94a;transition:transform .45s cubic-bezier(.2,.9,.3,1.2);font-family:Figtree,system-ui,sans-serif}
@@ -49,6 +69,7 @@ function markSeen(secs) { if (secs > seenSecs()) store.set(seenKey, String(secs)
 
 function onNotices(snap) {
   const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.createdAt && a.createdAt.seconds);
+  dlog("notices found", snap.size + " (" + rows.length + " with a date)");
   if (!rows.length) return;
   if (store.get(seenKey) == null) {
     // First time on this phone: only pop up a notice from the last 3 days, never a pile of old ones
@@ -57,6 +78,7 @@ function onNotices(snap) {
   }
   const s = seenSecs();
   pending = rows.filter(a => a.createdAt.seconds > s).sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+  dlog("seen marker", s); dlog("unread notices", pending.length + (pending.length ? " newest: " + pending[0].title : ""));
   if (pending.length) showToast(pending[0], pending.length - 1);
   else hideToast();
 }
@@ -160,6 +182,7 @@ function pushSetup() {
 
 /* ---------- Start when the student is logged in ---------- */
 onAuthStateChanged(auth, async u => {
+  dlog("login", u ? (u.email || u.uid) : "not logged in yet");
   if (!u || started) return;
   started = true; uid = u.uid; seenKey = "nt_seen_" + uid;
   myName = u.displayName || u.email || "Student";
@@ -167,7 +190,9 @@ onAuthStateChanged(auth, async u => {
   let admin = false;
   try { admin = (await getDoc(doc(db, "admins", uid))).exists(); } catch (e) {}
   // The admin also gets pop-ups (so you can test), except on the Admin page where the notice was just sent
-  if (admin && /admin/i.test(location.pathname)) return;
-  onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(10)), onNotices, e => console.warn("notices:", e.code));
+  dlog("is admin", admin); dlog("push support", canPush() + ", permission: " + (window.Notification ? Notification.permission : "none"));
+  if (admin && /admin/i.test(location.pathname)) { dlog("note", "admin page: pop-ups off here"); return; }
+  onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(10)), onNotices, e => { console.warn("notices:", e.code); dlog("listener error", e.code + " " + (e.message || "")); });
+  dlog("listener", "started");
   setTimeout(pushSetup, 2500);
 });
