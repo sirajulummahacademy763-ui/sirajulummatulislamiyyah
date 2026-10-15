@@ -83,6 +83,12 @@ details p{margin:8px 0 0;color:var(--soft)}
 footer{background:var(--night);color:#cfd3e8;padding:30px clamp(18px,5vw,64px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.12);font-size:.92rem}
 footer a{text-decoration:none;margin-right:16px}
 a:focus-visible,summary:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+nav a.don{border:1.5px solid var(--lamp);border-radius:999px;padding:5px 14px;color:var(--lamp);font-weight:700}
+nav a.don:hover{background:var(--lamp);color:var(--night)}
+.give{background:linear-gradient(90deg,#fff4dc,#ffe9b8);border-bottom:1.5px solid #f0d28a;padding:14px clamp(18px,5vw,64px);display:flex;gap:12px 22px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center}
+.give p{margin:0;color:#4a3300;font-weight:500;max-width:60ch}
+.give p b{font-family:Amiri,serif;font-size:1.25rem;color:#3a2700}
+.give .btn{padding:9px 20px;white-space:nowrap}
 @media(max-width:820px){header{position:static;background:var(--night);flex-direction:column;align-items:flex-start}.hero{grid-template-columns:1fr;padding-top:50px}.hero img{max-width:160px;order:-1}.dept{grid-template-columns:1fr;gap:6px}.who{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 html:not(.ok){visibility:hidden}
@@ -91,7 +97,7 @@ html:not(.ok){visibility:hidden}
 <body>
 <header>
   <a class="logo" href="index.html"><img src="logo.svg" alt="" width="44" height="44"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a>
-  <nav><a href="#programs">What we teach</a><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="wallet.html">My wallet</a><a class="btn" href="#" data-logout>Log out</a></nav>
+  <nav><a href="#programs">What we teach</a><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a class="don" href="donate.html">Donate</a><a href="contact.html">Contact</a><a href="wallet.html">My wallet</a><a class="btn" href="#" data-logout>Log out</a></nav>
 </header>
 
 <div class="hero">
@@ -112,6 +118,11 @@ html:not(.ok){visibility:hidden}
 
 <div class="trust" aria-label="Why learn with us">
   <span>Free to create an account</span><span>Free digital library</span><span>Certificates you can verify online</span><span>Study on your phone or computer</span>
+</div>
+
+<div class="give">
+  <p><b>Sadaqah Jariyah</b> &nbsp;·&nbsp; The Prophet &#65018; said: &ldquo;When a person dies, his deeds end except three: ongoing charity, knowledge that benefits, or a righteous child who prays for him.&rdquo; Help more people learn.</p>
+  <a class="btn" href="donate.html">Give sadaqah</a>
 </div>
 
 <div class="intro" id="programs">
@@ -210,10 +221,25 @@ html:not(.ok){visibility:hidden}
 
 <footer>
   <div style="max-width:560px"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.2rem;color:#f5b94a">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>
-  <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+  <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
 </footer>
   <div style="background:#12163a;color:#cfd3e8;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
 <script type="module">import "./guard.js";</script>
+  <script>
+  // Keeps the Donate link in the top menu even if another script rebuilds the menu
+  (function(){
+    function ensure(){
+      var nav=document.querySelector("header nav");
+      if(!nav||nav.querySelector('a[href="donate.html"]'))return;
+      var a=document.createElement("a");a.className="don";a.href="donate.html";a.textContent="Donate";
+      var about=nav.querySelector('a[href="about.html"]');
+      if(about&&about.nextSibling)nav.insertBefore(a,about.nextSibling);else nav.insertBefore(a,nav.firstChild);
+    }
+    ensure();
+    var nav=document.querySelector("header nav");
+    if(nav)new MutationObserver(ensure).observe(nav,{childList:true});
+  })();
+  </script>
   <script src="bot.js" defer></script>
 <script type="module">import "./classes-check.js";</script>
 </body>
