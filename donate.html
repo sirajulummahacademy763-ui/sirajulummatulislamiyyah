@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sadaqah Jariyah | Sirajul Ummah Islamic Institute</title>
+<meta name="description" content="Support Sirajul Ummah Islamic Institute with sadaqah jariyah, a gift that keeps giving, so more people can learn.">
+<link rel="icon" href="logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+:root{--night:#0e1230;--deep:#1c2150;--lamp:#f5b94a;--lamp2:#ffd98a;--mist:#f3f4fa;--ink:#171a33;--muted:#5b6082;--line:#e1e4f2;--ok:#1f8a5b;--bad:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+header{background:var(--night);color:#fff;padding:14px clamp(16px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:3px solid var(--lamp)}
+header a{color:#fff;text-decoration:none;font-weight:700}
+button{padding:13px 18px;border:0;border-radius:12px;background:var(--lamp);color:var(--night);font:700 1rem Figtree,sans-serif;cursor:pointer;transition:transform .12s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.6;cursor:wait}
+
+/* hero */
+.hero{position:relative;overflow:hidden;color:#fff;text-align:center;padding:44px clamp(18px,6vw,64px) 52px;
+  background:radial-gradient(circle at 85% 0%,rgba(245,185,74,.45),transparent 45%),radial-gradient(circle at 5% 110%,rgba(245,185,74,.16),transparent 45%),linear-gradient(150deg,var(--night),var(--deep))}
+.hero::after{content:"";position:absolute;inset:0;opacity:.06;pointer-events:none;background-image:repeating-linear-gradient(45deg,#fff 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,#fff 0 1px,transparent 1px 22px)}
+.hero>*{position:relative;z-index:1}
+.bism{font-family:Amiri,serif;font-size:1.5rem;color:var(--lamp2);margin:0 0 14px}
+.hero h1{font-family:Amiri,serif;font-size:clamp(2rem,7vw,3rem);margin:0 0 6px;line-height:1.15}
+.hero .ar{font-family:Amiri,serif;font-size:clamp(1.5rem,5vw,2.1rem);color:var(--lamp2);margin:0 0 16px}
+.hero p.lead{max-width:560px;margin:0 auto;color:rgba(255,255,255,.82);line-height:1.6;font-size:1.05rem}
+
+main{max-width:720px;margin:0 auto;padding:26px clamp(16px,5vw,32px) 60px}
+h2{font-family:Amiri,serif;font-size:1.55rem;margin:0 0 6px;color:var(--night)}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:20px;box-shadow:0 8px 22px -14px rgba(23,26,51,.25)}
+.card p{margin:0 0 14px;color:var(--muted);line-height:1.6}
+
+/* quotes */
+.quote{border-inline-start:4px solid var(--lamp);padding:4px 0 4px 16px;margin:0 0 20px}
+.quote:last-child{margin-bottom:0}
+.quote .arq{font-family:Amiri,serif;font-size:1.45rem;line-height:1.9;color:var(--night);direction:rtl;text-align:right;margin:0 0 6px}
+.quote .en{color:var(--ink);line-height:1.6;margin:0 0 4px}
+.quote .src{font-size:.85rem;color:var(--muted);font-weight:500}
+
+/* give */
+.tag{display:inline-block;font:700 .72rem Figtree,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#fff4dc;color:#8a5a00;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+label{display:block;font-weight:700;margin:14px 0 6px;font-size:.95rem}
+select,input[type=text],input[type=email],input[type=number]{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--mist);color:var(--ink);font:500 1.05rem Figtree,sans-serif}
+.packs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.chip{padding:10px 16px;border-radius:999px;background:var(--mist);color:var(--ink);border:1.5px solid var(--line);font:700 .95rem Figtree,sans-serif}
+.chip.on{background:var(--night);color:var(--lamp2);border-color:var(--night)}
+.row2{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+@media(max-width:420px){.row2{grid-template-columns:1fr}}
+#give{margin-top:18px;width:100%;padding:16px;font-size:1.08rem;box-shadow:0 8px 16px -8px rgba(245,185,74,.9)}
+#msg{margin:14px 0 0;font-weight:500;color:var(--ok);line-height:1.5}
+#msg.err{color:var(--bad)}
+#msg:empty{display:none}
+.small{font-size:.88rem;color:var(--muted);margin:12px 0 0;line-height:1.5}
+
+/* thanks + bank */
+#thanks{display:none;text-align:center}
+#thanks .ar{font-family:Amiri,serif;font-size:1.9rem;color:var(--night);margin:6px 0}
+#thanks p{margin:0 0 8px}
+dl{margin:0}
+dl div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+dl div:last-child{border-bottom:0}
+dt{color:var(--muted)}
+dd{margin:0;font-weight:700;text-align:right;word-break:break-word}
+.ways{margin:0;padding-left:20px;color:var(--muted);line-height:1.7}
+footer{text-align:center;color:var(--muted);padding:6px 16px 40px;font-size:.9rem}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" style="display:flex;align-items:center;gap:10px"><img src="logo.svg" alt="" width="36" height="36"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a>
+  <a href="index.html">Home</a>
+</header>
+
+<section class="hero">
+  <p class="bism" dir="rtl" lang="ar">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+  <h1>Sadaqah Jariyah</h1>
+  <p class="ar" dir="rtl" lang="ar">صدقة جارية</p>
+  <p class="lead">A gift that keeps giving. Help us teach the Qur'an and Islamic knowledge to more people, and let every lesson learned become a reward that keeps reaching you.</p>
+</section>
+
+<main>
+  <section class="card">
+    <h2>The words of Allah and His Messenger ﷺ</h2>
+    <p>Giving for the sake of Allah is never lost. Read what He and His Prophet ﷺ said about it.</p>
+
+    <blockquote class="quote" style="margin-inline:0">
+      <p class="arq" lang="ar">مَّثَلُ الَّذِينَ يُنفِقُونَ أَمْوَالَهُمْ فِي سَبِيلِ اللَّهِ كَمَثَلِ حَبَّةٍ أَنبَتَتْ سَبْعَ سَنَابِلَ فِي كُلِّ سُنبُلَةٍ مِّائَةُ حَبَّةٍ ۗ وَاللَّهُ يُضَاعِفُ لِمَن يَشَاءُ ۗ وَاللَّهُ وَاسِعٌ عَلِيمٌ</p>
+      <p class="en">"The example of those who spend their wealth in the way of Allah is like a seed that grows seven ears, in every ear a hundred grains. And Allah multiplies for whom He wills, and Allah is Vast and All-Knowing."</p>
+      <span class="src">Qur'an, Surah Al-Baqarah 2:261</span>
+    </blockquote>
+
+    <blockquote class="quote" style="margin-inline:0">
+      <p class="arq" lang="ar">إِذَا مَاتَ الإِنْسَانُ انْقَطَعَ عَنْهُ عَمَلُهُ إِلاَّ مِنْ ثَلاَثَةٍ: إِلاَّ مِنْ صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ</p>
+      <p class="en">The Messenger of Allah ﷺ said: "When a person dies, his deeds come to an end except for three: ongoing charity (sadaqah jariyah), knowledge from which people benefit, or a righteous child who prays for him."</p>
+      <span class="src">Sahih Muslim</span>
+    </blockquote>
+
+    <blockquote class="quote" style="margin-inline:0">
+      <p class="arq" lang="ar">مَنْ دَلَّ عَلَى خَيْرٍ فَلَهُ مِثْلُ أَجْرِ فَاعِلِهِ</p>
+      <p class="en">The Prophet ﷺ said: "Whoever guides to something good will have a reward like the one who does it."</p>
+      <span class="src">Sahih Muslim</span>
+    </blockquote>
+
+    <blockquote class="quote" style="margin-inline:0">
+      <p class="arq" lang="ar">مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ</p>
+      <p class="en">The Prophet ﷺ said: "Charity does not decrease wealth."</p>
+      <span class="src">Sahih Muslim</span>
+    </blockquote>
+  </section>
+
+  <section class="card">
+    <h2>Why your gift matters</h2>
+    <p>Sirajul Ummah Islamic Institute teaches Qur'an, Islamic studies and useful skills to students near and far. Your sadaqah helps us keep lessons affordable, add new courses and books, and reach students who could not otherwise learn. Every person who benefits from this knowledge is a continuing reward for you, in sha Allah.</p>
+  </section>
+
+  <section class="card" id="giveBox">
+    <span class="tag">Give · Sadaqah Jariyah</span>
+    <h2>Give for the sake of Allah</h2>
+    <p>Any amount is welcome. Choose your currency and give whatever amount your heart allows, then pay securely with your card, bank or mobile money.</p>
+
+    <label for="cur">Currency</label>
+    <select id="cur" aria-label="Currency"></select>
+
+    <label for="amt">Amount</label>
+    <input id="amt" type="number" inputmode="decimal" min="1" step="any" placeholder="Enter the amount you wish to give" aria-label="Amount">
+    <p class="small" id="minHint" style="margin:8px 0 0"></p>
+
+    <div class="row2">
+      <div><label for="nm">Your name <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="nm" type="text" autocomplete="name" placeholder="Your name"></div>
+      <div><label for="em">Your email</label><input id="em" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>
+    </div>
+
+    <label for="ded">In memory of / for someone <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <input id="ded" type="text" placeholder="e.g. my late father, my mother, my family">
+
+    <button type="button" id="give">Give sadaqah</button>
+    <p id="msg" role="status"></p>
+    <p class="small">Your payment is handled by Paystack (Naira) or Flutterwave (other currencies). We never see or keep your card details.</p>
+  </section>
+
+  <section class="card" id="thanks" aria-live="polite">
+    <p class="ar" dir="rtl" lang="ar">جَزَاكَ اللَّهُ خَيْرًا</p>
+    <h2>Jazakallahu khayran</h2>
+    <p id="thanksTxt">May Allah accept it from you, multiply your reward, and make it a continuing charity for you.</p>
+    <p dir="rtl" lang="ar" style="font-family:Amiri,serif;font-size:1.3rem;color:var(--night)">تَقَبَّلَ اللَّهُ مِنَّا وَمِنكُمْ</p>
+  </section>
+
+  <section class="card" id="bankBox" style="display:none">
+    <h2>Prefer a bank transfer?</h2>
+    <p>You can also send your sadaqah directly to the institute's account:</p>
+    <dl id="bankList"></dl>
+    <p class="small">After sending, please message us on the Contact page with your name so we can thank you.</p>
+  </section>
+
+  <section class="card">
+    <h2>Other ways to give</h2>
+    <ul class="ways">
+      <li>Tell your family and friends about the institute. "Whoever guides to something good has a reward like the one who does it."</li>
+      <li>Share our lessons and courses with someone who wants to learn.</li>
+      <li>Make dua for the teachers and students.</li>
+    </ul>
+  </section>
+</main>
+<footer>© Sirajul Ummah Islamic Institute · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Contact</a></footer>
+
+<script>
+// ===== Settings you may change =====
+// PUBLIC keys only. Never put a secret key in this file.
+var PAYSTACK_PUBLIC_KEY = "pk_live_8e4d823619421ca423c768f2b22acfdfb1864426";
+var FLW_PUBLIC_KEY = "FLWPUBK-bb9274fc861002f2236b26b6ab2fbe4e-X";
+
+// Optional: fill in to show a "bank transfer" box. Leave all three empty to hide it.
+var BANK = { bank: "", accountName: "", accountNumber: "" };
+
+// Currencies people can give in. "min" is the smallest amount allowed (the payment companies need a small minimum).
+var CURRENCIES = {
+  NGN: { name: "Nigerian Naira",        sym: "₦",    min: 500,  dec: 0 },
+  USD: { name: "US Dollar",             sym: "$",    min: 1,              dec: 2 },
+  GBP: { name: "British Pound",         sym: "£",    min: 1,               dec: 2 },
+  EUR: { name: "Euro",                  sym: "€",    min: 1,               dec: 2 },
+  SAR: { name: "Saudi Riyal",           sym: "SR",   min: 5,            dec: 2 },
+  AED: { name: "UAE Dirham",            sym: "AED",  min: 5,            dec: 2 },
+  QAR: { name: "Qatari Riyal",          sym: "QR",   min: 5,            dec: 2 },
+  CAD: { name: "Canadian Dollar",       sym: "CA$",  min: 1,               dec: 2 },
+  GHS: { name: "Ghana Cedi",            sym: "GH₵",  min: 10,          dec: 2 },
+  KES: { name: "Kenya Shilling",        sym: "KSh",  min: 100,     dec: 0 },
+  ZAR: { name: "South African Rand",    sym: "R",    min: 20,        dec: 2 },
+  UGX: { name: "Uganda Shilling",       sym: "USh",  min: 3000, dec: 0 },
+  TZS: { name: "Tanzania Shilling",     sym: "TSh",  min: 2000, dec: 0 },
+  RWF: { name: "Rwanda Franc",          sym: "RF",   min: 1000, dec: 0 },
+  ZMW: { name: "Zambian Kwacha",        sym: "ZK",   min: 20,          dec: 2 },
+  XAF: { name: "Central African CFA",   sym: "FCFA", min: 600,  dec: 0 },
+  XOF: { name: "West African CFA",      sym: "CFA",  min: 600,  dec: 0 },
+  EGP: { name: "Egyptian Pound",        sym: "E£",   min: 50,        dec: 0 }
+};
+// ===================================
+
+var $ = function (id) { return document.getElementById(id); };
+var cur = $("cur"), amt = $("amt"), msg = $("msg");
+
+Object.keys(CURRENCIES).forEach(function (k) {
+  var o = document.createElement("option");
+  o.value = k; o.textContent = k + " · " + CURRENCIES[k].name;
+  cur.appendChild(o);
+});
+
+function money(c, n) {
+  var d = CURRENCIES[c].dec;
+  return CURRENCIES[c].sym + " " + Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function say(t, bad) { msg.textContent = t; msg.className = bad ? "err" : ""; }
+
+function drawAmount() {
+  var c = CURRENCIES[cur.value];
+  amt.placeholder = "Enter the amount you wish to give";
+  var hint = $("minHint");
+  hint.textContent = "Smallest gift: " + money(cur.value, c.min).replace(/\.00$/, "");
+}
+// Start with the currency that suits the visitor's phone settings
+(function () {
+  try {
+    var region = ((navigator.language || "").split("-")[1] || "").toUpperCase();
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    var byRegion = { NG: "NGN", US: "USD", GB: "GBP", SA: "SAR", AE: "AED", QA: "QAR", CA: "CAD", GH: "GHS", KE: "KES", ZA: "ZAR", UG: "UGX", TZ: "TZS", RW: "RWF", ZM: "ZMW", EG: "EGP", CM: "XAF", GA: "XAF", SN: "XOF", CI: "XOF", BJ: "XOF", ML: "XOF", BF: "XOF", TG: "XOF" };
+    var byZone = { "Africa/Lagos": "NGN", "Asia/Riyadh": "SAR", "Asia/Dubai": "AED", "Asia/Qatar": "QAR", "Europe/London": "GBP", "Africa/Accra": "GHS", "Africa/Nairobi": "KES", "Africa/Johannesburg": "ZAR", "Africa/Kampala": "UGX", "Africa/Dar_es_Salaam": "TZS", "Africa/Kigali": "RWF", "Africa/Lusaka": "ZMW", "Africa/Cairo": "EGP", "Africa/Douala": "XAF", "Africa/Dakar": "XOF", "Africa/Abidjan": "XOF" };
+    var pick = byZone[tz] || byRegion[region] || "NGN";
+    if (CURRENCIES[pick]) cur.value = pick;
+  } catch (e) {}
+})();
+cur.onchange = drawAmount;
+drawAmount();
+
+// Optional bank box
+if (BANK.bank && BANK.accountName && BANK.accountNumber) {
+  $("bankBox").style.display = "block";
+  $("bankList").innerHTML =
+    "<div><dt>Bank</dt><dd></dd></div><div><dt>Account name</dt><dd></dd></div><div><dt>Account number</dt><dd></dd></div>";
+  var dds = $("bankList").querySelectorAll("dd");
+  dds[0].textContent = BANK.bank; dds[1].textContent = BANK.accountName; dds[2].textContent = BANK.accountNumber;
+}
+
+function thank(c, a, name) {
+  $("giveBox").style.display = "none";
+  $("thanks").style.display = "block";
+  $("thanksTxt").textContent = (name ? name + ", " : "") + "we received your sadaqah of " + money(c, a) + ". May Allah accept it from you, multiply your reward, and make it a continuing charity for you.";
+  window.scrollTo({ top: $("thanks").offsetTop - 20, behavior: "smooth" });
+}
+
+$("give").onclick = function () {
+  var c = cur.value, conf = CURRENCIES[c];
+  var a = Number(amt.value), email = $("em").value.trim(), name = $("nm").value.trim(), ded = $("ded").value.trim();
+  if (!(a >= conf.min)) { say("Please enter at least " + money(c, conf.min).replace(/\.00$/, "") + ".", true); return; }
+  if (a > 100000000) { say("That amount is too large. Please check it.", true); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say("Please enter your email so your payment receipt can reach you.", true); return; }
+  a = Math.round(a * Math.pow(10, conf.dec)) / Math.pow(10, conf.dec);
+  say("Opening secure payment...", false);
+  var desc = "Sadaqah Jariyah" + (ded ? " - for " + ded : "");
+
+  if (c === "NGN") {
+    if (!window.PaystackPop) { say("Payment system did not load. Check your internet and refresh.", true); return; }
+    PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email,
+      amount: Math.round(a * 100),
+      currency: "NGN",
+      ref: "sadaqah_" + Date.now() + "_" + Math.floor(Math.random() * 1e6),
+      metadata: { purpose: "sadaqah-jariyah", donor: name, dedication: ded,
+        custom_fields: [{ display_name: "Purpose", variable_name: "purpose", value: desc }] },
+      callback: function () { thank(c, a, name); },
+      onClose: function () { if (msg.textContent.indexOf("Opening") === 0) say("", false); }
+    }).openIframe();
+    return;
+  }
+
+  function open() {
+    if (!window.FlutterwaveCheckout) { say("Payment system did not load. Check your internet and try again.", true); return; }
+    window.FlutterwaveCheckout({
+      public_key: FLW_PUBLIC_KEY,
+      tx_ref: "SJ-" + Date.now() + "-" + Math.floor(Math.random() * 1e6),
+      amount: a,
+      currency: c,
+      customer: { email: email, name: name || "Donor" },
+      meta: { purpose: "sadaqah-jariyah", dedication: ded },
+      customizations: { title: "Sirajul Ummah Islamic Institute", description: desc },
+      callback: function (r) {
+        if (r && r.status && r.status !== "successful" && r.status !== "completed") { say("The payment was not completed. You were not charged. Please try again.", true); return; }
+        thank(c, a, name);
+      },
+      onclose: function () { if (msg.textContent.indexOf("Opening") === 0) say("", false); }
+    });
+  }
+  if (window.FlutterwaveCheckout) return open();
+  var s = document.createElement("script");
+  s.src = "https://checkout.flutterwave.com/v3.js";
+  s.onload = open;
+  s.onerror = function () { say("Payment system did not load. Check your internet and try again.", true); };
+  document.head.appendChild(s);
+};
+</script>
+</body>
+</html>
