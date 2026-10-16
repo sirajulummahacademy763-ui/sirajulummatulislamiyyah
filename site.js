@@ -10,7 +10,7 @@ document.body.insertAdjacentHTML("afterbegin",
  '<header class="top"><a class="logo" href="index.html" style="display:flex;align-items:center;gap:10px"><img src="logo.svg" alt="" width="40" height="40"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a><button class="mb" type="button" aria-expanded="false" aria-controls="mainnav">\u2630 Menu</button><nav id="mainnav">'+
  nav.map(n=>'<a href="'+n[0]+'">'+n[1]+'</a>').join("")+
  cta+'</nav></header>');
-document.body.insertAdjacentHTML("beforeend",
+if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
  '<footer><div style="max-width:560px"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.2rem;color:#f5b94a">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur\u2019an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>'+
  '<div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a></div></footer>');
 const cat=new URLSearchParams(location.search).get("category");
@@ -41,10 +41,10 @@ if(!isPub){
   }).catch(()=>{});
 }
 // Copyright line on every page
-document.body.insertAdjacentHTML("beforeend",
+if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
  '<div style="background:var(--night,#12163b);color:#c9ccdf;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.<br>Website developed with Alpha Tech Hub</div>');
 // Help bot
-if(!isPub){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
+if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
 // Exams, certificates and classroom links
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
