@@ -1,92 +1,60 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hifz and Revision (admin) | Sirajul Ummah Islamic Institute</title>
+<title>Hifz and Revision Choices (admin) | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
-.ra{max-width:860px}
-.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
-.cd select{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-.hd,.row{display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;align-items:center}
-.hd{font-weight:700;font-size:.9rem;padding-bottom:8px;color:#12163a}
-.row{padding:9px 0;border-top:1px solid var(--line)}
-.row b{font-size:1.02rem}
-.row small.ar{display:block;font-family:Amiri,serif;font-size:1.05rem;color:#555}
-.row label{display:none;font-size:.8rem;font-weight:700;margin:0 0 3px}
-.gt{display:flex;gap:10px;flex-wrap:wrap}
-.gb{flex:1;min-width:150px;font:inherit;font-weight:700;padding:12px;border:2px solid var(--line);border-radius:12px;background:#fff;cursor:pointer}
-.gb.on{border-color:#f5b94a;background:#fff8e6}
-.b{font:inherit;font-weight:700;padding:11px 20px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
-.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
-@media(max-width:600px){.hd{display:none}.row{grid-template-columns:1fr;gap:6px}.row label{display:block}}
+.ch{max-width:900px}
+.hint{color:#555}
+.tl{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+.tl input{flex:1;min-width:180px;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.rw{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.rw b{color:#12163a}
+.rw small{display:block;color:#555}
+.b{font:inherit;font-weight:700;padding:9px 14px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.er{color:#b3261e;font-weight:500}.ok{color:#1c7a4d;font-weight:500}
 </style></head><body>
-<main class="page ra" id="app"><p>Checking access...</p></main>
+<main class="page ch" id="app"><p>Checking access...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs, doc, getDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-const AR = ["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر","الثالث عشر","الرابع عشر","الخامس عشر","السادس عشر","السابع عشر","الثامن عشر","التاسع عشر","العشرون","الحادي والعشرون","الثاني والعشرون","الثالث والعشرون","الرابع والعشرون","الخامس والعشرون","السادس والعشرون","السابع والعشرون","الثامن والعشرون","التاسع والعشرون","الثلاثون"];
-// two kinds of class for every juz: new memorization (hifz) and revision (muraja'a)
-const TR = [["hifz", "Hifz · حفظ", "h", "Qur'an Hifz"], ["revision", "Revision · مراجعة", "r", "Qur'an Revision"]];
-const cid = (t, n, g) => t + "__Juz-" + n + "-" + g;   // section + "__" + level, plus the gender
-let teachers = [], existing = {}, pub = {}, gen = "male";
-
+const TN = { hifz: "Hifz · حفظ", revision: "Revision · مراجعة", both: "Revise then memorize (old)" };
+let rows = [];
 onAuthStateChanged(auth, async u => {
-  if (!u) return $("app").innerHTML = '<h1>Hifz and Revision</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  if (!u) return $("app").innerHTML = '<h1>Hifz and Revision Choices</h1><p>Please <a href="login.html">log in</a> first.</p>';
   let ok = false;
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
-  if (!ok) return $("app").innerHTML = "<h1>Hifz and Revision</h1><p>You do not have access to this page.</p>";
-  try { await load(); draw(); }
-  catch (e) { $("app").innerHTML = '<h1>Hifz and Revision</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+  if (!ok) return $("app").innerHTML = "<h1>Hifz and Revision Choices</h1><p>You do not have access to this page.</p>";
+  try { await load(); draw(); } catch (e) { $("app").innerHTML = '<h1>Hifz and Revision Choices</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
-
 async function load() {
-  teachers = (await getDocs(collection(db, "teachers"))).docs.map(d => ({ id: d.id, name: d.data().name || d.id })).sort((a, b) => a.name.localeCompare(b.name));
-  existing = {};
-  (await getDocs(collection(db, "classrooms"))).docs.forEach(d => { if (d.id.indexOf("revision__") === 0 || d.id.indexOf("hifz__") === 0) existing[d.id] = d.data(); });
-  pub = {};
-  (await getDocs(collection(db, "revisionJuz"))).docs.forEach(d => { pub[d.id] = d.data(); });
+  const [cs, ss] = await Promise.all([getDocs(collection(db, "revisionChoices")), getDocs(collection(db, "students"))]);
+  const sg = {}; ss.docs.forEach(d => sg[d.id] = d.data());
+  rows = cs.docs.map(d => ({ id: d.id, ...d.data(), g: (sg[d.id] && sg[d.id].gender) || "" }))
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
-
 function draw(msg, good) {
-  let h = `<h1>Hifz and Revision · حفظ ومراجعة</h1>
-  <p>Boys and girls have separate classes, and a student can only enter the classes of the gender they chose at registration. Choose <b>Male</b> or <b>Female</b> below, set the teachers for that group, and tap Save all before you switch. For each juz, choose the teacher for <b>Hifz</b> (new memorization) and the teacher for <b>Revision</b> (muraja'a). It can be the same teacher for both, and one teacher can take many juz. Leave "No teacher" if a class is not available yet. Students choose a plan on the Hifz and Revision page: Hifz, Revision then Hifz, or Revision only.</p>
-  ${teachers.length ? "" : '<p class="er">No teachers yet. Add teachers on the Admin page first.</p>'}
-  <div class="cd gt"><button type="button" class="gb ${gen === "male" ? "on" : ""}" data-g="male">Male classes · ذكور</button><button type="button" class="gb ${gen === "female" ? "on" : ""}" data-g="female">Female classes · إناث</button></div>
-  <div class="cd"><div class="hd"><span>Juz</span><span>Hifz teacher · حفظ</span><span>Revision teacher · مراجعة</span></div>`;
-  const sel = (code, n, cur, lbl) => `<div><label>${lbl}</label><select id="${code}-${n}"><option value="">No teacher</option>${teachers.map(t => `<option value="${esc(t.id)}"${t.id === cur ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></div>`;
-  for (let n = 1; n <= 30; n++) {
-    const hc = (existing[cid("hifz", n, gen)] || {}).teacherId || "", rc = (existing[cid("revision", n, gen)] || {}).teacherId || "";
-    h += `<div class="row"><div><b>Juz ${n}</b><small class="ar">الجزء ${AR[n - 1]}</small></div>${sel("h", n, hc, "Hifz teacher · حفظ")}${sel("r", n, rc, "Revision teacher · مراجعة")}</div>`;
-  }
-  h += `</div><p><button class="b" id="sv" type="button">Save all</button> <span id="sm" class="${good ? "ok" : "er"}">${esc(msg || "")}</span></p>`;
-  $("app").innerHTML = h;
-  $("sv").onclick = save;
-  $("app").querySelectorAll("[data-g]").forEach(b => b.onclick = () => { gen = b.dataset.g; draw(); });
+  $("app").innerHTML = `<h1>Hifz and Revision Choices · اختيارات الطلاب</h1>
+  <p class="hint">A student who chose Hifz or Revision cannot change it. If a student chose wrongly, tap <b>Allow change</b>. This clears the choice, and the student can choose again on the Hifz &amp; Revision page.</p>
+  <p id="m" class="${good ? "ok" : "er"}">${esc(msg || "")}</p>
+  <div class="tl"><input id="q" placeholder="Search a student"></div><div id="rs"></div>`;
+  $("q").oninput = show; show();
 }
-
-async function save() {
-  $("sv").disabled = true;
-  try {
-    const b = writeBatch(db); let c = 0;
-    for (let n = 1; n <= 30; n++) for (const [track, , code, name] of TR) {
-      const v = $(code + "-" + n).value, t = teachers.find(x => x.id === v), id = cid(track, n, gen), ex = existing[id], ref = doc(db, "classrooms", id);
-      const base = { section: track, level: "Juz " + n, juz: n, gender: gen, title: name + " · Juz " + n + " · " + (gen === "male" ? "Male" : "Female"), teacherId: t ? t.id : "", teacherName: t ? t.name : "" };
-      const pb = pub[gen + "-" + track + "-" + n], pubChanged = pb ? (pb.teacherId || "") !== base.teacherId : !!t;
-      if (ex) {
-        if ((ex.teacherId || "") !== base.teacherId || ex.juz !== n) { b.update(ref, base); c++; }
-      } else if (t) {
-        b.set(ref, { ...base, status: "closed", sessionId: "", sessionTitle: "", studentsCanType: true, note: "", room: "siraj-" + Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8), createdAt: serverTimestamp() });
-        c++;
-      }
-      if (pubChanged || (ex && ex.juz !== n)) { b.set(doc(db, "revisionJuz", gen + "-" + track + "-" + n), { juz: n, track, gender: gen, teacherId: base.teacherId, teacherName: base.teacherName }); c++; }
-    }
-    if (!c) { $("sv").disabled = false; $("sm").textContent = "Nothing changed."; $("sm").className = "ok"; return; }
-    await b.commit(); await load(); draw("Saved.", true);
-  } catch (e) { $("sv").disabled = false; $("sm").textContent = "Failed: " + (e.code || e.message); $("sm").className = "er"; }
+function show() {
+  const q = $("q").value.trim().toLowerCase();
+  const r = rows.filter(x => !q || String(x.name).toLowerCase().includes(q));
+  $("rs").innerHTML = r.length ? r.map(x => `<div class="rw"><span><b>${esc(x.name || x.id)}</b><small>${esc(TN[x.track] || x.track)} · Juz ${esc(x.juz)}${x.g ? " · " + esc(x.g) : ""}</small></span><button class="b" type="button" data-id="${esc(x.id)}">Allow change</button></div>`).join("") : "<p>No choices yet.</p>";
+  $("rs").querySelectorAll("[data-id]").forEach(b => b.onclick = () => reset(b.dataset.id));
+}
+async function reset(id) {
+  const x = rows.find(r => r.id === id);
+  if (!confirm("Let " + (x.name || "this student") + " choose Hifz or Revision again?")) return;
+  try { await deleteDoc(doc(db, "revisionChoices", id)); rows = rows.filter(r => r.id !== id); draw((x.name || "Student") + " can choose again.", true); }
+  catch (e) { $("m").textContent = "Failed: " + (e.code || e.message); $("m").className = "er"; }
 }
 </script>
 </body></html>
