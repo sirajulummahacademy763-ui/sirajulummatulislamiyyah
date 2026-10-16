@@ -1,5 +1,5 @@
 // Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
-const PUBLIC=["about","contact","privacy","terms"];
+const PUBLIC=["about","contact","privacy","terms","donate"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
 if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
