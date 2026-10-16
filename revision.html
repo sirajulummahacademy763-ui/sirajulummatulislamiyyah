@@ -113,21 +113,23 @@ function planCard() {
 
 function draw() {
   let h = `<h1>حفظ ومراجعة القرآن<small>Qur'an Hifz and Revision</small></h1>
-    <p>Choose what you want to do, then choose your juz. You will see your teacher and enter the class. You follow one juz at a time, and you can change it later.</p>`;
+    <p>Choose Hifz or Revision, then choose your juz. You will see your teacher and enter the class. Your choice of Hifz or Revision is locked after you choose it, and only the admin can change it.</p>`;
   if (denied) h += '<p class="er">Some data could not be loaded. Please tell the admin that the Hifz and Revision pages need access rules.</p>';
   h += planCard();
   if (!selGender) { h += '<div class="cd"><b class="er">Your gender is not recorded on your account. Please tell the admin, so you can be placed in the right class.</b></div>'; $("app").innerHTML = h; return; }
   h += `<div class="cd"><h3>Your classes · فصولك</h3><p style="margin:2px 0 0">${esc(GEN[selGender].en)} classes · ${GEN[selGender].ar}. <small>This comes from the gender you chose when you registered.</small></p></div>`;
-  h += `<div class="cd"><h3>1. What do you want to do?</h3><div class="tk">` +
-    ["hifz", "both", "revision"].map(k => `<button type="button" data-t="${k}" class="${selTrack === k ? "sel" : ""}"><span class="ar">${TRK[k].ar}</span><b>${esc(TRK[k].en)}</b><small>${esc(TRK[k].d)}</small></button>`).join("") + `</div></div>`;
-  h += `<div class="cd"><h3>2. Choose your juz</h3><p style="margin:2px 0 0"><small>${selTrack ? "Tap a juz to confirm your plan. A juz with no teacher yet is greyed out." : "Choose what you want to do first."}</small></p><div class="jg">`;
+  const locked = !!(choice && TRK[choice.track]);
+  if (locked) h += `<div class="cd"><h3>1. What you chose · اختيارك</h3><p style="margin:2px 0 0"><b>${esc(TRK[choice.track].en)}</b> · ${TRK[choice.track].ar}</p><p style="margin:4px 0 0"><small>🔒 This is locked. Only the admin can change it. Please contact the admin if you need to change it.</small></p></div>`;
+  else h += `<div class="cd"><h3>1. What do you want to do?</h3><p style="margin:2px 0 0"><small>Choose carefully. After you choose, you cannot change it unless the admin allows it.</small></p><div class="tk">` +
+    ["hifz", "revision"].map(k => `<button type="button" data-t="${k}" class="${selTrack === k ? "sel" : ""}"><span class="ar">${TRK[k].ar}</span><b>${esc(TRK[k].en)}</b><small>${esc(TRK[k].d)}</small></button>`).join("") + `</div></div>`;
+  h += `<div class="cd"><h3>2. Choose your juz</h3><p style="margin:2px 0 0"><small>${selTrack ? (locked ? "You can move to another juz when you are ready. A juz with no teacher yet is greyed out." : "Tap a juz to confirm your plan. Your choice in step 1 will then be locked. A juz with no teacher yet is greyed out.") : "Choose what you want to do first."}</small></p><div class="jg">`;
   for (let n = 1; n <= 30; n++) {
     const mineHere = choice && choice.juz === n && choice.track === selTrack;
     h += `<button type="button" data-j="${n}" class="${mineHere ? "sel" : ""}${ready(n) ? "" : " no"}"><b>${n}</b><span class="ar">الجزء ${AR[n - 1]}</span><small>${selTrack && selGender ? esc(tileLine(n)) : "&nbsp;"}</small></button>`;
   }
   h += `</div><p id="rm" class="er"></p></div>`;
   $("app").innerHTML = h;
-  $("app").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { selTrack = b.dataset.t; draw(); });
+  $("app").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { if (!locked) { selTrack = b.dataset.t; draw(); } });
   $("app").querySelectorAll("[data-j]").forEach(b => b.onclick = () => pick(+b.dataset.j));
 }
 
@@ -136,7 +138,9 @@ async function pick(n) {
   if (!selTrack) return say("Choose what you want to do first (step 1).");
   if (!ready(n)) return say("This juz has no teacher yet for your choice.");
   if (choice && choice.juz === n && choice.track === selTrack) return;
-  if (choice && choice.juz && !confirm("Change your plan to Juz " + n + " (" + TRK[selTrack].en + ")?")) return;
+  if (choice && TRK[choice.track] && selTrack !== choice.track) return say("Your choice is locked. Only the admin can change it.");
+  if (choice && choice.juz) { if (!confirm("Move to Juz " + n + " (" + TRK[selTrack].en + ")?")) return; }
+  else if (!confirm("You are choosing " + TRK[selTrack].en + ", Juz " + n + ". After this you cannot change between Hifz and Revision unless the admin allows it. Continue?")) return;
   try {
     await setDoc(doc(db, "revisionChoices", uid), { juz: n, track: selTrack, name: myName, updatedAt: serverTimestamp() });
     choice = { juz: n, track: selTrack, name: myName }; await loadMine(); draw(); window.scrollTo({ top: 0, behavior: "smooth" });
