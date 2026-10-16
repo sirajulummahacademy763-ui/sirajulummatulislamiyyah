@@ -24,196 +24,206 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--night:#12163a;--deep:#1c2150;--lamp:#f5b94a;--mist:#eef0f8;--ink:#171a33;--line:#cfd3e8;--soft:#4b5072}
+:root{--night:#12163a;--deep:#1c2150;--lamp:#f5b94a;--gold:#b87d0c;--mist:#eef0f8;--ink:#171a33;--line:#cfd3e8;--soft:#4b5072}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:var(--mist);line-height:1.6}
 a{color:inherit}
-header{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px clamp(18px,5vw,64px);color:#fff}
-.logo{font-weight:700;text-decoration:none;display:flex;align-items:center;gap:10px}
-nav{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-nav a{text-decoration:none;font-weight:500}
-nav a:hover{color:var(--lamp)}
-.btn{display:inline-block;padding:12px 24px;border-radius:10px;background:var(--lamp);color:var(--night)!important;font-weight:700;text-decoration:none}
-.btn.dark{background:var(--night);color:#fff!important}
-.ghost{margin-left:16px;font-weight:700;color:#fff}
 .ar{font-family:Amiri,serif}
-.hero{background:radial-gradient(circle at 80% 40%,rgba(245,185,74,.38),transparent 48%),var(--night);color:#fff;padding:140px clamp(18px,5vw,64px) 70px;display:grid;grid-template-columns:7fr 4fr;gap:32px;align-items:center}
-.hero .arname{font-size:1.5rem;line-height:1.5;margin:0 0 4px}
-.hero .enname{opacity:.85;margin:0 0 22px;font-size:.95rem}
-.hero h1{font-family:Amiri,serif;font-size:clamp(2.4rem,5.4vw,4.4rem);line-height:1.1;margin:0 0 16px}
-.hero p.sub{max-width:52ch;font-size:1.1rem;opacity:.92;margin:0 0 26px}
-.hero img{width:100%;max-width:300px;justify-self:center;filter:drop-shadow(0 0 40px rgba(245,185,74,.5))}
-.pills{background:var(--deep);padding:16px clamp(18px,5vw,64px);display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.pills a{color:#fff;text-decoration:none;border:1.5px solid rgba(245,185,74,.5);border-radius:999px;padding:8px 18px;font-weight:500}
-.pills a:hover{background:var(--lamp);color:var(--night)}
-.pills .ar{font-size:1.2rem;margin-left:6px}
-.trust{background:#fff;border-bottom:1.5px solid var(--line);padding:14px clamp(18px,5vw,64px);display:flex;flex-wrap:wrap;gap:6px 28px;justify-content:center;font-weight:500;color:var(--soft);font-size:.95rem}
-.trust span:before{content:"\2713";color:#c78a14;font-weight:700;margin-right:7px}
-.intro{max-width:760px;margin:0 auto;padding:70px clamp(18px,5vw,40px) 30px;text-align:center}
-h2{font-family:Amiri,serif;font-size:2.4rem;margin:0 0 10px;line-height:1.15}
-.dept{display:grid;grid-template-columns:4fr 7fr;gap:40px;padding:70px clamp(18px,5vw,64px);align-items:start}
-.dept:nth-of-type(odd){background:#fff}
-.dept.dk{background:var(--night);color:#fff}
-.dept .word{font-family:Amiri,serif;font-size:clamp(70px,11vw,140px);line-height:1.1;color:#c78a14;margin:0}
-.dept.dk .word{color:var(--lamp);text-shadow:0 0 50px rgba(245,185,74,.4)}
-.dept small{display:block;font-weight:700;letter-spacing:.04em;color:var(--soft)}
-.dept.dk small{color:#cfd3e8}
-.dept ul{list-style:none;margin:18px 0 0;padding:0}
-.dept li{padding:12px 0;border-top:1.5px solid var(--line)}
-.dept.dk li{border-color:rgba(255,255,255,.18)}
-.dept li b{display:block}
-.dept li span{color:var(--soft)}
-.dept.dk li span{color:#cfd3e8}
-.wrap{max-width:1100px;margin:0 auto;padding:70px clamp(18px,5vw,64px)}
-.who{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px}
-.who div{padding:20px 18px 20px 0;border-top:2px solid var(--line)}
-.who b{display:block;font-size:1.1rem}
-.who span{color:var(--soft)}
-.steps{counter-reset:s;list-style:none;padding:0;margin:26px 0 0}
-.steps li{counter-increment:s;display:grid;grid-template-columns:56px 1fr;gap:14px;padding:18px 0;border-top:2px solid var(--line)}
-.steps li:before{content:counter(s);font-family:Amiri,serif;font-size:2.4rem;color:#c78a14;line-height:1}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;background:var(--lamp);color:var(--night)!important;font-weight:700;text-decoration:none}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.in{max-width:1080px;margin:0 auto;padding-left:clamp(18px,5vw,40px);padding-right:clamp(18px,5vw,40px)}
+
+/* hero: a greeting first, then the places a student goes every day */
+.hero{background:radial-gradient(circle at 88% 20%,rgba(245,185,74,.30),transparent 46%),var(--night);color:#fff;padding:44px 0 40px}
+.hero .in{display:grid;grid-template-columns:1fr auto;gap:12px 36px;align-items:center}
+.hello{text-align:left;font-family:Amiri,serif;font-size:1.5rem;color:var(--lamp);margin:0;line-height:1.4}
+.hero h1{font-family:Amiri,serif;font-size:clamp(2.2rem,7vw,3.6rem);line-height:1.1;margin:2px 0 8px;font-weight:700}
+.hero .lead{margin:0;max-width:44ch;color:#d6d9ee;font-size:1.05rem}
+.hero img{width:clamp(84px,18vw,190px);filter:drop-shadow(0 0 34px rgba(245,185,74,.45))}
+.go{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:22px}
+.go a{display:flex;flex-direction:column;gap:0;padding:14px 16px 12px;border:1.5px solid rgba(245,185,74,.45);border-radius:14px;text-decoration:none;color:#fff;background:rgba(255,255,255,.04);transition:background .15s,border-color .15s}
+.go a:hover{background:rgba(245,185,74,.16);border-color:var(--lamp)}
+.go .w{font-family:Amiri,serif;font-size:1.9rem;line-height:1.25;color:var(--lamp);text-align:right}
+.go .e{font-weight:600}
+.go .d{font-size:.85rem;color:#c3c7e2}
+@media(min-width:760px){.go{grid-template-columns:repeat(5,1fr)}.hero{padding:64px 0 52px}}
+
+/* who we are */
+.id{background:#fff;border-bottom:1.5px solid var(--line);padding:26px 0}
+.id .in{display:grid;gap:6px}
+.id .arname{text-align:left;font-size:1.35rem;line-height:1.6;margin:0;color:var(--night)}
+.id p{margin:0;color:var(--soft);max-width:70ch}
+.id a{font-weight:700;color:var(--night)}
+
+/* five paths: one list, tap a row to open it */
+.sec{padding:52px 0 8px}
+.sec h2,.how h2,.faq h2{font-family:Amiri,serif;font-size:clamp(1.8rem,5vw,2.4rem);line-height:1.2;margin:0 0 6px}
+.sec .sub{margin:0 0 22px;color:var(--soft);max-width:60ch}
+.paths{border-top:2px solid var(--night)}
+.paths details{border-bottom:1.5px solid var(--line)}
+.paths summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto 28px;gap:14px;align-items:center;padding:18px 0}
+.paths summary::-webkit-details-marker{display:none}
+.paths summary b{display:block;font-size:1.1rem}
+.paths summary span.t{display:block;color:var(--soft);font-size:.95rem}
+.paths summary .w{font-family:Amiri,serif;font-size:clamp(2rem,7vw,3rem);line-height:1.1;color:var(--gold)}
+.paths summary::after{content:"+";font-size:1.6rem;line-height:1;color:var(--night);text-align:center;transition:transform .2s}
+.paths details[open] summary::after{transform:rotate(45deg)}
+.paths ul{list-style:none;margin:0;padding:0 0 18px;display:grid;gap:0 32px}
+.paths li{padding:11px 0;border-top:1px solid var(--line)}
+.paths li b{display:block}
+.paths li span{color:var(--soft)}
+@media(min-width:760px){.paths ul{grid-template-columns:1fr 1fr}}
+
+/* who it is for */
+.for{padding:44px 0 0}
+.for h2{font-family:Amiri,serif;font-size:clamp(1.8rem,5vw,2.4rem);margin:0 0 14px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.who div{padding:14px 0;border-top:1.5px solid var(--line)}
+.who b{display:block}
+.who span{color:var(--soft);font-size:.95rem}
+@media(min-width:760px){.who{grid-template-columns:repeat(4,1fr)}}
+
+/* how learning works: a real sequence */
+.how{padding:52px 0 8px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:18px 0 0;display:grid;gap:0 40px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 0;border-top:1.5px solid var(--line)}
+.steps li:before{content:counter(s);font-family:Amiri,serif;font-size:2rem;color:var(--gold);line-height:1}
 .steps b{display:block}
 .steps span{color:var(--soft)}
-details{border-top:2px solid var(--line);padding:16px 0}
-summary{font-weight:700;cursor:pointer}
-details p{margin:8px 0 0;color:var(--soft)}
-.cta{background:var(--night);color:#fff;text-align:center;padding:80px clamp(18px,5vw,64px)}
-.cta p{max-width:52ch;margin:0 auto 26px;opacity:.9}
+@media(min-width:760px){.steps{grid-template-columns:1fr 1fr}}
+
+/* questions */
+.faq{padding-top:44px;padding-bottom:56px}
+.faq details.q{max-width:820px}
+details.q{border-top:1.5px solid var(--line);padding:15px 0}
+details.q:last-child{border-bottom:1.5px solid var(--line)}
+details.q summary{font-weight:700;cursor:pointer}
+details.q p{margin:8px 0 0;color:var(--soft)}
+
+/* sadaqah */
+.give{background:var(--night);color:#e6e8f6;padding:34px 0}
+.give .in{display:grid;gap:16px;align-items:center}
+.give p{margin:0;max-width:62ch}
+.give p b{font-family:Amiri,serif;font-size:1.4rem;color:var(--lamp);display:block;font-weight:700}
+@media(min-width:760px){.give .in{grid-template-columns:1fr auto}}
+
 footer{background:var(--night);color:#cfd3e8;padding:30px clamp(18px,5vw,64px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.12);font-size:.92rem}
 footer a{text-decoration:none;margin-right:16px}
-a:focus-visible,summary:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
-nav a.don{border:1.5px solid var(--lamp);border-radius:999px;padding:5px 14px;color:var(--lamp);font-weight:700}
-nav a.don:hover{background:var(--lamp);color:var(--night)}
-.give{background:linear-gradient(90deg,#fff4dc,#ffe9b8);border-bottom:1.5px solid #f0d28a;padding:14px clamp(18px,5vw,64px);display:flex;gap:12px 22px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center}
-.give p{margin:0;color:#4a3300;font-weight:500;max-width:60ch}
-.give p b{font-family:Amiri,serif;font-size:1.25rem;color:#3a2700}
-.give .btn{padding:9px 20px;white-space:nowrap}
-@media(max-width:820px){header{position:static;background:var(--night);flex-direction:column;align-items:flex-start}.hero{grid-template-columns:1fr;padding-top:50px}.hero img{max-width:160px;order:-1}.dept{grid-template-columns:1fr;gap:6px}.who{grid-template-columns:1fr 1fr}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.go a,.paths summary::after{transition:none}}
 html:not(.ok){visibility:hidden}
 </style>
 <script>window.SITE_HOME=true</script>
 <script src="site.js" defer></script>
 </head>
 <body>
-<div class="hero">
-  <div>
+<section class="hero">
+  <div class="in">
+    <div>
+      <p class="hello" dir="rtl" lang="ar">السلام عليكم ورحمة الله</p>
+      <h1 id="hi">Welcome back</h1>
+      <p class="lead">Your subjects, timetable and books are all here. Pick up where you left off.</p>
+    </div>
+    <img src="logo.svg" alt="Sirajul Ummah Islamic Institute logo">
+    <nav class="go" aria-label="Your pages">
+      <a href="subjects.html"><span class="w" dir="rtl" lang="ar">المواد</span><span class="e">Subjects</span><span class="d">Your classes and books</span></a>
+      <a href="timetable.html"><span class="w" dir="rtl" lang="ar">الجدول</span><span class="e">Timetable</span><span class="d">Your online lessons</span></a>
+      <a href="library.html"><span class="w" dir="rtl" lang="ar">المكتبة</span><span class="e">Library</span><span class="d">Books to read and download</span></a>
+      <a href="revision.html"><span class="w" dir="rtl" lang="ar">حفظ ومراجعة</span><span class="e">Hifz &amp; Revision</span><span class="d">Choose your juz</span></a>
+      <a href="wallet.html"><span class="w" dir="rtl" lang="ar">المحفظة</span><span class="e">My wallet</span><span class="d">Your coins</span></a>
+    </nav>
+  </div>
+</section>
+
+<section class="id">
+  <div class="in">
     <p class="arname ar" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</p>
-    <p class="enname">Sirajul Ummah Islamic Institute for Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning</p>
-    <p class="enname" style="margin-top:-12px">Founded by <a href="about.html" style="font-weight:700">Abdullahi Miftaudeen</a></p>
-    <h1>One institute. Five paths of knowledge.</h1>
-    <p class="sub">Memorize the Qur'an, master Arabic, study the Islamic sciences, learn Western subjects, and build technology skills, all online and at your own pace.</p>
-    <a class="btn" href="#programs">See everything we teach</a><a class="ghost" href="library.html">Open the library</a>
+    <p>Sirajul Ummah Islamic Institute for Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</p>
+    <p>Founded by <a href="about.html">Abdullahi Miftaudeen</a></p>
   </div>
-  <img src="logo.svg" alt="Sirajul Ummah Islamic Institute logo">
-</div>
-
-<nav class="pills" aria-label="Departments">
-  <a href="#quran"><span class="ar">القرآن</span> Qur'an</a><a href="#arabic"><span class="ar">العربية</span> Arabic</a><a href="#islamic"><span class="ar">الإسلامية</span> Islamic</a><a href="#western"><span class="ar">الغربية</span> Western</a><a href="#tech"><span class="ar">التقنية</span> Technology</a>
-</nav>
-
-<div class="trust" aria-label="Why learn with us">
-  <span>Free to create an account</span><span>Free digital library</span><span>Certificates you can verify online</span><span>Study on your phone or computer</span>
-</div>
-
-<div class="give">
-  <p><b>Sadaqah Jariyah</b> &nbsp;·&nbsp; The Prophet &#65018; said: &ldquo;When a person dies, his deeds end except three: ongoing charity, knowledge that benefits, or a righteous child who prays for him.&rdquo; Help more people learn.</p>
-  <a class="btn" href="donate.html">Give sadaqah</a>
-</div>
-
-<div class="intro" id="programs">
-  <h2>Everything we teach, in five departments</h2>
-  <p style="color:var(--soft)">Read what each path covers before you register. Choose one, or combine them.</p>
-</div>
-
-<section class="dept" id="quran">
-  <div><p class="word" dir="rtl" lang="ar">القرآن</p><small>QUR'AN MEMORIZATION</small></div>
-  <div><h2>Memorize with accuracy, recite with beauty</h2>
-  <ul>
-    <li><b>Hifz (memorization)</b><span>Start from the beginning or continue what you already know, at a steady pace.</span></li>
-    <li><b>Tajweed</b><span>The rules of correct recitation, from letter articulation to lengthening and stops.</span></li>
-    <li><b>Recitation practice</b><span>Learn to read fluently with correct pronunciation.</span></li>
-    <li><b>Revision (muraja'ah)</b><span>Review plans so what you memorize stays with you.</span></li>
-  </ul></div>
 </section>
 
-<section class="dept dk" id="arabic">
-  <div><p class="word" dir="rtl" lang="ar">العربية</p><small>ARABIC LANGUAGE</small></div>
-  <div><h2>Understand the language of the Qur'an</h2>
-  <ul>
-    <li><b>Reading and writing</b><span>The alphabet, vowels and connecting letters, from zero.</span></li>
-    <li><b>Vocabulary</b><span>Everyday words and the words that appear most in the Qur'an.</span></li>
-    <li><b>Grammar and word forms</b><span>Nahw and sarf, explained step by step.</span></li>
-    <li><b>Speaking and comprehension</b><span>Simple conversation and understanding Arabic texts.</span></li>
-  </ul></div>
-</section>
-
-<section class="dept" id="islamic">
-  <div><p class="word" dir="rtl" lang="ar">الإسلامية</p><small>ISLAMIC STUDIES</small></div>
-  <div><h2>Know your faith from reliable sources</h2>
-  <ul>
-    <li><b>Aqeedah</b><span>The foundations of belief.</span></li>
-    <li><b>Fiqh</b><span>The rulings of prayer, fasting, zakat, hajj and daily life.</span></li>
-    <li><b>Hadith and Tafsir</b><span>Understanding the Sunnah and the meanings of the Qur'an.</span></li>
-    <li><b>Seerah and Adab</b><span>The life of the Prophet ﷺ and the character that follows from it.</span></li>
-  </ul></div>
-</section>
-
-<section class="dept dk" id="western">
-  <div><p class="word" dir="rtl" lang="ar">الغربية</p><small>WESTERN STUDIES</small></div>
-  <div><h2>Modern academic knowledge, taught with good values</h2>
-  <ul>
-    <li><b>English language</b><span>Reading, writing and speaking.</span></li>
-    <li><b>Mathematics</b><span>From the basics upward, for school-age learners and adults.</span></li>
-    <li><b>Sciences</b><span>How the natural world works.</span></li>
-    <li><b>Social studies and history</b><span>Understanding the world and its past.</span></li>
-  </ul></div>
-</section>
-
-<section class="dept" id="tech">
-  <div><p class="word" dir="rtl" lang="ar">التقنية</p><small>TECHNOLOGY</small></div>
-  <div><h2>Practical technology skills, learned online</h2>
-  <ul>
-    <li><b>Computer and internet basics</b><span>Using devices, files and the web with confidence.</span></li>
-    <li><b>Digital safety</b><span>Protecting yourself and your family online.</span></li>
-    <li><b>Everyday digital tools</b><span>Typing, documents, email and online learning tools.</span></li>
-    <li><b>Web design and programming</b><span>Build websites and learn to code.</span></li>
-  </ul></div>
-</section>
-
-<div class="wrap">
-  <h2>Who it is for</h2>
-  <div class="who">
-    <div><b>Children</b><span>Gentle, structured steps for young learners.</span></div>
-    <div><b>Teenagers</b><span>Skills and knowledge alongside school.</span></div>
-    <div><b>Adults</b><span>Start or continue at any age.</span></div>
-    <div><b>Parents</b><span>Support your children's learning at home.</span></div>
+<section class="sec" id="programs">
+  <div class="in">
+    <h2>What we teach</h2>
+    <p class="sub">Five departments. Tap one to see what it covers.</p>
+    <div class="paths">
+      <details id="quran"><summary><span><b>Qur'an memorization</b><span class="t">Memorize with accuracy, recite with beauty</span></span><span class="w" dir="rtl" lang="ar">القرآن</span></summary>
+        <ul>
+          <li><b>Hifz (memorization)</b><span>Start from the beginning or continue what you already know, at a steady pace.</span></li>
+          <li><b>Tajweed</b><span>The rules of correct recitation, from letter articulation to lengthening and stops.</span></li>
+          <li><b>Recitation practice</b><span>Learn to read fluently with correct pronunciation.</span></li>
+          <li><b>Revision (muraja'ah)</b><span>Review plans so what you memorize stays with you.</span></li>
+        </ul></details>
+      <details id="arabic"><summary><span><b>Arabic language</b><span class="t">Understand the language of the Qur'an</span></span><span class="w" dir="rtl" lang="ar">العربية</span></summary>
+        <ul>
+          <li><b>Reading and writing</b><span>The alphabet, vowels and connecting letters, from zero.</span></li>
+          <li><b>Vocabulary</b><span>Everyday words and the words that appear most in the Qur'an.</span></li>
+          <li><b>Grammar and word forms</b><span>Nahw and sarf, explained step by step.</span></li>
+          <li><b>Speaking and comprehension</b><span>Simple conversation and understanding Arabic texts.</span></li>
+        </ul></details>
+      <details id="islamic"><summary><span><b>Islamic studies</b><span class="t">Know your faith from reliable sources</span></span><span class="w" dir="rtl" lang="ar">الإسلامية</span></summary>
+        <ul>
+          <li><b>Aqeedah</b><span>The foundations of belief.</span></li>
+          <li><b>Fiqh</b><span>The rulings of prayer, fasting, zakat, hajj and daily life.</span></li>
+          <li><b>Hadith and Tafsir</b><span>Understanding the Sunnah and the meanings of the Qur'an.</span></li>
+          <li><b>Seerah and Adab</b><span>The life of the Prophet &#65018; and the character that follows from it.</span></li>
+        </ul></details>
+      <details id="western"><summary><span><b>Western studies</b><span class="t">Modern academic knowledge, taught with good values</span></span><span class="w" dir="rtl" lang="ar">الغربية</span></summary>
+        <ul>
+          <li><b>English language</b><span>Reading, writing and speaking.</span></li>
+          <li><b>Mathematics</b><span>From the basics upward, for school-age learners and adults.</span></li>
+          <li><b>Sciences</b><span>How the natural world works.</span></li>
+          <li><b>Social studies and history</b><span>Understanding the world and its past.</span></li>
+        </ul></details>
+      <details id="tech"><summary><span><b>Technology</b><span class="t">Practical technology skills, learned online</span></span><span class="w" dir="rtl" lang="ar">التقنية</span></summary>
+        <ul>
+          <li><b>Computer and internet basics</b><span>Using devices, files and the web with confidence.</span></li>
+          <li><b>Digital safety</b><span>Protecting yourself and your family online.</span></li>
+          <li><b>Everyday digital tools</b><span>Typing, documents, email and online learning tools.</span></li>
+          <li><b>Web design and programming</b><span>Build websites and learn to code.</span></li>
+        </ul></details>
+    </div>
   </div>
-</div>
+</section>
 
-<div class="wrap" style="padding-top:0">
-  <h2>How it works</h2>
-  <ol class="steps">
-    <li><div><b>Create your free account</b><span>Tell us who you are and what you want to learn.</span></div></li>
-    <li><div><b>Choose your path</b><span>Pick one department or mix several.</span></div></li>
-    <li><div><b>Learn online</b><span>Study from your phone or computer, at your own pace.</span></div></li>
-    <li><div><b>Use your wallet</b><span>Your wallet keeps your coins for joining courses.</span></div></li>
-  </ol>
-</div>
+<section class="for">
+  <div class="in">
+    <h2>Who it is for</h2>
+    <div class="who">
+      <div><b>Children</b><span>Gentle, structured steps for young learners.</span></div>
+      <div><b>Teenagers</b><span>Skills and knowledge alongside school.</span></div>
+      <div><b>Adults</b><span>Start or continue at any age.</span></div>
+      <div><b>Parents</b><span>Support your children's learning at home.</span></div>
+    </div>
+  </div>
+</section>
 
-<div class="wrap" style="padding-top:0;max-width:820px">
+<section class="how">
+  <div class="in">
+    <h2>How learning works here</h2>
+    <ol class="steps">
+      <li><div><b>Your class is set</b><span>You chose your classes when you joined. They decide your subjects and timetable.</span></div></li>
+      <li><div><b>Open your subjects</b><span>Each subject shows its teacher and its book.</span></div></li>
+      <li><div><b>Join your lessons online</b><span>Your timetable shows each lesson in its own country's time, and in yours.</span></div></li>
+      <li><div><b>Use coins for books and courses</b><span>Your wallet keeps your coins. Add more from the wallet page.</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="in faq">
   <h2>Questions</h2>
-  <details><summary>Is it free to create an account?</summary><p>Yes. Creating an account costs nothing.</p></details>
-  <details><summary>Do I need any experience?</summary><p>No. Every department starts from the beginning.</p></details>
-  <details><summary>Can I study more than one department?</summary><p>Yes. Choose several interests when you register.</p></details>
-  <details><summary>How do I pay for courses?</summary><p>Through coins in your wallet. Check the wallet page after you log in.</p></details>
-</div>
+  <details class="q"><summary>Where do I find my books?</summary><p>Open Subjects. Each subject has its book. If you have not unlocked it yet, the button shows its price in coins.</p></details>
+  <details class="q"><summary>Where is my timetable?</summary><p>Open Timetable. The admin sets it for each class, term by term.</p></details>
+  <details class="q"><summary>How do I pay for books and courses?</summary><p>With coins from your wallet. Open My wallet to add coins.</p></details>
+  <details class="q"><summary>Can I change my class?</summary><p>Your class is fixed once you choose it. Contact the admin if it needs to change.</p></details>
+</section>
 
-<section class="cta">
-  <h2>Begin with the lamp of knowledge</h2>
-  <p>Your library, courses and wallet are ready for you.</p>
-  <a class="btn" href="library.html">Open the library</a>
+<section class="give">
+  <div class="in">
+    <p><b>Sadaqah Jariyah</b>The Prophet &#65018; said: &ldquo;When a person dies, his deeds end except three: ongoing charity, knowledge that benefits, or a righteous child who prays for him.&rdquo; Help more people learn.</p>
+    <a class="btn" href="donate.html">Give sadaqah</a>
+  </div>
 </section>
 
 <footer>
@@ -221,6 +231,19 @@ html:not(.ok){visibility:hidden}
   <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
 </footer>
   <div style="background:#12163a;color:#cfd3e8;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+// Greet the student by first name
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  let n = u.displayName || "";
+  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) n = s.data().name; } catch (e) {}
+  n = String(n).trim().split(/\s+/)[0];
+  if (n && n.indexOf("@") < 0) document.getElementById("hi").textContent = "Welcome back, " + n;
+});
+</script>
 <script type="module">import "./guard.js";</script>
   <script>
   // Keeps the Donate link in the top menu even if another script rebuilds the menu
