@@ -35,6 +35,24 @@ const DAYS = [[1, "Monday", "الاثنين"], [2, "Tuesday", "الثلاثاء"
 const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return esc(t); return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
 let plans = [];
+const MY = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return ""; } })();
+const tzName = z => String(z || "").split("/").pop().replace(/_/g, " ");
+const parts = (ms, tz, o) => Object.fromEntries(new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: tz, hourCycle: "h23" }, o)).formatToParts(new Date(ms)).map(p => [p.type, p.value]));
+const offMs = (ms, tz) => { const p = parts(ms, tz, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }); return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000; };
+// the next time this weekday/hour happens in zone tz, as a real moment; then shown in the student's own zone
+function mine(day, hhmm, tz) {
+  try {
+    const [h, mi] = hhmm.split(":").map(Number), now = Date.now();
+    const p = parts(now, tz, { year: "numeric", month: "2-digit", day: "2-digit" });
+    const wd = new Date(Date.UTC(+p.year, +p.month - 1, +p.day)).getUTCDay();
+    const d = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + ((day - wd + 7) % 7)));
+    const g = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), h, mi);
+    const ms = g - offMs(g, tz);
+    const f = parts(ms, MY, { weekday: "short", hour: "numeric", minute: "2-digit", hour12: true });
+    return { wd: f.weekday, t: f.hour + ":" + f.minute + " " + f.dayPeriod };
+  } catch (e) { return null; }
+}
+const dfmt = s => s ? new Date(s + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>My Timetable</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -51,7 +69,7 @@ onAuthStateChanged(auth, async u => {
 
 function draw(noClasses, failed) {
   const today = new Date().getDay();
-  let h = `<h1>الجدول · My Timetable<small>Your weekly online lessons</small></h1>
+  let h = `<h1>الجدول · My Timetable<small>Your online lessons for the term</small></h1>
     <p><a href="subjects.html">See my subjects and books</a></p>`;
   if (failed) h += `<p class="er">Some data could not be loaded (${esc(failed)}). Please refresh.</p>`;
   if (noClasses) h += '<div class="cd"><p class="no">You have not chosen your classes yet. Open the Home page and choose them, then come back here.</p></div>';
@@ -60,14 +78,20 @@ function draw(noClasses, failed) {
     let body = "";
     if (!slots.length) body = `<p class="no">The timetable for this class will be added soon.</p>`;
     else {
-      if (p.tz) body += `<p class="nt">Times are in ${esc(p.tz)}.</p>`;
+      const tm = p.term || {}, td = new Date().toISOString().slice(0, 10);
+      if (tm.name) body += `<p class="nt"><b>${esc(tm.name)}</b>${tm.start || tm.end ? " · " + esc(dfmt(tm.start)) + " – " + esc(dfmt(tm.end)) : ""}</p>`;
+      if (tm.end && td > tm.end) body += `<p class="er">This term has ended. The timetable for the next term will be added soon.</p>`;
+      else if (tm.start && td < tm.start) body += `<p class="nt">This term starts on ${esc(dfmt(tm.start))}.</p>`;
+      body += `<p class="nt">These lessons repeat every week of the term. Each time is shown in its own country time${MY ? ", and in your time (" + esc(tzName(MY)) + ")" : ""}.</p>`;
       DAYS.forEach(([d, en, a]) => {
         const ds = slots.filter(s => Number(s.day) === d).sort((x, y) => String(x.start).localeCompare(String(y.start)));
         if (!ds.length) return;
         body += `<div class="dy${d === today ? " today" : ""}"><h3>${en} · <span dir="rtl" lang="ar">${a}</span></h3>` + ds.map(s => {
           const w = String(s.where || "");
           const where = /^https?:\/\//i.test(w) ? `<a href="${esc(w)}" target="_blank" rel="noopener">Join class</a>` : (w ? esc(w) : "");
-          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span class="tx"><b>${esc(s.subject)}</b>` +
+          const z = s.tz || p.tzId || "Africa/Lagos", a1 = MY && MY !== z ? mine(d, s.start, z) : null, a2 = MY && MY !== z ? mine(d, s.end, z) : null;
+          const you = a1 && a2 && (a1.wd + a1.t !== en.slice(0, 3) + t12(s.start)) ? `<small>Your time: ${a1.wd} ${a1.t} – ${a2.t}</small>` : "";
+          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}<small>${esc(tzName(z))} time</small>${you}</span><span class="tx"><b>${esc(s.subject)}</b>` +
             `${s.teacher ? `<small>Teacher: ${esc(s.teacher)}</small>` : ""}${where ? `<small>${where}</small>` : ""}</span></div>`;
         }).join("") + "</div>";
       });
