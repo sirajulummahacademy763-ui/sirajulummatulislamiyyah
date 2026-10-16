@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Students by Country (admin) | Sirajul Ummah Islamic Institute</title>
+<title>Students and Teachers by Country (admin) | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
@@ -13,6 +13,7 @@
 .tl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
 .tl input{flex:1;min-width:180px;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
 .b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.b.alt{background:#fff;color:var(--night);border:1.5px solid var(--line)}
 .cr{background:#fff;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
 .ch{display:grid;grid-template-columns:34px 1.2fr 2fr 70px;gap:10px;align-items:center;padding:11px 14px;cursor:pointer;width:100%;border:0;background:none;font:inherit;text-align:left}
 .ch .n{color:#777;font-size:.85rem}
@@ -55,7 +56,7 @@ const key = raw => {
 const CANON = Object.fromEntries(Object.values(ALIAS).map(v => [v.toLowerCase(), v]));
 const title = k => CANON[k] || null;
 const cap = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
-let rows = [], list = [], total = 0;
+let G = { students: [], teachers: [] }, T = { students: 0, teachers: 0 }, tab = "students";
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>Students by Country</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -63,37 +64,48 @@ onAuthStateChanged(auth, async u => {
   try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!ok) return $("app").innerHTML = "<h1>Students by Country</h1><p>You do not have access to this page.</p>";
   try {
-    const s = await getDocs(collection(db, "students"));
-    const g = new Map();
-    s.docs.forEach(d => {
-      const x = d.data(), k = key(x.country) || "";
-      if (!g.has(k)) g.set(k, { k, n: 0, male: 0, female: 0, names: new Map(), st: [] });
-      const c = g.get(k); c.n++;
-      const gn = String(x.gender || "").toLowerCase(); if (gn === "male") c.male++; else if (gn === "female") c.female++;
-      const raw = String(x.country || "").trim(); if (raw) c.names.set(raw, (c.names.get(raw) || 0) + 1);
-      c.st.push({ name: x.name || x.email || d.id, state: x.state || "", gender: x.gender || "", at: x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null });
-    });
-    total = s.docs.length;
-    list = [...g.values()].map(c => {
-      const best = [...c.names.entries()].sort((a, b) => b[1] - a[1])[0];
-      c.label = !c.k ? "Not given" : (title(c.k) || cap(best ? best[0].trim().toLowerCase() : c.k));
-      c.st.sort((a, b) => (b.at || 0) - (a.at || 0));
-      return c;
-    }).sort((a, b) => (!a.k) - (!b.k) || b.n - a.n || a.label.localeCompare(b.label));
+    const [s, ts] = await Promise.all([getDocs(collection(db, "students")), getDocs(collection(db, "teachers"))]);
+    const tids = new Set(ts.docs.map(d => d.id));
+    // teachers also have a profile in "students", so keep them out of the student count and list them on their own
+    const sd = s.docs.filter(d => !tids.has(d.id)), td = s.docs.filter(d => tids.has(d.id));
+    const noProfile = ts.docs.filter(d => !s.docs.some(x => x.id === d.id)).map(d => ({ id: d.id, data: () => ({ name: d.data().name, email: d.data().email }) }));
+    G.students = group(sd); T.students = sd.length;
+    G.teachers = group(td.concat(noProfile)); T.teachers = td.length + noProfile.length;
     draw();
   } catch (e) { $("app").innerHTML = '<h1>Students by Country</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
 
+function group(docs) {
+  const g = new Map();
+  docs.forEach(d => {
+    const x = d.data(), k = key(x.country) || "";
+    if (!g.has(k)) g.set(k, { k, n: 0, male: 0, female: 0, names: new Map(), st: [] });
+    const c = g.get(k); c.n++;
+    const gn = String(x.gender || "").toLowerCase(); if (gn === "male") c.male++; else if (gn === "female") c.female++;
+    const raw = String(x.country || "").trim(); if (raw) c.names.set(raw, (c.names.get(raw) || 0) + 1);
+    c.st.push({ name: x.name || x.email || d.id, state: x.state || "", gender: x.gender || "", at: x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null });
+  });
+  return [...g.values()].map(c => {
+    const best = [...c.names.entries()].sort((a, b) => b[1] - a[1])[0];
+    c.label = !c.k ? "Not given" : (title(c.k) || cap(best ? best[0].trim().toLowerCase() : c.k));
+    c.st.sort((a, b) => (b.at || 0) - (a.at || 0));
+    return c;
+  }).sort((a, b) => (!a.k) - (!b.k) || b.n - a.n || a.label.localeCompare(b.label));
+}
+
 function draw() {
-  const real = list.filter(c => c.k), top = real[0];
-  $("app").innerHTML = `<h1>Students by Country · الطلاب حسب البلد</h1>
-  <p style="color:#555">Students are grouped by the country they typed when they registered.</p>
-  <div class="st"><div class="sc"><b>${total}</b><span>Students</span></div><div class="sc"><b>${real.length}</b><span>Countries</span></div><div class="sc"><b>${top ? esc(top.label) : "-"}</b><span>${top ? "Most students (" + top.n + ")" : "Top country"}</span></div></div>
-  <div class="tl"><input id="q" placeholder="Search a country"><button class="b" type="button" id="csv">Download list (CSV)</button></div>
+  const list = G[tab], total = T[tab], real = list.filter(c => c.k), top = real[0], W = tab === "students" ? "Students" : "Teachers";
+  $("app").innerHTML = `<h1>Students and Teachers by Country · حسب البلد</h1>
+  <p style="color:#555">Grouped by the country typed at registration. Students and teachers are counted separately.</p>
+  <div class="tl"><button class="b${tab === "students" ? "" : " alt"}" type="button" data-tab="students">Students (${T.students})</button><button class="b${tab === "teachers" ? "" : " alt"}" type="button" data-tab="teachers">Teachers (${T.teachers})</button></div>
+  <div class="st"><div class="sc"><b>${total}</b><span>${W}</span></div><div class="sc"><b>${real.length}</b><span>Countries</span></div><div class="sc"><b>${top ? esc(top.label) : "-"}</b><span>${top ? "Most " + W.toLowerCase() + " (" + top.n + ")" : "Top country"}</span></div></div>
+  <div class="tl"><input id="q" placeholder="Search a country"><button class="b" type="button" id="csv">Download ${W.toLowerCase()} list (CSV)</button></div>
   <div id="rs"></div>`;
+  $("app").querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; draw(); });
   $("q").oninput = show; $("csv").onclick = csv; show();
 }
 function show() {
+  const list = G[tab];
   const q = $("q").value.trim().toLowerCase(), max = Math.max(1, ...list.map(c => c.n));
   const r = list.filter(c => !q || c.label.toLowerCase().includes(q));
   $("rs").innerHTML = r.length ? r.map((c, i) => `<div class="cr"><button type="button" class="ch" data-i="${i}">
@@ -105,10 +117,11 @@ function show() {
   $("rs").querySelectorAll(".ch").forEach(b => b.onclick = () => b.parentNode.classList.toggle("open"));
 }
 function csv() {
+  const list = G[tab];
   const q = v => '"' + String(v).replace(/"/g, '""') + '"';
   const out = [["Country", "Students", "Male", "Female"].join(",")].concat(list.map(c => [q(c.label), c.n, c.male, c.female].join(",")));
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["﻿" + out.join("\n")], { type: "text/csv" })); a.download = "students-by-country.csv"; a.click();
+  a.href = URL.createObjectURL(new Blob(["﻿" + out.join("\n")], { type: "text/csv" })); a.download = tab + "-by-country.csv"; a.click();
 }
 </script>
 </body></html>
