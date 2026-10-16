@@ -52,10 +52,10 @@ const TRK = {
 const LBL = { revision: { ar: "مراجعة", en: "Revision", hint: "Revise what you know" }, hifz: { ar: "حفظ", en: "Hifz", hint: "Today's new portion" } };
 const need = t => t === "both" ? ["revision", "hifz"] : (t === "hifz" || t === "revision") ? [t] : [];
 const GEN = {
-  male: { ar: "ذكر · طالب", en: "Male", d: "Brothers." },
-  female: { ar: "أنثى · طالبة", en: "Female", d: "Sisters." }
+  male: { ar: "ذكر · طالب", en: "Male", d: "Brothers' classes." },
+  female: { ar: "أنثى · طالبة", en: "Female", d: "Sisters' classes." }
 };
-const cid = (t, n) => t + "__Juz-" + n;
+const cid = (t, n, g) => t + "__Juz-" + n + "-" + g;
 let uid = "", myName = "Student", pub = {}, rooms = {}, choice = null, selTrack = "", selGender = "", denied = false;
 
 onAuthStateChanged(auth, async u => {
@@ -65,14 +65,13 @@ onAuthStateChanged(auth, async u => {
   try { const s = await getDoc(doc(db, "students", uid)); if (s.exists()) { if (s.data().name) myName = s.data().name; profGender = String(s.data().gender || "").toLowerCase(); } } catch (e) {}
   await Promise.all([loadTeachers(), loadChoice()]);
   selTrack = choice && TRK[choice.track] ? choice.track : "";
-  let saved = ""; try { saved = localStorage.getItem("hifzGender") || ""; } catch (e) {}
-  selGender = GEN[saved] ? saved : (GEN[profGender] ? profGender : "");
+  selGender = GEN[profGender] ? profGender : "";
   await loadMine();
   draw();
 });
 
 async function loadTeachers() {
-  try { (await getDocs(collection(db, "revisionJuz"))).docs.forEach(d => { const x = d.data(); if (x.juz && x.track) pub[x.track + "-" + x.juz] = x; }); }
+  try { (await getDocs(collection(db, "revisionJuz"))).docs.forEach(d => { const x = d.data(); if (x.juz && x.track && x.gender) pub[x.gender + "-" + x.track + "-" + x.juz] = x; }); }
   catch (e) { if (e.code === "permission-denied") denied = true; }
 }
 async function loadChoice() {
@@ -81,60 +80,60 @@ async function loadChoice() {
 }
 async function loadMine() {
   rooms = {};
-  if (!choice || !choice.juz || !TRK[choice.track]) return;
+  if (!choice || !choice.juz || !TRK[choice.track] || !selGender) return;
   await Promise.all(need(choice.track).map(async t => {
-    try { const s = await getDoc(doc(db, "classrooms", cid(t, choice.juz))); if (s.exists()) rooms[t] = s.data(); } catch (e) {}
+    try { const s = await getDoc(doc(db, "classrooms", cid(t, choice.juz, selGender))); if (s.exists()) rooms[t] = s.data(); } catch (e) {}
   }));
 }
-const teacherOf = (t, n) => (pub[t + "-" + n] && pub[t + "-" + n].teacherId) ? (pub[t + "-" + n].teacherName || "Teacher") : "";
-const ready = n => !!selGender && !!selTrack && need(selTrack).every(t => teacherOf(t, n));
+const teacherOf = (t, n, g) => { const x = pub[g + "-" + t + "-" + n]; return (x && x.teacherId) ? (x.teacherName || "Teacher") : ""; };
+const ready = n => !!selGender && !!selTrack && need(selTrack).every(t => teacherOf(t, n, selGender));
 function tileLine(n) {
   if (!selTrack || !selGender) return "";
-  const ts = need(selTrack).map(t => teacherOf(t, n));
+  const ts = need(selTrack).map(t => teacherOf(t, n, selGender));
   if (ts.some(x => !x)) return "No teacher yet";
   return ts[0] === ts[ts.length - 1] ? ts[0] : ts.join(" · ");
 }
 const say = t => { if ($("rm")) $("rm").textContent = t; };
 
 function planCard() {
+  if (!selGender) return "";
   if (!choice || !choice.juz || !TRK[choice.track]) return choice ? '<div class="cd"><b>Please choose what you want to do and your juz again below.</b></div>' : "";
   const n = choice.juz, T = TRK[choice.track], both = choice.track === "both";
-  let h = `<div class="cd mine"><span>Your plan · خطتك</span><h2>Juz ${n} · الجزء ${AR[n - 1]}</h2><p><b>${esc(T.en)}</b> · ${T.ar}</p>`;
+  let h = `<div class="cd mine"><span>Your plan · خطتك</span><h2>Juz ${n} · الجزء ${AR[n - 1]}</h2><p><b>${esc(T.en)}</b> · ${T.ar}</p><p><small>${esc(GEN[selGender].en)} class · ${GEN[selGender].ar}</small></p>`;
   need(choice.track).forEach((t, i) => {
-    const r = rooms[t], tn = teacherOf(t, n), L = LBL[t], open = r && r.status === "open";
+    const r = rooms[t], tn = teacherOf(t, n, selGender), L = LBL[t], open = r && r.status === "open";
     h += `<div class="st"><span class="n">${both ? i + 1 : "✓"}</span><div class="tx"><b>${esc(L.en)} · ${L.ar}</b>${both ? ` <small>(${esc(L.hint)})</small>` : ""}<br>` +
       (tn ? `<small>Teacher: ${esc(tn)}</small><span class="badge ${open ? "on" : "off"}">${open ? "Live now" : "Closed"}</span>` +
         (r && r.schedDays && r.schedDays.length ? `<br><small>📅 ${esc(r.schedDays.map(d => DL[d]).join(", "))} at ${esc(r.schedTime || "")}</small>` : "")
         : "<small>No teacher yet for this class.</small>") + "</div>" +
-      (tn && r ? `<a class="b" href="classroom.html?id=${encodeURIComponent(cid(t, n))}">Enter class</a>` : "") + "</div>";
+      (tn && r ? `<a class="b" href="classroom.html?id=${encodeURIComponent(cid(t, n, selGender))}">Enter class</a>` : "") + "</div>";
   });
   return h + "</div>";
 }
 
 function draw() {
   let h = `<h1>حفظ ومراجعة القرآن<small>Qur'an Hifz and Revision</small></h1>
-    <p>First choose Male or Female. Then choose what you want to do, then choose your juz. You will see your teacher and enter the class. You follow one juz at a time, and you can change it later.</p>`;
+    <p>Choose what you want to do, then choose your juz. You will see your teacher and enter the class. You follow one juz at a time, and you can change it later.</p>`;
   if (denied) h += '<p class="er">Some data could not be loaded. Please tell the admin that the Hifz and Revision pages need access rules.</p>';
   h += planCard();
-  h += `<div class="cd"><h3>1. Are you male or female? · هل أنت ذكر أم أنثى؟</h3><div class="tk">` +
-    ["male", "female"].map(k => `<button type="button" data-g="${k}" class="${selGender === k ? "sel" : ""}"><span class="ar">${GEN[k].ar}</span><b>${esc(GEN[k].en)}</b><small>${esc(GEN[k].d)}</small></button>`).join("") + `</div></div>`;
-  h += `<div class="cd"><h3>2. What do you want to do?</h3><div class="tk">` +
+  if (!selGender) { h += '<div class="cd"><b class="er">Your gender is not recorded on your account. Please tell the admin, so you can be placed in the right class.</b></div>'; $("app").innerHTML = h; return; }
+  h += `<div class="cd"><h3>Your classes · فصولك</h3><p style="margin:2px 0 0">${esc(GEN[selGender].en)} classes · ${GEN[selGender].ar}. <small>This comes from the gender you chose when you registered.</small></p></div>`;
+  h += `<div class="cd"><h3>1. What do you want to do?</h3><div class="tk">` +
     ["hifz", "both", "revision"].map(k => `<button type="button" data-t="${k}" class="${selTrack === k ? "sel" : ""}"><span class="ar">${TRK[k].ar}</span><b>${esc(TRK[k].en)}</b><small>${esc(TRK[k].d)}</small></button>`).join("") + `</div></div>`;
-  h += `<div class="cd"><h3>3. Choose your juz</h3><p style="margin:2px 0 0"><small>${selGender && selTrack ? "Tap a juz to confirm your plan. A juz with no teacher yet is greyed out." : "Choose male or female, and what you want to do, first."}</small></p><div class="jg">`;
+  h += `<div class="cd"><h3>2. Choose your juz</h3><p style="margin:2px 0 0"><small>${selTrack ? "Tap a juz to confirm your plan. A juz with no teacher yet is greyed out." : "Choose what you want to do first."}</small></p><div class="jg">`;
   for (let n = 1; n <= 30; n++) {
     const mineHere = choice && choice.juz === n && choice.track === selTrack;
     h += `<button type="button" data-j="${n}" class="${mineHere ? "sel" : ""}${ready(n) ? "" : " no"}"><b>${n}</b><span class="ar">الجزء ${AR[n - 1]}</span><small>${selTrack && selGender ? esc(tileLine(n)) : "&nbsp;"}</small></button>`;
   }
   h += `</div><p id="rm" class="er"></p></div>`;
   $("app").innerHTML = h;
-  $("app").querySelectorAll("[data-g]").forEach(b => b.onclick = () => { selGender = b.dataset.g; try { localStorage.setItem("hifzGender", selGender); } catch (e) {} draw(); });
   $("app").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { selTrack = b.dataset.t; draw(); });
   $("app").querySelectorAll("[data-j]").forEach(b => b.onclick = () => pick(+b.dataset.j));
 }
 
 async function pick(n) {
-  if (!selGender) return say("Choose male or female first (step 1).");
-  if (!selTrack) return say("Choose what you want to do first (step 2).");
+  if (!selGender) return say("Your gender is not recorded on your account. Please tell the admin.");
+  if (!selTrack) return say("Choose what you want to do first (step 1).");
   if (!ready(n)) return say("This juz has no teacher yet for your choice.");
   if (choice && choice.juz === n && choice.track === selTrack) return;
   if (choice && choice.juz && !confirm("Change your plan to Juz " + n + " (" + TRK[selTrack].en + ")?")) return;
