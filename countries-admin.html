@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Students by Country (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.co{max-width:960px}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.sc{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.sc b{display:block;font-size:1.8rem;color:#12163a;line-height:1.1}
+.sc span{color:#555;font-size:.88rem}
+.tl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
+.tl input{flex:1;min-width:180px;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.cr{background:#fff;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.ch{display:grid;grid-template-columns:34px 1.2fr 2fr 70px;gap:10px;align-items:center;padding:11px 14px;cursor:pointer;width:100%;border:0;background:none;font:inherit;text-align:left}
+.ch .n{color:#777;font-size:.85rem}
+.ch .nm{font-weight:700;color:#12163a}
+.ch .nm small{display:block;font-weight:400;color:#555}
+.br{height:10px;background:#eceef7;border-radius:6px;overflow:hidden}
+.br i{display:block;height:100%;background:#f5b94a;border-radius:6px}
+.ch .ct{text-align:right;font-weight:700;font-size:1.1rem}
+.ls{border-top:1px solid var(--line);padding:6px 14px 10px;display:none}
+.cr.open .ls{display:block}
+.ls div{display:flex;gap:10px;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.ls div:last-child{border:0}
+.ls small{color:#555}
+.er{color:#b3261e;font-weight:500}
+@media(max-width:560px){.st{grid-template-columns:1fr 1fr}.ch{grid-template-columns:26px 1fr 54px}.ch .br{display:none}}
+</style></head><body>
+<main class="page co" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+// Students type their country themselves, so spellings differ ("nigeria", "Nigeria ", "NIGERIA"). We join the same country together.
+const ALIAS = {
+  "usa": "United States", "us": "United States", "u s a": "United States", "u s": "United States", "united states of america": "United States", "america": "United States", "united state": "United States",
+  "uk": "United Kingdom", "u k": "United Kingdom", "england": "United Kingdom", "great britain": "United Kingdom", "britain": "United Kingdom", "scotland": "United Kingdom", "wales": "United Kingdom",
+  "uae": "United Arab Emirates", "u a e": "United Arab Emirates", "dubai": "United Arab Emirates", "emirates": "United Arab Emirates",
+  "ksa": "Saudi Arabia", "saudi": "Saudi Arabia", "saudia": "Saudi Arabia", "saudi arabia kingdom": "Saudi Arabia",
+  "naija": "Nigeria", "nigerai": "Nigeria", "nig": "Nigeria", "federal republic of nigeria": "Nigeria",
+  "south africa republic": "South Africa", "cote d ivoire": "Ivory Coast", "côte d ivoire": "Ivory Coast",
+  "republic of ghana": "Ghana", "the gambia": "Gambia", "the netherlands": "Netherlands", "holland": "Netherlands",
+  "korea": "South Korea", "russia federation": "Russia", "ivory coast": "Ivory Coast", "uk england": "United Kingdom"
+};
+const key = raw => {
+  let k = String(raw || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z؀-ۿ ]+/g, " ").replace(/\s+/g, " ").trim();
+  if (k.startsWith("the ")) k = k.slice(4);
+  return ALIAS[k] ? ALIAS[k].toLowerCase() : k;
+};
+const CANON = Object.fromEntries(Object.values(ALIAS).map(v => [v.toLowerCase(), v]));
+const title = k => CANON[k] || null;
+const cap = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
+let rows = [], list = [], total = 0;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Students by Country</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Students by Country</h1><p>You do not have access to this page.</p>";
+  try {
+    const s = await getDocs(collection(db, "students"));
+    const g = new Map();
+    s.docs.forEach(d => {
+      const x = d.data(), k = key(x.country) || "";
+      if (!g.has(k)) g.set(k, { k, n: 0, male: 0, female: 0, names: new Map(), st: [] });
+      const c = g.get(k); c.n++;
+      const gn = String(x.gender || "").toLowerCase(); if (gn === "male") c.male++; else if (gn === "female") c.female++;
+      const raw = String(x.country || "").trim(); if (raw) c.names.set(raw, (c.names.get(raw) || 0) + 1);
+      c.st.push({ name: x.name || x.email || d.id, state: x.state || "", gender: x.gender || "", at: x.createdAt && x.createdAt.toDate ? x.createdAt.toDate() : null });
+    });
+    total = s.docs.length;
+    list = [...g.values()].map(c => {
+      const best = [...c.names.entries()].sort((a, b) => b[1] - a[1])[0];
+      c.label = !c.k ? "Not given" : (title(c.k) || cap(best ? best[0].trim().toLowerCase() : c.k));
+      c.st.sort((a, b) => (b.at || 0) - (a.at || 0));
+      return c;
+    }).sort((a, b) => (!a.k) - (!b.k) || b.n - a.n || a.label.localeCompare(b.label));
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Students by Country</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+function draw() {
+  const real = list.filter(c => c.k), top = real[0];
+  $("app").innerHTML = `<h1>Students by Country · الطلاب حسب البلد</h1>
+  <p style="color:#555">Students are grouped by the country they typed when they registered.</p>
+  <div class="st"><div class="sc"><b>${total}</b><span>Students</span></div><div class="sc"><b>${real.length}</b><span>Countries</span></div><div class="sc"><b>${top ? esc(top.label) : "-"}</b><span>${top ? "Most students (" + top.n + ")" : "Top country"}</span></div></div>
+  <div class="tl"><input id="q" placeholder="Search a country"><button class="b" type="button" id="csv">Download list (CSV)</button></div>
+  <div id="rs"></div>`;
+  $("q").oninput = show; $("csv").onclick = csv; show();
+}
+function show() {
+  const q = $("q").value.trim().toLowerCase(), max = Math.max(1, ...list.map(c => c.n));
+  const r = list.filter(c => !q || c.label.toLowerCase().includes(q));
+  $("rs").innerHTML = r.length ? r.map((c, i) => `<div class="cr"><button type="button" class="ch" data-i="${i}">
+      <span class="n">${i + 1}</span>
+      <span class="nm">${esc(c.label)}<small>${c.male} male · ${c.female} female${c.n - c.male - c.female ? " · " + (c.n - c.male - c.female) + " not stated" : ""}</small></span>
+      <span class="br"><i style="width:${Math.max(4, Math.round(c.n / max * 100))}%"></i></span>
+      <span class="ct">${c.n}</span></button>
+      <div class="ls">${c.st.map(s => `<div><span>${esc(s.name)}${s.state ? "<small> · " + esc(s.state) + "</small>" : ""}</span><small>${esc(s.gender)}${s.at ? " · " + s.at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""}</small></div>`).join("")}</div></div>`).join("") : "<p>No country found.</p>";
+  $("rs").querySelectorAll(".ch").forEach(b => b.onclick = () => b.parentNode.classList.toggle("open"));
+}
+function csv() {
+  const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const out = [["Country", "Students", "Male", "Female"].join(",")].concat(list.map(c => [q(c.label), c.n, c.male, c.female].join(",")));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + out.join("\n")], { type: "text/csv" })); a.download = "students-by-country.csv"; a.click();
+}
+</script>
+</body></html>
