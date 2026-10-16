@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Subjects | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.sj{max-width:900px}
+.sj h1 small{font-family:Figtree,sans-serif;font-size:.5em;font-weight:500;color:#555;display:block}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+.cd h2{margin:0 0 2px;font-size:1.2rem}
+.cd .sec{color:#555;font-size:.9rem;margin:0 0 12px}
+.gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.sb{border:1.5px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;background:#fbfbfe}
+.sb b{font-size:1.05rem;color:#12163a}
+.sb .ar{font-family:Amiri,serif;font-size:1.3rem;color:#12163a;line-height:1.3}
+.sb small{color:#555}
+.bt{display:inline-block;margin-top:8px;font:inherit;font-weight:700;font-size:.9rem;padding:9px 14px;border-radius:10px;background:#f5b94a;color:#12163a;text-decoration:none;text-align:center}
+.bt.alt{background:#fff;border:1.5px solid var(--line);color:#12163a}
+.no{color:#555;margin:0}
+.lk{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 18px}
+.lk a{font-weight:700}
+.er{color:#b3261e;font-weight:500}
+</style></head><body>
+<main class="page sj" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SECS = [["islamic", "Arabic and Islamic Studies", "العلوم العربية والإسلامية"], ["western", "Western Studies", "الدراسات الغربية"], ["tech", "Technology", "التقنية"]];
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>My Subjects</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let classes = null, mine = new Set(), failed = "";
+  try {
+    const s = await getDoc(doc(db, "students", u.uid));
+    if (s.exists()) classes = s.data().classes || null;
+    const e = await getDocs(query(collection(db, "enrollments"), where("uid", "==", u.uid)));
+    mine = new Set(e.docs.map(d => d.data().courseId));
+  } catch (e) { failed = e.code || e.message; }
+  let h = `<h1>موادي · My Subjects<small>Your subjects for each of your classes</small></h1>
+    <div class="lk"><a href="timetable.html">See my timetable</a><a href="revision.html">Hifz &amp; Revision</a><a href="library.html">Library</a><a href="courses.html">Extra courses</a></div>`;
+  if (failed) h += `<p class="er">Some data could not be loaded (${esc(failed)}). Please refresh.</p>`;
+  if (!classes) { $("app").innerHTML = h + '<div class="cd"><p class="no">You have not chosen your classes yet. Open the Home page and choose them, then come back here.</p></div>'; return; }
+  for (const [sec, name, ar] of SECS) {
+    const lvl = classes[sec];
+    if (!lvl) continue;
+    let plan = null;
+    try { const p = await getDoc(doc(db, "classPlans", planId(sec, lvl))); if (p.exists()) plan = p.data(); } catch (e) {}
+    let body;
+    if (!plan || !(plan.subjects || []).length) body = '<p class="no">The subjects for this class will be added soon.</p>';
+    else {
+      const cards = await Promise.all(plan.subjects.map(async s => {
+        let btn = "", book = null;
+        if (s.bookId) { try { const b = await getDoc(doc(db, "courses", s.bookId)); if (b.exists() && b.data().published !== false) book = b.data(); } catch (e) {} }
+        if (book) {
+          const cat = book.section || sec, p = Number(book.price) || 0;
+          btn = mine.has(s.bookId)
+            ? `<a class="bt" href="pdf.html?id=${encodeURIComponent(s.bookId)}&c=${encodeURIComponent(cat)}">Open book</a>`
+            : `<a class="bt alt" href="library.html?category=${encodeURIComponent(cat)}">Get book${p ? " · " + p + " coins" : ""}</a>`;
+        } else if (s.bookId) btn = '<small>Book coming soon</small>';
+        return `<div class="sb"><b>${esc(s.name)}</b>${s.nameAr ? `<span class="ar" dir="rtl" lang="ar">${esc(s.nameAr)}</span>` : ""}${s.teacher ? `<small>Teacher: ${esc(s.teacher)}</small>` : ""}${btn}</div>`;
+      }));
+      body = `<div class="gr">${cards.join("")}</div>`;
+    }
+    h += `<div class="cd"><h2>${esc(lvl)}</h2><p class="sec">${esc(name)} · <span dir="rtl" lang="ar">${ar}</span></p>${body}</div>`;
+  }
+  $("app").innerHTML = h;
+});
+</script>
+</body></html>

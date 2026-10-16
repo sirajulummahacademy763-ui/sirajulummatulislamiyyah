@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Timetable | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.tt{max-width:900px}
+.tt h1 small{font-family:Figtree,sans-serif;font-size:.5em;font-weight:500;color:#555;display:block}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+.cd h2{margin:0 0 2px;font-size:1.2rem}
+.cd .sec{color:#555;font-size:.9rem;margin:0 0 10px}
+.md{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+.md button{font:inherit;font-weight:700;padding:9px 16px;border-radius:20px;border:1.5px solid var(--line);background:#fff;color:#12163a;cursor:pointer}
+.md button.on{background:#12163a;color:#fff;border-color:#12163a}
+.dy{border-top:1px solid var(--line);padding:10px 0}
+.dy h3{margin:0 0 6px;font-size:1rem;color:#12163a}
+.dy.today h3::after{content:"Today";margin-left:8px;font-size:.72rem;font-weight:700;background:#f5b94a;color:#12163a;border-radius:20px;padding:2px 9px}
+.sl{display:flex;gap:12px;align-items:flex-start;padding:7px 0}
+.sl .tm{flex:none;min-width:128px;font-weight:700;color:#12163a}
+.sl .tx{flex:1;min-width:0}
+.sl small{color:#555;display:block}
+.sl a{font-weight:700}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;border-radius:20px;padding:1px 8px;margin-left:6px;background:#eef0fa;color:#33397a}
+.no{color:#555;margin:0}
+.nt{color:#555;font-size:.85rem;margin:0 0 12px}
+.er{color:#b3261e;font-weight:500}
+@media(max-width:520px){.sl{flex-direction:column;gap:2px}.sl .tm{min-width:0}}
+</style></head><body>
+<main class="page tt" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SECS = [["islamic", "Arabic and Islamic Studies", "العلوم العربية والإسلامية"], ["western", "Western Studies", "الدراسات الغربية"], ["tech", "Technology", "التقنية"]];
+const DAYS = [[1, "Monday", "الاثنين"], [2, "Tuesday", "الثلاثاء"], [3, "Wednesday", "الأربعاء"], [4, "Thursday", "الخميس"], [5, "Friday", "الجمعة"], [6, "Saturday", "السبت"], [0, "Sunday", "الأحد"]];
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return esc(t); return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
+let mode = "all", plans = [];
+try { mode = localStorage.getItem("ttMode") || "all"; } catch (e) {}
+if (!["all", "online", "physical"].includes(mode)) mode = "all";
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>My Timetable</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let classes = null, failed = "";
+  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists()) classes = s.data().classes || null; } catch (e) { failed = e.code || e.message; }
+  if (classes) for (const [sec, name, ar] of SECS) {
+    const lvl = classes[sec]; if (!lvl) continue;
+    let p = null;
+    try { const d = await getDoc(doc(db, "classPlans", planId(sec, lvl))); if (d.exists()) p = d.data(); } catch (e) {}
+    plans.push({ sec, name, ar, lvl, p });
+  }
+  draw(!classes, failed);
+});
+
+function draw(noClasses, failed) {
+  const today = new Date().getDay();
+  let h = `<h1>الجدول · My Timetable<small>Your weekly lessons</small></h1>
+    <p><a href="subjects.html">See my subjects and books</a></p>
+    <div class="md">${[["all", "All"], ["online", "Online"], ["physical", "Physical"]].map(([k, n]) => `<button type="button" data-m="${k}" class="${mode === k ? "on" : ""}">${n}</button>`).join("")}</div>`;
+  if (failed) h += `<p class="er">Some data could not be loaded (${esc(failed)}). Please refresh.</p>`;
+  if (noClasses) h += '<div class="cd"><p class="no">You have not chosen your classes yet. Open the Home page and choose them, then come back here.</p></div>';
+  plans.forEach(({ name, ar, lvl, p }) => {
+    const slots = ((p && p.slots) || []).filter(s => mode === "all" || (s.mode || "both") === "both" || s.mode === mode);
+    let body = "";
+    if (!slots.length) body = `<p class="no">${p && (p.slots || []).length ? "No lessons for this choice." : "The timetable for this class will be added soon."}</p>`;
+    else {
+      if (p.tz) body += `<p class="nt">Times are in ${esc(p.tz)}.</p>`;
+      DAYS.forEach(([d, en, a]) => {
+        const ds = slots.filter(s => Number(s.day) === d).sort((x, y) => String(x.start).localeCompare(String(y.start)));
+        if (!ds.length) return;
+        body += `<div class="dy${d === today ? " today" : ""}"><h3>${en} · <span dir="rtl" lang="ar">${a}</span></h3>` + ds.map(s => {
+          const w = String(s.where || "");
+          const where = /^https?:\/\//i.test(w) ? `<a href="${esc(w)}" target="_blank" rel="noopener">Join class</a>` : (w ? esc(w) : "");
+          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span class="tx"><b>${esc(s.subject)}</b>${s.mode && s.mode !== "both" ? `<span class="tag">${s.mode === "online" ? "Online" : "Physical"}</span>` : ""}` +
+            `${s.teacher ? `<small>Teacher: ${esc(s.teacher)}</small>` : ""}${where ? `<small>${where}</small>` : ""}</span></div>`;
+        }).join("") + "</div>";
+      });
+    }
+    h += `<div class="cd"><h2>${esc(lvl)}</h2><p class="sec">${esc(name)} · <span dir="rtl" lang="ar">${ar}</span></p>${body}</div>`;
+  });
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; try { localStorage.setItem("ttMode", mode); } catch (e) {} draw(noClasses, failed); });
+}
+</script>
+</body></html>
