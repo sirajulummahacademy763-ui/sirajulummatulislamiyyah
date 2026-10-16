@@ -3,7 +3,7 @@ const PUBLIC=["about","contact","privacy","terms"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
 if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
-const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["courses.html","Courses"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["wallet.html","My wallet"]];
+const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["wallet.html","My wallet"]];
 const cta=isPub?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML("beforeend",'<link rel="icon" href="logo.svg">');
 document.body.insertAdjacentHTML("afterbegin",
@@ -35,7 +35,7 @@ if(!isPub){
         l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
         nv.insertBefore(l,nv.querySelector("[data-logout]"));
       };
-      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");} }catch(e){}
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");} }catch(e){}
       try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher"); }catch(e){}
     });
   }).catch(()=>{});
