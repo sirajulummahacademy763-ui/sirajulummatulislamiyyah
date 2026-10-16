@@ -7,7 +7,7 @@ const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","C
 const cta=isPub?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML("beforeend",'<link rel="icon" href="logo.svg">');
 document.body.insertAdjacentHTML("afterbegin",
- '<header class="top"><a class="logo" href="index.html" style="display:flex;align-items:center;gap:10px"><img src="logo.svg" alt="" width="40" height="40"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a><nav>'+
+ '<header class="top"><a class="logo" href="index.html" style="display:flex;align-items:center;gap:10px"><img src="logo.svg" alt="" width="40" height="40"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a><button class="mb" type="button" aria-expanded="false" aria-controls="mainnav">\u2630 Menu</button><nav id="mainnav">'+
  nav.map(n=>'<a href="'+n[0]+'">'+n[1]+'</a>').join("")+
  cta+'</nav></header>');
 document.body.insertAdjacentHTML("beforeend",
@@ -53,4 +53,32 @@ if(!isPub)import("./notice-popup.js?v=5").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
+// Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=1">');
+if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#12163a">');
+(function(){
+ const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
+ const here=(location.pathname.split("/").pop()||"index.html");
+ const head=document.createElement("div");head.className="nvh";head.textContent="Staff tools";nv.appendChild(head);
+ let busy=false;
+ const tidy=()=>{if(busy)return;busy=true;let st=0;
+  nv.querySelectorAll(":scope>a").forEach(a=>{const h=(a.getAttribute("href")||"").split("?")[0];
+   if(/(^|\/)(admin|teacher)\.html$|-admin\.html$/.test(h)){a.classList.add("stf");st++}
+   a.classList.toggle("on",h===here||(here===""&&h==="index.html"))});
+  head.classList.toggle("show",st>0);busy=false};
+ new MutationObserver(tidy).observe(nv,{childList:true});tidy();
+ const set=o=>{hd.classList.toggle("open",o);mb.setAttribute("aria-expanded",o?"true":"false");mb.innerHTML=o?"\u2715 Close":"\u2630 Menu"};
+ mb.onclick=e=>{e.stopPropagation();set(!hd.classList.contains("open"))};
+ document.addEventListener("click",e=>{if(hd.classList.contains("open")&&!hd.contains(e.target))set(false)});
+ nv.addEventListener("click",e=>{if(e.target.closest("a"))set(false)});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")set(false)});
+})();
+(function(){
+ let n=0;const iv=setInterval(()=>{n++;const m=document.querySelector("main.page");
+  if(m&&!m.querySelector(".jb")){const cs=[...m.querySelectorAll(".cd")].filter(c=>c.querySelector(":scope>h2"));
+   if(cs.length>=5){const bar=document.createElement("div");bar.className="jb";
+    cs.forEach((c,i)=>{c.id=c.id||"sec"+i;const a=document.createElement("a");a.href="#"+c.id;a.textContent=c.querySelector(":scope>h2").textContent.trim();bar.appendChild(a)});
+    const h1=m.querySelector("h1");(h1?h1.after(bar):m.prepend(bar));clearInterval(iv)}}
+  if(n>40)clearInterval(iv)},250);
+})();
 import("./lang.js");
