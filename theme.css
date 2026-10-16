@@ -1,0 +1,65 @@
+/* Shared look for every page that uses site.js: header menu, headings, cards, forms, buttons.
+   Loaded after site.css, so it only tidies things up. */
+:root{--r:16px;--sh:0 8px 24px -14px rgba(18,22,58,.35)}
+html{-webkit-text-size-adjust:100%}
+body{line-height:1.55}
+
+/* ---------- Header and menu ---------- */
+header.top{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap;padding:10px 16px}
+header.top .logo{min-width:0;font-size:.95rem}
+header.top .logo img{flex:none}
+header.top .mb{flex:none;font:inherit;font-weight:700;font-size:.95rem;color:#fff;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.28);border-radius:12px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+header.top .mb:hover,header.top.open .mb{background:#f5b94a;color:#12163a;border-color:#f5b94a}
+header.top nav{display:none;position:absolute;top:100%;left:0;right:0;max-height:calc(100vh - 70px);overflow:auto;background:#12163a;border-top:1px solid rgba(255,255,255,.14);box-shadow:0 22px 40px -18px rgba(0,0,0,.6);padding:14px 16px 18px;flex-wrap:wrap;gap:8px;align-items:stretch}
+header.top.open nav{display:flex}
+header.top nav>a{box-sizing:border-box;order:1;flex:1 1 calc(50% - 8px);min-width:140px;color:#fff;text-decoration:none;font-weight:500;font-size:.95rem;padding:11px 14px;border-radius:12px;background:rgba(255,255,255,.07);text-align:left;margin:0}
+header.top nav>a:hover{background:rgba(255,255,255,.16)}
+header.top nav>a.on{background:#f5b94a;color:#12163a;font-weight:700}
+header.top nav>a.stf{order:6;background:rgba(245,185,74,.12);border:1px solid rgba(245,185,74,.35);color:#ffe3a8}
+header.top nav>a.stf.on{background:#f5b94a;color:#12163a}
+header.top nav>.nvh{order:5;flex:1 1 100%;margin:10px 2px 0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#f5b94a;font-weight:700;display:none}
+header.top nav>.nvh.show{display:block}
+header.top nav>a[data-logout],header.top nav>a.btn{order:9;flex:1 1 100%;margin-top:8px;background:#f5b94a;color:#12163a!important;font-weight:700;text-align:center;border-radius:12px}
+@media(min-width:760px){
+  header.top nav{left:auto;right:16px;width:440px;border-radius:0 0 18px 18px;border:1px solid rgba(255,255,255,.14);border-top:0}
+}
+
+/* ---------- Page, headings ---------- */
+main.page{padding-left:16px;padding-right:16px;padding-bottom:56px}
+main.page h1{font-size:clamp(1.7rem,6vw,2.5rem);line-height:1.2;margin:.5em 0 .4em}
+main.page h2{font-size:clamp(1.15rem,4.2vw,1.45rem);line-height:1.3}
+main.page h3{line-height:1.3}
+
+/* ---------- Cards ---------- */
+main.page .cd{border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+main.page .cd>h2:first-child,main.page .cd>h3:first-child{margin-top:0}
+main.page .cd>h2:first-child{padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--line,#dfe2f0)}
+
+/* ---------- Forms and buttons ---------- */
+main.page label{display:block;font-weight:600;font-size:.88rem;color:#2b2f55}
+main.page input:not([type=checkbox]):not([type=radio]):not([type=file]),main.page select,main.page textarea{min-height:44px;border-radius:10px;font:inherit;background:#fff}
+main.page textarea{min-height:90px}
+main.page input:focus,main.page select:focus,main.page textarea:focus{outline:3px solid rgba(245,185,74,.55);outline-offset:0;border-color:#f5b94a}
+main.page button,main.page .b{min-height:44px;border-radius:12px;transition:filter .15s,transform .05s}
+main.page button:not(:disabled):hover,main.page .b:hover{filter:brightness(1.08)}
+main.page button:active{transform:translateY(1px)}
+main.page button:disabled{opacity:.55;cursor:not-allowed}
+main.page .cd button.sm{min-height:36px}
+main.page input[type=checkbox],main.page input[type=radio]{width:20px;height:20px;accent-color:#12163a}
+
+/* ---------- Lists, rows, tables ---------- */
+main.page .it{gap:12px;padding:12px 0}
+main.page table{width:100%;border-collapse:collapse}
+main.page th{text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:#555}
+main.page th,main.page td{padding:10px 8px;border-bottom:1px solid var(--line,#dfe2f0)}
+main.page .ok,main.page .er{display:block;margin:8px 0 0}
+
+/* ---------- "Jump to" bar on long admin pages ---------- */
+.jb{position:sticky;top:64px;z-index:40;background:rgba(238,241,250,.94);backdrop-filter:blur(6px);margin:0 -16px 16px;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;border-bottom:1px solid var(--line,#dfe2f0);scrollbar-width:none}
+.jb::-webkit-scrollbar{display:none}
+.jb a{flex:none;font-size:.85rem;font-weight:600;color:#12163a;background:#fff;border:1.5px solid var(--line,#dfe2f0);border-radius:999px;padding:7px 13px;text-decoration:none}
+.jb a:hover{background:#f5b94a;border-color:#f5b94a}
+.cd[id]{scroll-margin-top:130px}
+
+footer{line-height:1.6}
+@media(max-width:520px){main.page{padding-left:14px;padding-right:14px}header.top .logo span span{font-size:1.05em}}
