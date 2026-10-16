@@ -35,7 +35,7 @@ if(!isPub){
         l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
         nv.insertBefore(l,nv.querySelector("[data-logout]"));
       };
-      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");} }catch(e){}
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");add("countries-admin.html","Students by Country (admin)");} }catch(e){}
       try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher"); }catch(e){}
     });
   }).catch(()=>{});
