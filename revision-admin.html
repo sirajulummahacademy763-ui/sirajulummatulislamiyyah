@@ -53,7 +53,7 @@ async function load() {
 
 function draw(msg, good) {
   let h = `<h1>Hifz and Revision · حفظ ومراجعة</h1>
-  <p>Boys and girls have separate classes. Choose <b>Male</b> or <b>Female</b> below, then set the teachers for that group, and tap Save all before switching. For each juz, choose the teacher for <b>Hifz</b> (new memorization) and the teacher for <b>Revision</b> (muraja'a). It can be the same teacher for both, and one teacher can take many juz. Leave "No teacher" if a class is not available yet. Students choose a plan on the Hifz and Revision page: Hifz, Revision then Hifz, or Revision only.</p>
+  <p>Boys and girls have separate classes, and a student can only enter the classes of the gender they chose at registration. Choose <b>Male</b> or <b>Female</b> below, set the teachers for that group, and tap Save all before you switch. For each juz, choose the teacher for <b>Hifz</b> (new memorization) and the teacher for <b>Revision</b> (muraja'a). It can be the same teacher for both, and one teacher can take many juz. Leave "No teacher" if a class is not available yet. Students choose a plan on the Hifz and Revision page: Hifz, Revision then Hifz, or Revision only.</p>
   ${teachers.length ? "" : '<p class="er">No teachers yet. Add teachers on the Admin page first.</p>'}
   <div class="cd gt"><button type="button" class="gb ${gen === "male" ? "on" : ""}" data-g="male">Male classes · ذكور</button><button type="button" class="gb ${gen === "female" ? "on" : ""}" data-g="female">Female classes · إناث</button></div>
   <div class="cd"><div class="hd"><span>Juz</span><span>Hifz teacher · حفظ</span><span>Revision teacher · مراجعة</span></div>`;
