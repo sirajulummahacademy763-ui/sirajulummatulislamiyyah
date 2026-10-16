@@ -241,6 +241,7 @@ onAuthStateChanged(auth, async u => {
   let n = u.displayName || "";
   try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) n = s.data().name; } catch (e) {}
   n = String(n).trim().split(/\s+/)[0];
+  if (n === n.toUpperCase()) n = n.charAt(0) + n.slice(1).toLowerCase();
   if (n && n.indexOf("@") < 0) document.getElementById("hi").textContent = "Welcome back, " + n;
 });
 </script>
