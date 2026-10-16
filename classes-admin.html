@@ -12,8 +12,9 @@
 .cd input,.cd select{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff;min-width:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .rw{border-top:1px solid var(--line);padding:10px 0;display:grid;gap:8px}
+.g3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
 .rw.sub{grid-template-columns:1.2fr 1.2fr 1fr 1.4fr auto;align-items:end}
-.rw.slot{grid-template-columns:1fr .8fr .8fr 1.2fr 1fr 1.4fr auto;align-items:end}
+.rw.slot{grid-template-columns:repeat(4,1fr);align-items:end}
 .rw label{margin:0 0 2px;font-size:.74rem}
 .hint{color:#555;font-size:.88rem;margin:2px 0 8px}
 .b{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
@@ -21,7 +22,7 @@
 .b.rm{padding:8px 12px;font-size:.85rem;background:#fff;color:#b3261e;border:1.5px solid #e8c4c1}
 .ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
 .bar{position:sticky;bottom:0;background:#fff;border-top:1.5px solid var(--line);padding:10px 0;margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-@media(max-width:820px){.g2{grid-template-columns:1fr}.rw.sub,.rw.slot{grid-template-columns:1fr 1fr}.rw .full{grid-column:1/-1}}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}.rw.sub,.rw.slot{grid-template-columns:1fr 1fr}.rw .full{grid-column:1/-1}}
 </style></head><body>
 <main class="page ca" id="app"><p>Checking access...</p></main>
 <script type="module">
@@ -39,8 +40,13 @@ const BC = {
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const DAYS = [[1, "Monday"], [2, "Tuesday"], [3, "Wednesday"], [4, "Thursday"], [5, "Friday"], [6, "Saturday"], [0, "Sunday"]];
 const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
-let sec = "islamic", lvl = BC.islamic[0], books = [], plan = blank(), loaded = false;
-function blank() { return { subjects: [], slots: [], tz: "Nigeria time (WAT, UTC+1)" }; }
+const TZS = (() => { let l = []; try { l = Intl.supportedValuesOf("timeZone"); } catch (e) {} if (!l.length) l = ["Africa/Lagos", "Africa/Accra", "Africa/Cairo", "Africa/Johannesburg", "Africa/Nairobi", "Europe/London", "Europe/Paris", "Asia/Riyadh", "Asia/Dubai", "Asia/Karachi", "Asia/Kolkata", "Asia/Kuala_Lumpur", "America/New_York", "America/Chicago", "America/Los_Angeles", "America/Toronto", "Australia/Sydney"]; if (!l.includes("UTC")) l.push("UTC"); return l; })();
+const offLabel = tz => { try { const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" }).formatToParts(new Date()).find(x => x.type === "timeZoneName"); return (p ? p.value : "").replace("GMT", "UTC") || "UTC"; } catch (e) { return ""; } };
+const tzOpts = cur => TZS.map(z => `<option value="${esc(z)}"${z === cur ? " selected" : ""}>${esc(z.replace(/_/g, " "))} (${esc(offLabel(z))})</option>`).join("");
+let lastTerm = {}; try { lastTerm = JSON.parse(localStorage.getItem("lastTerm") || "{}"); } catch (e) {}
+function blank() { return { subjects: [], slots: [], tzId: "Africa/Lagos", term: { name: lastTerm.name || "", start: lastTerm.start || "", end: lastTerm.end || "" } }; }
+
+let sec = "islamic", lvl = BC.islamic[0], books = [], plan = blank();
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>Classes and Timetable</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -58,7 +64,7 @@ async function loadBooks() {
 async function loadPlan() {
   const s = await getDoc(doc(db, "classPlans", planId(sec, lvl)));
   plan = blank();
-  if (s.exists()) { const d = s.data(); plan = { subjects: d.subjects || [], slots: d.slots || [], tz: d.tz || plan.tz }; }
+  if (s.exists()) { const d = s.data(); plan = { subjects: d.subjects || [], slots: d.slots || [], tzId: d.tzId || "Africa/Lagos", term: Object.assign({ name: "", start: "", end: "" }, d.term || {}) }; }
 }
 const bookOpts = cur => `<option value="">No book yet</option>` + books
   .slice().sort((a, b) => (a.section === sec ? 0 : 1) - (b.section === sec ? 0 : 1) || String(a.title).localeCompare(String(b.title)))
@@ -82,8 +88,14 @@ function draw(msg, good) {
       <div><button class="b rm" type="button" data-rm="subjects.${i}">Remove</button></div></div>`;
   });
   h += `<p><button class="b sm" type="button" id="addSub">+ Add subject</button></p></div>
-  <div class="cd"><h2>Timetable · الجدول</h2><p class="hint">Each row is one online lesson in the week. Use 24-hour times (for example 16:30).</p>
-    <label>Time zone note shown to students</label><input id="tz" value="${esc(plan.tz)}">`;
+  <div class="cd"><h2>Timetable · الجدول</h2><p class="hint">The timetable is for one <b>term</b>. Give the term a name and its start and end dates. Each lesson row below is repeated every week until the term ends. Use 24-hour times (for example 16:30). Next term, change the term and the lessons, then Save.</p>
+    <div class="g3">
+      <div><label>Term name</label><input id="tn" value="${esc(plan.term.name)}" placeholder="First Term 2026/2027"></div>
+      <div><label>Term starts</label><input id="ts" type="date" value="${esc(plan.term.start)}"></div>
+      <div><label>Term ends</label><input id="te" type="date" value="${esc(plan.term.end)}"></div>
+    </div>
+    <label>Time zone of this class (country time)</label><select id="tz">${tzOpts(plan.tzId)}</select>
+    <p class="hint">Pick the city or country whose time you are using. Students see the time in this zone and also in their own local time. If one lesson uses a different country's time, change it on that lesson.</p>`;
   plan.slots.forEach((s, i) => {
     h += `<div class="rw slot">
       <div><label>Day</label><select data-k="slots.${i}.day">${DAYS.map(([v, n]) => `<option value="${v}"${Number(s.day) === v ? " selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -92,6 +104,7 @@ function draw(msg, good) {
       <div><label>Subject</label><select data-k="slots.${i}.subject">${subOpts(s.subject)}</select></div>
       <div><label>Teacher</label><input data-k="slots.${i}.teacher" value="${esc(s.teacher)}"></div>
       <div><label>Class link (Zoom, Meet...)</label><input data-k="slots.${i}.where" value="${esc(s.where)}" placeholder="https://..."></div>
+      <div><label>Time zone of this lesson</label><select data-k="slots.${i}.tz"><option value="">Same as class</option>${tzOpts(s.tz)}</select></div>
       <div><button class="b rm" type="button" data-rm="slots.${i}">Remove</button></div></div>`;
   });
   h += `<p><button class="b sm" type="button" id="addSlot">+ Add lesson time</button></p></div>
@@ -102,9 +115,10 @@ function draw(msg, good) {
   $("app").innerHTML = h;
   $("sec").onchange = async e => { sec = e.target.value; lvl = BC[sec][0]; await loadPlan(); draw(); };
   $("lvl").onchange = async e => { lvl = e.target.value; await loadPlan(); draw(); };
-  $("tz").oninput = e => { plan.tz = e.target.value; };
+  $("tz").onchange = e => { plan.tzId = e.target.value; };
+  [["tn", "name"], ["ts", "start"], ["te", "end"]].forEach(([id, k]) => $(id).oninput = e => { plan.term[k] = e.target.value; });
   $("addSub").onclick = () => { plan.subjects.push({ name: "", nameAr: "", teacher: "", bookId: "" }); draw(); };
-  $("addSlot").onclick = () => { plan.slots.push({ day: 1, start: "", end: "", subject: "", teacher: "", where: "" }); draw(); };
+  $("addSlot").onclick = () => { plan.slots.push({ day: 1, start: "", end: "", subject: "", teacher: "", where: "", tz: "" }); draw(); };
   $("app").querySelectorAll("[data-k]").forEach(el => el.oninput = el.onchange = () => {
     const [arr, i, f] = el.dataset.k.split("."); plan[arr][+i][f] = el.value;
   });
@@ -125,6 +139,7 @@ async function copyPlan() {
     const d = s.data();
     plan.subjects = JSON.parse(JSON.stringify(d.subjects || []));
     plan.slots = JSON.parse(JSON.stringify(d.slots || []));
+    plan.tzId = d.tzId || plan.tzId;
     draw("Copied from " + l2 + ". Check it, then tap Save.", true);
   } catch (e) { draw("Could not copy: " + (e.code || e.message), false); }
 }
@@ -135,12 +150,16 @@ async function save() {
     name: String(s.name).trim(), nameAr: String(s.nameAr || "").trim(), teacher: String(s.teacher || "").trim(), bookId: s.bookId || ""
   }));
   const slots = plan.slots.filter(s => s.start && s.end && s.subject).map(s => ({
-    day: Number(s.day), start: s.start, end: s.end, subject: s.subject, teacher: String(s.teacher || "").trim(), where: String(s.where || "").trim()
+    day: Number(s.day), start: s.start, end: s.end, subject: s.subject, teacher: String(s.teacher || "").trim(), where: String(s.where || "").trim(), tz: s.tz || ""
   }));
   const dropped = plan.slots.length - slots.length;
+  const term = { name: String(plan.term.name || "").trim(), start: plan.term.start || "", end: plan.term.end || "" };
+  if (!term.name) { $("sv").disabled = false; return draw("Please give the term a name (for example First Term 2026/2027).", false); }
+  if (term.start && term.end && term.end < term.start) { $("sv").disabled = false; return draw("The term end date is before the start date.", false); }
   try {
-    await setDoc(doc(db, "classPlans", planId(sec, lvl)), { section: sec, level: lvl, subjects, slots, tz: String(plan.tz || "").trim(), updatedAt: serverTimestamp() });
-    plan.subjects = subjects; plan.slots = slots;
+    await setDoc(doc(db, "classPlans", planId(sec, lvl)), { section: sec, level: lvl, subjects, slots, tzId: plan.tzId || "Africa/Lagos", term, updatedAt: serverTimestamp() });
+    plan.subjects = subjects; plan.slots = slots; plan.term = term;
+    try { localStorage.setItem("lastTerm", JSON.stringify(term)); } catch (e) {}
     draw("Saved." + (dropped > 0 ? " " + dropped + " lesson row(s) were left out because the time or subject was empty." : ""), true);
   } catch (e) { $("sv").disabled = false; $("sm").textContent = "Failed: " + (e.code || e.message); $("sm").className = "er"; }
 }
