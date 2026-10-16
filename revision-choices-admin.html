@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hifz and Revision Choices (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ch{max-width:900px}
+.hint{color:#555}
+.tl{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}
+.tl input{flex:1;min-width:180px;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.rw{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.rw b{color:#12163a}
+.rw small{display:block;color:#555}
+.b{font:inherit;font-weight:700;padding:9px 14px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.er{color:#b3261e;font-weight:500}.ok{color:#1c7a4d;font-weight:500}
+</style></head><body>
+<main class="page ch" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const TN = { hifz: "Hifz · حفظ", revision: "Revision · مراجعة", both: "Revise then memorize (old)" };
+let rows = [];
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Hifz and Revision Choices</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Hifz and Revision Choices</h1><p>You do not have access to this page.</p>";
+  try { await load(); draw(); } catch (e) { $("app").innerHTML = '<h1>Hifz and Revision Choices</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+async function load() {
+  const [cs, ss] = await Promise.all([getDocs(collection(db, "revisionChoices")), getDocs(collection(db, "students"))]);
+  const sg = {}; ss.docs.forEach(d => sg[d.id] = d.data());
+  rows = cs.docs.map(d => ({ id: d.id, ...d.data(), g: (sg[d.id] && sg[d.id].gender) || "" }))
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+}
+function draw(msg, good) {
+  $("app").innerHTML = `<h1>Hifz and Revision Choices · اختيارات الطلاب</h1>
+  <p class="hint">A student who chose Hifz or Revision cannot change it. If a student chose wrongly, tap <b>Allow change</b>. This clears the choice, and the student can choose again on the Hifz &amp; Revision page.</p>
+  <p id="m" class="${good ? "ok" : "er"}">${esc(msg || "")}</p>
+  <div class="tl"><input id="q" placeholder="Search a student"></div><div id="rs"></div>`;
+  $("q").oninput = show; show();
+}
+function show() {
+  const q = $("q").value.trim().toLowerCase();
+  const r = rows.filter(x => !q || String(x.name).toLowerCase().includes(q));
+  $("rs").innerHTML = r.length ? r.map(x => `<div class="rw"><span><b>${esc(x.name || x.id)}</b><small>${esc(TN[x.track] || x.track)} · Juz ${esc(x.juz)}${x.g ? " · " + esc(x.g) : ""}</small></span><button class="b" type="button" data-id="${esc(x.id)}">Allow change</button></div>`).join("") : "<p>No choices yet.</p>";
+  $("rs").querySelectorAll("[data-id]").forEach(b => b.onclick = () => reset(b.dataset.id));
+}
+async function reset(id) {
+  const x = rows.find(r => r.id === id);
+  if (!confirm("Let " + (x.name || "this student") + " choose Hifz or Revision again?")) return;
+  try { await deleteDoc(doc(db, "revisionChoices", id)); rows = rows.filter(r => r.id !== id); draw((x.name || "Student") + " can choose again.", true); }
+  catch (e) { $("m").textContent = "Failed: " + (e.code || e.message); $("m").className = "er"; }
+}
+</script>
+</body></html>
