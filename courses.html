@@ -39,7 +39,7 @@ const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&am
 const TABS = [["all", "All"], ["islamic", "Qur'an and Islamic"], ["western", "Western studies"], ["tech", "Technology"], ["mine", "My courses"]];
 const baseC = s => String(s || "").replace(/ \d+$/, "");
 const sameClass = (a, b) => !!a && a !== "none" && (a === b || baseC(a) === b || a === baseC(b));
-let user, coins = 0, classes = null, courses = [], mine = new Set(), tab = "all";
+let ok = [], user, coins = 0, classes = null, courses = [], mine = new Set(), tab = "all";
 
 onAuthStateChanged(auth, u => { if (u) { user = u; load(); } });
 
@@ -55,7 +55,14 @@ async function load() {
     coins = st.exists() ? (st.data().coins || 0) : 0;
     classes = st.exists() ? (st.data().classes || null) : null;
     // Show only the courses of the student's chosen classes (courses already unlocked stay visible)
-    if (classes) courses = courses.filter(c => mine.has(c.id) || c.level === "All classes" || sameClass(classes[c.section], c.level));
+    // Extra courses are only for Thanawi 3 (islamic), SSS 3 (western) and Advanced (tech)
+    if (classes) {
+      if (classes.islamic === "Thanawi 3") ok.push("islamic");
+      if (classes.western === "SSS 3") ok.push("western");
+      if (classes.tech === "Advanced") ok.push("tech");
+    }
+    courses = courses.filter(c => mine.has(c.id) || (ok.includes(c.section) && (c.level === "All classes" || sameClass(classes[c.section], c.level))));
+    if (!ok.length && !courses.length) return location.replace("subjects.html");
     if (classes) {
       const n = v => !v || v === "none" ? "none" : v;
       $("mycl").textContent = "Your classes: " + n(classes.islamic) + " (Arabic and Islamic) · " + n(classes.western) + " (Western) · " + n(classes.tech) + " (Technology)";
@@ -66,7 +73,7 @@ async function load() {
 
 function draw() {
   $("coins").textContent = coins;
-  $("tabs").innerHTML = TABS.map(t => `<button type="button" data-t="${t[0]}" class="${t[0] === tab ? "on" : ""}">${t[1]}</button>`).join("");
+  $("tabs").innerHTML = TABS.filter(t => ["all", "mine"].includes(t[0]) || ok.includes(t[0])).map(t => `<button type="button" data-t="${t[0]}" class="${t[0] === tab ? "on" : ""}">${t[1]}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; draw(); });
   const r = courses.filter(c => tab === "all" || (tab === "mine" ? mine.has(c.id) : c.section === tab));
   if (!r.length) { $("list").innerHTML = `<p>${tab === "mine" ? "You have not unlocked any course yet." : "No courses for your class here yet. Please check back soon."}</p>`; return; }
