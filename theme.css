@@ -5,6 +5,9 @@ html{-webkit-text-size-adjust:100%}
 body{line-height:1.55}
 
 /* ---------- Header and menu ---------- */
+header.top{background:#12163a;color:#fff;flex-direction:row;align-items:center}
+header.top .logo{color:#fff;text-decoration:none;font-weight:700}
+header.top nav{flex-direction:row}
 header.top{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap;padding:12px clamp(16px,5vw,64px)}
 header.top .logo{min-width:0;font-size:.95rem}
 header.top .logo img{flex:none}
