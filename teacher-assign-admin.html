@@ -106,7 +106,7 @@ function draw(msg, good) {
   $("save").onclick = async () => {
     const t = teachers.find(x => x.id === tid);
     try {
-      await setDoc(doc(db, "teacherAssign", tid), { name: t ? t.name : "", items, updatedAt: serverTimestamp() });
+      await setDoc(doc(db, "teacherAssign", tid), { name: t ? t.name : "", items, classKeys: Array.from(new Set(items.map(i => i.section + "|" + i.level))), updatedAt: serverTimestamp() });
       all[tid] = items.slice(); draw("Saved.", true);
     } catch (e) { draw("Could not save: " + (e.code || e.message)); }
   };
