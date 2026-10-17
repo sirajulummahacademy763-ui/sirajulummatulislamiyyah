@@ -63,7 +63,7 @@ function nextClass(r) {
 }
 const weekStart = () => { const d = new Date(); const k = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - k); return d; };
 const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); };
-const me = { uid: "", name: "User", admin: false, teacher: false, classes: null };
+const me = { uid: "", name: "User", admin: false, teacher: false, classes: null, keys: new Set() };
 let unsubs = [];
 const tryGet = async ref => { try { return await getDoc(ref); } catch (e) { return null; } };
 
@@ -72,6 +72,7 @@ onAuthStateChanged(auth, async u => {
   me.uid = u.uid;
   const a = await tryGet(doc(db, "admins", u.uid)), t = await tryGet(doc(db, "teachers", u.uid)), s = await tryGet(doc(db, "students", u.uid));
   me.admin = !!(a && a.exists()); me.teacher = !!(t && t.exists());
+  if (me.teacher) { const ta = await tryGet(doc(db, "teacherAssign", u.uid)); if (ta && ta.exists()) me.keys = new Set(ta.data().classKeys || []); }
   const sd = s && s.exists() ? s.data() : {};
   me.classes = sd.classes || null;
   me.name = (t && t.exists() && t.data().name) || sd.name || u.email || "User";
@@ -88,7 +89,13 @@ async function list() {
     if (me.admin) docs = (await getDocs(collection(db, "classrooms"))).docs;
     else {
       const seen = new Set();
-      if (me.teacher) (await getDocs(query(collection(db, "classrooms"), where("teacherId", "==", me.uid)))).docs.forEach(d => { seen.add(d.id); docs.push(d); });
+      // Hifz and Revision rooms: the teacher set on the Hifz & Revision admin page
+      if (me.teacher) (await getDocs(query(collection(db, "classrooms"), where("teacherId", "==", me.uid), where("section", "in", ["hifz", "revision"])))).docs.forEach(d => { seen.add(d.id); docs.push(d); });
+      // other classes: only the ones the admin assigned to him or her (Assign Teachers page)
+      if (me.teacher) for (const k of me.keys) {
+        const [sec, lv] = k.split("|"), id = sec + "__" + slug(lv); if (seen.has(id)) continue;
+        try { const d = await getDoc(doc(db, "classrooms", id)); if (d.exists()) { seen.add(id); docs.push(d); } } catch (e) {}
+      }
       if (me.classes) for (const sec of Object.keys(BC)) {
         const lv = me.classes[sec]; if (!lv || lv === "none") continue;
         const id = sec + "__" + slug(lv); if (seen.has(id)) continue;
@@ -98,7 +105,7 @@ async function list() {
   } catch (e) { $("ls").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
   $("ls").innerHTML = docs.length ? docs.map(d => { const r = d.data(), open = r.status === "open", nx = nextClass(r);
     return `<div class="it"><span><b>${esc(r.title)}</b><br><small>Teacher: ${esc(r.teacherName || "")}${nx ? " · Next: " + esc(fmtWhen(nx)) : ""}</small><br><span class="badge ${open ? "on" : "off"}">${open ? "Live now" : "Closed"}</span></span><a class="b" href="classroom.html?id=${encodeURIComponent(d.id)}" style="text-decoration:none">Enter</a></div>`; }).join("")
-    : "<p>No classroom for you yet. The admin creates classrooms for each class.</p>";
+    : (me.teacher ? "<p>No classroom for you yet. The admin must assign a class to you (and create its classroom).</p>" : "<p>No classroom for you yet. The admin creates classrooms for each class.</p>");
 }
 
 function codeCard() {
@@ -145,7 +152,7 @@ async function newForm() {
   $("nw").innerHTML = `<div class="cd"><h2 style="margin-top:0">Create or update a classroom</h2>
     <label>Section</label><select id="ns">${Object.keys(SEC).map(k => `<option value="${k}">${SEC[k]}</option>`).join("")}</select>
     <label>Class</label><select id="nl"></select>
-    <label>Teacher</label><select id="nt">${ts.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
+    <label>Teacher name shown to students (the teachers who can enter are set in Assign Teachers)</label><select id="nt">${ts.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select>
     <p style="margin:12px 0 0"><button class="b" id="nb" type="button">Save classroom</button> <span id="nm"></span></p></div>`;
   const fill = () => { $("nl").innerHTML = BC[$("ns").value].map(l => `<option>${esc(l)}</option>`).join(""); };
   $("ns").onchange = fill; fill();
@@ -168,7 +175,7 @@ function room(id) {
   let R = null, sessions = {}, msgs = [], rendered = [], compKey = "", vidKey = "", vidMode = "", prevOpen = false, attended = "", rosterDone = false, latestKey = "", starsSeen = null;
   let rec = null, chunks = [], stream = null, tmr = null, secs = 0, blob = null, mime = "";
   let replyTo = null, quiz = null, qUnsub = null, qKey = "", myAns = null, qAns = [];
-  const staff = () => me.admin || (me.teacher && R && R.teacherId === me.uid);
+  const staff = () => me.admin || (me.teacher && R && (me.keys.has(R.section + "|" + R.level) || (R.teacherId === me.uid && (R.section === "hifz" || R.section === "revision"))));
   const kids = () => !staff() && R && ["Rawdatul Atfal 1", "Rawdatul Atfal 2", "Kindergarten (KG)"].includes(R.level);
   const low = () => { try { const v = localStorage.getItem("sirajLow"); return v === null ? !(me.admin || me.teacher) : v === "1"; } catch (e) { return !(me.admin || me.teacher); } };
   $("app").innerHTML = `<p><a href="classroom.html">← All classrooms</a></p><h1 id="rtt">Classroom</h1><p id="rs"></p><div id="note"></div><div id="tools"></div><div id="panel"></div><div id="vid"></div><div id="quiz"></div><div id="latest"></div><div id="chat" translate="no"></div><div id="rbar"></div><div class="cd" id="comp"></div>`;
