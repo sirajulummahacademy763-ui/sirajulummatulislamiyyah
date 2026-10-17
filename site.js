@@ -49,7 +49,7 @@ if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv&&nv.querySelector("[data-logout]");if(nv&&!nv.querySelector('a[href="classroom.html"]')){const a=document.createElement("a");a.href="classroom.html";a.textContent="Classroom";nv.insertBefore(a,lo)}}
-if(!isPub)import("./notice-popup.js?v=5").catch(()=>{});
+if(!isPub)import("./notice-popup.js?v=6").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
