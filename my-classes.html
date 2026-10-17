@@ -43,6 +43,7 @@ onAuthStateChanged(auth, async u => {
       const names = mine || subs.map(s => s.name);
       h += `<div class="cd"><h2>${esc(SN[i.section] || i.section)} · ${esc(i.level)}</h2>`;
       if (d.term && d.term.name) h += `<p class="hint">${esc(d.term.name)}${d.term.start ? " · " + esc(d.term.start) + " to " + esc(d.term.end || "") : ""}</p>`;
+      h += `<p><a class="b" style="text-decoration:none;display:inline-block;background:#12163a;color:#fff;padding:9px 16px;border-radius:10px;font-weight:700" href="classroom.html?id=${encodeURIComponent(i.section + "__" + i.level.replace(/[^A-Za-z0-9]+/g, "-"))}">Open classroom</a></p>`;
       if (!names.length) h += `<p class="hint">No subjects have been set for this class yet.</p>`;
       names.forEach(n => {
         const s = (d.subjects || []).find(x => x.name === n) || { name: n };
