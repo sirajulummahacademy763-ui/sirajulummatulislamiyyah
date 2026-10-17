@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Library | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script><script src="reciters-extra.js"></script><script src="reciters-female.js"></script><script src="books.js"></script>
@@ -327,13 +327,18 @@ function speak(i,cont,lang){
   const parts=chunk(ar?rows[i].ar:rows[i].en,ar?150:170);let p=0;
   const finish=()=>{if(my!==tok)return;if(cont&&i<rows.length-1)speak(i+1,true,lang);else{hi=-1;mark()}};
   // Arabic: use the phone's Arabic voice when it has one. If it has none (or stays silent), read it through an online Arabic voice instead.
-  const online=()=>{
+  const EP=["https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=","https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ar&q=","https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=ar&q="];
+  const online=(ep)=>{
     if(my!==tok)return;
+    ep=ep||0;
     if(p>=parts.length)return finish();
-    const a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q="+encodeURIComponent(parts[p++]));
-    gA=a;a.onended=online;
-    a.onerror=()=>{if(my!==tok)return;herr("Arabic could not be played. Check your internet, or install an Arabic voice in your phone's text-to-speech settings.");stopSpeak()};
-    a.play().catch(()=>{if(my!==tok)return;herr("Arabic could not be played. Tap Listen again, or check your internet.");stopSpeak()});
+    const txt=parts[p];
+    const bad=()=>{if(my!==tok)return;if(ep+1<EP.length)return online(ep+1);herr("Arabic could not be played right now. Tap Listen again in a moment.");stopSpeak()};
+    const a=new Audio();a.preload="auto";gA=a;
+    a.onended=()=>{p++;online(0)};
+    a.onerror=bad;
+    a.src=EP[ep]+encodeURIComponent(txt);
+    const pr=a.play();if(pr&&pr.catch)pr.catch(e=>{if(e&&e.name==="NotAllowedError"){if(my===tok){herr("Tap Listen in Arabic again to start the sound.");stopSpeak()}}else bad()});
   };
   const native=()=>{
     if(my!==tok)return;
