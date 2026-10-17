@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assign Teachers (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:860px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.cd h2{margin:0 0 6px;font-size:1.15rem}
+.cd label.l{display:block;font-size:.85rem;font-weight:700;margin:8px 0 3px}
+.cd select{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;background:#fff;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{color:#555;font-size:.88rem;margin:2px 0 8px}
+.b{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer}
+.b.rm{padding:7px 12px;font-size:.85rem;background:#fff;color:#b3261e;border:1.5px solid #e8c4c1}
+.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
+.as{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.as b{display:block}.as span{color:#4b5072;font-size:.92rem}
+.ck{display:flex;gap:8px;align-items:center;margin:6px 0;font-weight:500}
+.ck input{width:20px;height:20px;flex:none}
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin:6px 0 10px}
+.ov{width:100%;border-collapse:collapse;font-size:.92rem}
+.ov td,.ov th{border-top:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+@media(max-width:640px){.g2,.subs{grid-template-columns:1fr}.as{flex-direction:column}}
+</style></head><body>
+<main class="page ca" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const BC = {
+  islamic: ["Rawdatul Atfal 1", "Rawdatul Atfal 2", "Ibtidai 1", "Ibtidai 2", "Ibtidai 3", "I'dadi 1", "I'dadi 2", "I'dadi 3", "Thanawi 1", "Thanawi 2", "Thanawi 3"],
+  western: ["Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3"],
+  tech: ["Beginner", "Intermediate", "Advanced"]
+};
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+let teachers = [], all = {}, tid = "", items = [], sec = "islamic", lvl = BC.islamic[0], subs = [], pick = new Set(), whole = true, plans = {};
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Assign Teachers</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Assign Teachers</h1><p>You do not have access to this page.</p>";
+  try {
+    const t = await getDocs(collection(db, "teachers"));
+    teachers = t.docs.map(d => ({ id: d.id, name: d.data().name || d.data().email || d.id })).sort((a, b) => a.name.localeCompare(b.name));
+    const a = await getDocs(collection(db, "teacherAssign"));
+    a.docs.forEach(d => all[d.id] = d.data().items || []);
+    const p = await getDocs(collection(db, "classPlans"));
+    p.docs.forEach(d => plans[d.id] = d.data());
+    if (teachers.length) { tid = teachers[0].id; items = (all[tid] || []).slice(); }
+    await loadSubs(); draw();
+  } catch (e) { $("app").innerHTML = '<h1>Assign Teachers</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+async function loadSubs() {
+  const p = plans[planId(sec, lvl)];
+  subs = p ? (p.subjects || []).map(s => s.name).filter(Boolean) : [];
+  pick = new Set(); whole = true;
+}
+const label = i => `${SN[i.section] || i.section} · ${i.level}`;
+const same = (a, b) => a.section === b.section && a.level === b.level;
+
+function draw(msg, good) {
+  if (!teachers.length) { $("app").innerHTML = "<h1>Assign Teachers</h1><p>No teacher has registered yet.</p>"; return; }
+  let h = `<h1>Assign Teachers · تعيين المعلمين</h1>
+  <p class="hint">Choose a teacher, add the classes he or she teaches, then Save. The teacher sees these on the <b>My Classes</b> page.</p>
+  <div class="cd"><h2>1. Teacher</h2><select id="tc">${teachers.map(t => `<option value="${t.id}"${t.id === tid ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></div>
+  <div class="cd"><h2>2. Classes of this teacher</h2>`;
+  if (!items.length) h += `<p class="hint">No class yet.</p>`;
+  items.forEach((i, n) => {
+    h += `<div class="as"><div><b>${esc(label(i))}</b><span>${i.subjects && i.subjects.length ? esc(i.subjects.join(", ")) : "All subjects of the class"}</span></div><button class="b rm" type="button" data-rm="${n}">Remove</button></div>`;
+  });
+  h += `</div><div class="cd"><h2>3. Add a class</h2><div class="g2">
+    <div><label class="l">Section</label><select id="sc">${Object.keys(BC).map(k => `<option value="${k}"${k === sec ? " selected" : ""}>${SN[k]}</option>`).join("")}</select></div>
+    <div><label class="l">Class</label><select id="lv">${BC[sec].map(l => `<option${l === lvl ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></div></div>
+    <label class="ck"><input type="checkbox" id="wh"${whole ? " checked" : ""}> All subjects of this class</label>`;
+  if (!whole) {
+    h += subs.length ? `<div class="subs">${subs.map((s, n) => `<label class="ck"><input type="checkbox" data-s="${n}"${pick.has(s) ? " checked" : ""}> ${esc(s)}</label>`).join("")}</div>`
+      : `<p class="hint">This class has no subjects yet. Add them in Classes &amp; Timetable (admin) first, or tick “All subjects”.</p>`;
+  }
+  h += `<button class="b" type="button" id="add">Add this class</button></div>
+  <button class="b" type="button" id="save">Save for this teacher</button> <span class="${good ? "ok" : "er"}" id="msg">${esc(msg || "")}</span>`;
+  // overview of every teacher
+  const rows = teachers.map(t => { const it = t.id === tid ? items : (all[t.id] || []); return `<tr><td><b>${esc(t.name)}</b></td><td>${it.length ? it.map(i => esc(label(i)) + (i.subjects && i.subjects.length ? " (" + esc(i.subjects.join(", ")) + ")" : "")).join("<br>") : "<span class='hint'>none</span>"}</td></tr>`; }).join("");
+  h += `<div class="cd" style="margin-top:20px"><h2>All teachers</h2><table class="ov">${rows}</table></div>`;
+  $("app").innerHTML = h;
+  $("tc").onchange = e => { tid = e.target.value; items = (all[tid] || []).slice(); draw(); };
+  $("sc").onchange = async e => { sec = e.target.value; lvl = BC[sec][0]; await loadSubs(); draw(); };
+  $("lv").onchange = async e => { lvl = e.target.value; await loadSubs(); draw(); };
+  $("wh").onchange = e => { whole = e.target.checked; draw(); };
+  $("app").querySelectorAll("[data-s]").forEach(c => c.onchange = () => { const s = subs[+c.dataset.s]; c.checked ? pick.add(s) : pick.delete(s); });
+  $("app").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { items.splice(+b.dataset.rm, 1); draw("Removed. Tap Save to keep the change."); });
+  $("add").onclick = () => {
+    const it = { section: sec, level: lvl, subjects: whole ? [] : subs.filter(s => pick.has(s)) };
+    if (!whole && !it.subjects.length) return draw("Tick at least one subject, or choose All subjects.");
+    const k = items.findIndex(x => same(x, it));
+    if (k >= 0) { if (!it.subjects.length || !items[k].subjects.length) items[k].subjects = []; else items[k].subjects = Array.from(new Set(items[k].subjects.concat(it.subjects))); }
+    else items.push(it);
+    draw("Added. Tap Save to keep it.", true);
+  };
+  $("save").onclick = async () => {
+    const t = teachers.find(x => x.id === tid);
+    try {
+      await setDoc(doc(db, "teacherAssign", tid), { name: t ? t.name : "", items, updatedAt: serverTimestamp() });
+      all[tid] = items.slice(); draw("Saved.", true);
+    } catch (e) { draw("Could not save: " + (e.code || e.message)); }
+  };
+}
+</script></body></html>

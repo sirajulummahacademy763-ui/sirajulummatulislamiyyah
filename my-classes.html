@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Classes | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:860px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.cd h2{margin:0 0 8px;font-size:1.2rem}
+.hint{color:#555;font-size:.9rem;margin:2px 0 8px}
+.sb{border-top:1px solid var(--line);padding:10px 0}
+.sb b{font-size:1.02rem}.sb .ar{font-family:Amiri,serif;color:#b87d0c;margin-left:8px;font-size:1.15rem}
+.ls{list-style:none;margin:6px 0 0;padding:0;color:#4b5072;font-size:.92rem}
+.ls li{padding:2px 0}
+.er{color:#b3261e}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const DN = { 0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday" };
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>My Classes</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  try {
+    const t = await getDoc(doc(db, "teachers", u.uid));
+    if (!t.exists()) return $("app").innerHTML = "<h1>My Classes</h1><p>This page is for teachers.</p>";
+    const a = await getDoc(doc(db, "teacherAssign", u.uid));
+    const items = a.exists() ? (a.data().items || []) : [];
+    let h = `<h1>My Classes · فصولي</h1>`;
+    if (!items.length) return $("app").innerHTML = h + '<p class="hint">No class has been assigned to you yet. The admin will assign you soon.</p>';
+    h += `<p class="hint">The classes and subjects the admin assigned to you.</p>`;
+    for (const i of items) {
+      const p = await getDoc(doc(db, "classPlans", planId(i.section, i.level)));
+      const d = p.exists() ? p.data() : {};
+      const mine = i.subjects && i.subjects.length ? i.subjects : null;
+      const subs = (d.subjects || []).filter(s => !mine || mine.includes(s.name));
+      const names = mine || subs.map(s => s.name);
+      h += `<div class="cd"><h2>${esc(SN[i.section] || i.section)} · ${esc(i.level)}</h2>`;
+      if (d.term && d.term.name) h += `<p class="hint">${esc(d.term.name)}${d.term.start ? " · " + esc(d.term.start) + " to " + esc(d.term.end || "") : ""}</p>`;
+      if (!names.length) h += `<p class="hint">No subjects have been set for this class yet.</p>`;
+      names.forEach(n => {
+        const s = (d.subjects || []).find(x => x.name === n) || { name: n };
+        const sl = (d.slots || []).filter(x => x.subject === n).sort((x, y) => ((x.day + 6) % 7) - ((y.day + 6) % 7) || String(x.start).localeCompare(String(y.start)));
+        h += `<div class="sb"><b>${esc(n)}</b>${s.nameAr ? `<span class="ar" dir="rtl">${esc(s.nameAr)}</span>` : ""}`;
+        h += sl.length ? `<ul class="ls">${sl.map(x => `<li>${esc(DN[x.day])} · ${esc(x.start)}–${esc(x.end)} (${esc((x.tz || d.tzId || "Africa/Lagos").replace(/_/g, " "))})${x.where ? " · " + esc(x.where) : ""}</li>`).join("")}</ul>` : `<ul class="ls"><li>No lesson time set yet.</li></ul>`;
+        h += `</div>`;
+      });
+      h += `</div>`;
+    }
+    $("app").innerHTML = h;
+  } catch (e) { $("app").innerHTML = '<h1>My Classes</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+</script></body></html>
