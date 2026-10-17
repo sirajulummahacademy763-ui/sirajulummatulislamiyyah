@@ -43,7 +43,9 @@ css.textContent = `
 #nt-toast b{display:block;font-size:1.05rem;margin:6px 0 2px}
 #nt-toast p{margin:0;color:#d8dbef;font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #nt-toast .ar,#nt-modal .ar{direction:rtl;text-align:right;font-family:Amiri,serif}
-#nt-toast b.ar{font-size:1.25rem;color:#f5b94a;margin:2px 0 4px}
+#nt-toast .arx{border-top:1px solid rgba(245,185,74,.45);margin-top:8px;padding-top:6px}
+#nt-toast b.ar{font-size:1.25rem;color:#f5b94a;margin:2px 0 2px}
+#nt-toast p.ar{font-size:1.05rem}
 #nt-modal .arb{border-top:2px solid #f5b94a;margin-top:14px;padding-top:12px}
 #nt-modal .arb h3{font-size:1.5rem}
 #nt-modal .arb .m{font-size:1.2rem;line-height:1.9}
@@ -95,7 +97,7 @@ function showToast(a, more) {
   toast = document.createElement("div");
   toast.id = "nt-toast";
   toast.setAttribute("role", "alert");
-  toast.innerHTML = `<div class="k"><i></i> New notice from the institute</div><b>${esc(a.title)}</b>${a.titleAr ? `<b class="ar" dir="rtl" lang="ar">${esc(a.titleAr)}</b>` : ""}<p>${esc(a.body)}</p><small>${more ? "+" + more + " more new notice" + (more > 1 ? "s" : "") : ""}</small>
+  toast.innerHTML = `<div class="k"><i></i> New notice from the institute</div><b>${esc(a.title)}</b><p>${esc(a.body)}</p>${a.titleAr ? `<div class="arx" dir="rtl" lang="ar"><b class="ar">${esc(a.titleAr)}</b><p class="ar">${esc(a.bodyAr || "")}</p></div>` : ""}<small>${more ? "+" + more + " more new notice" + (more > 1 ? "s" : "") : ""}</small>
     <div class="r"><button class="nt-b" type="button" data-o>Read</button><button class="nt-b g" type="button" data-c>Close</button></div>`;
   document.body.appendChild(toast);
   requestAnimationFrame(() => requestAnimationFrame(() => toast && toast.classList.add("show")));
