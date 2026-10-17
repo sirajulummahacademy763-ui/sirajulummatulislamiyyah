@@ -42,6 +42,11 @@ css.textContent = `
 @keyframes ntp{0%{box-shadow:0 0 0 0 rgba(245,185,74,.7)}100%{box-shadow:0 0 0 10px rgba(245,185,74,0)}}
 #nt-toast b{display:block;font-size:1.05rem;margin:6px 0 2px}
 #nt-toast p{margin:0;color:#d8dbef;font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#nt-toast .ar,#nt-modal .ar{direction:rtl;text-align:right;font-family:Amiri,serif}
+#nt-toast b.ar{font-size:1.25rem;color:#f5b94a;margin:2px 0 4px}
+#nt-modal .arb{border-top:2px solid #f5b94a;margin-top:14px;padding-top:12px}
+#nt-modal .arb h3{font-size:1.5rem}
+#nt-modal .arb .m{font-size:1.2rem;line-height:1.9}
 #nt-toast small{display:block;margin-top:4px;color:#aab0d6}
 #nt-toast .r{display:flex;gap:8px;margin-top:10px}
 .nt-b{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;cursor:pointer;background:#f5b94a;color:#12163a}
@@ -90,7 +95,7 @@ function showToast(a, more) {
   toast = document.createElement("div");
   toast.id = "nt-toast";
   toast.setAttribute("role", "alert");
-  toast.innerHTML = `<div class="k"><i></i> New notice from the institute</div><b>${esc(a.title)}</b><p>${esc(a.body)}</p><small>${more ? "+" + more + " more new notice" + (more > 1 ? "s" : "") : ""}</small>
+  toast.innerHTML = `<div class="k"><i></i> New notice from the institute</div><b>${esc(a.title)}</b>${a.titleAr ? `<b class="ar" dir="rtl" lang="ar">${esc(a.titleAr)}</b>` : ""}<p>${esc(a.body)}</p><small>${more ? "+" + more + " more new notice" + (more > 1 ? "s" : "") : ""}</small>
     <div class="r"><button class="nt-b" type="button" data-o>Read</button><button class="nt-b g" type="button" data-c>Close</button></div>`;
   document.body.appendChild(toast);
   requestAnimationFrame(() => requestAnimationFrame(() => toast && toast.classList.add("show")));
@@ -111,7 +116,7 @@ function openModal(a) {
   const when = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
   const m = document.createElement("div");
   m.id = "nt-modal";
-  m.innerHTML = `<div class="c" role="dialog" aria-modal="true"><h3>${esc(a.title)}</h3><div class="t">${esc(when)}</div><div class="m">${esc(a.body)}</div>
+  m.innerHTML = `<div class="c" role="dialog" aria-modal="true"><h3>${esc(a.title)}</h3><div class="t">${esc(when)}</div><div class="m">${esc(a.body)}</div>${a.titleAr ? `<div class="arb ar" dir="rtl" lang="ar"><h3>${esc(a.titleAr)}</h3><div class="m">${esc(a.bodyAr || "")}</div></div>` : ""}
     <div class="row"><button class="nt-b b2" type="button" data-x>Close</button></div></div>`;
   document.body.appendChild(m);
   const close = () => m.remove();
