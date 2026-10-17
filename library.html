@@ -139,7 +139,7 @@ table.bt{width:100%;border-collapse:separate;border-spacing:0;background:#fff;bo
   <button id="hlistenEn" type="button" style="background:var(--night);color:#fff">Listen to chapter in English</button>
   <button id="hstop" type="button">Stop</button>
 </div>
-<p class="hnote">Arabic is on the right and English on the left of each hadith. Each side has its own listen button. Listening uses your phone's built-in voice (text-to-speech), not a recorded reciter.</p>
+<p class="hnote">Arabic is on the right and English on the left of each hadith. Each side has its own listen button. Listening uses a computer voice (text-to-speech), not a recorded reciter. Arabic uses your phone's Arabic voice if it has one, and otherwise an online Arabic voice.</p>
 <div id="herr" role="alert"></div>
 <div id="hout"><p>Loading...</p></div>
 </div>
@@ -314,26 +314,41 @@ async function openSec(k){
 
 function chunk(t,max){const w=t.split(/\s+/),o=[];let c="";for(const x of w){if((c+" "+x).length>max&&c){o.push(c);c=x}else c=c?c+" "+x:x}if(c)o.push(c);return o}
 function mark(){document.querySelectorAll("#hout .hy").forEach((d,i)=>d.classList.toggle("on",i===hi));const el=document.querySelector("#hout .hy.on");if(el)el.scrollIntoView({behavior:"smooth",block:"center"})}
-function stopSpeak(){tok++;hi=-1;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}document.querySelectorAll("#hout .hy").forEach(d=>d.classList.remove("on"))}
+let gA=null;
+function stopSpeak(){tok++;hi=-1;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}if(gA){try{gA.pause()}catch(e){}gA=null}document.querySelectorAll("#hout .hy").forEach(d=>d.classList.remove("on"))}
+const arVoice=()=>{try{return speechSynthesis.getVoices().find(v=>/^ar([-_]|$)/i.test(v.lang))||null}catch(e){return null}};
+try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(e){}
 function speak(i,cont,lang){
-  if(!window.speechSynthesis){return herr("Your browser cannot read aloud.")}
-  const my=++tok;try{speechSynthesis.cancel()}catch(e){}
-  hi=i;mark();herr("");
   const ar=lang==="ar";
-  const parts=chunk(ar?rows[i].ar:rows[i].en,170);let p=0;
-  const next=()=>{
+  if(!ar&&!window.speechSynthesis){return herr("Your browser cannot read aloud.")}
+  const my=++tok;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}
+  if(gA){try{gA.pause()}catch(e){}gA=null}
+  hi=i;mark();herr("");
+  const parts=chunk(ar?rows[i].ar:rows[i].en,ar?150:170);let p=0;
+  const finish=()=>{if(my!==tok)return;if(cont&&i<rows.length-1)speak(i+1,true,lang);else{hi=-1;mark()}};
+  // Arabic: use the phone's Arabic voice when it has one. If it has none (or stays silent), read it through an online Arabic voice instead.
+  const online=()=>{
     if(my!==tok)return;
-    if(p>=parts.length){
-      if(cont&&i<rows.length-1)speak(i+1,true,lang);else{hi=-1;mark()}
-      return;
-    }
-    const u=new SpeechSynthesisUtterance(parts[p++]);
-    u.lang=ar?"ar-SA":"en-US";u.rate=ar?.85:.95;
-    u.onend=next;
-    u.onerror=ev=>{if(my!==tok)return;if(ev.error==="canceled"||ev.error==="interrupted")return;herr(ar?"Your phone could not play Arabic. Install an Arabic voice in text-to-speech settings, or listen in English.":"Could not play audio.");stopSpeak()};
-    speechSynthesis.speak(u);
+    if(p>=parts.length)return finish();
+    const a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q="+encodeURIComponent(parts[p++]));
+    gA=a;a.onended=online;
+    a.onerror=()=>{if(my!==tok)return;herr("Arabic could not be played. Check your internet, or install an Arabic voice in your phone's text-to-speech settings.");stopSpeak()};
+    a.play().catch(()=>{if(my!==tok)return;herr("Arabic could not be played. Tap Listen again, or check your internet.");stopSpeak()});
   };
-  next();
+  const native=()=>{
+    if(my!==tok)return;
+    if(p>=parts.length)return finish();
+    const u=new SpeechSynthesisUtterance(parts[p++]);
+    const v=ar?arVoice():null;
+    u.lang=ar?"ar-SA":"en-US";if(v){u.voice=v;u.lang=v.lang}u.rate=ar?.85:.95;
+    let started=false;
+    u.onstart=()=>{started=true};
+    u.onend=native;
+    u.onerror=ev=>{if(my!==tok)return;if(ev.error==="canceled"||ev.error==="interrupted")return;if(ar){p=Math.max(0,p-1);try{speechSynthesis.cancel()}catch(e){}return online()}herr("Could not play audio.");stopSpeak()};
+    speechSynthesis.speak(u);
+    if(ar)setTimeout(()=>{if(my===tok&&!started&&!(gA)){try{speechSynthesis.cancel()}catch(e){}p=Math.max(0,p-1);online()}},2500);
+  };
+  if(ar&&(!window.speechSynthesis||!arVoice()))online();else native();
 }
 
 $("hbk").onchange=()=>loadBook($("hbk").value);
