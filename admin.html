@@ -196,10 +196,10 @@ async function addAnn() {
     $("gt").value = ""; $("gm").value = ""; $("gta").value = ""; $("gma").value = ""; $("gp").checked = false; loadAnns();
     say("gs", "Sent. Students on the site see it now. Sending phone alerts...", true);
     let msg = "Sent. Students on the site see it now", bad = [];
-    try { const n = await pushAll(ref.id, t, ta ? ta + " — " + m : m); msg += ", " + n + " phone" + (n === 1 ? "" : "s") + " alerted"; }
+    try { const n = await pushAll(ref.id, t, m); msg += ", " + n + " phone" + (n === 1 ? "" : "s") + " alerted"; }
     catch (e) { bad.push("phone alerts failed: " + (e.message || e)); }
     if (wantEmail) {
-      try { const n = await mailAll(ta ? t + " · " + ta : t, ta ? m + "\n\n— — —\n\n" + ma : m); msg += ", " + n + " email" + (n === 1 ? "" : "s") + " sent"; }
+      try { const n = await mailAll(t, ta ? m + "\n\n━━━━━━━━━━\n\n" + ta + "\n\n" + ma : m); msg += ", " + n + " email" + (n === 1 ? "" : "s") + " sent"; }
       catch (e) { bad.push("emails failed: " + (e.message || e)); }
     }
     say("gs", msg + "." + (bad.length ? " But " + bad.join("; ") + "." : ""), !bad.length);
