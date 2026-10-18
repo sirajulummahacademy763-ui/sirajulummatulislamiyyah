@@ -13,12 +13,22 @@
 .sb b{font-size:1.02rem}.sb .ar{font-family:Amiri,serif;color:#b87d0c;margin-left:8px;font-size:1.15rem}
 .ls{list-style:none;margin:6px 0 0;padding:0;color:#4b5072;font-size:.92rem}
 .ls li{padding:2px 0}
-.er{color:#b3261e}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+.hw{margin-top:14px;border-top:2px solid #f5b94a;padding-top:12px}
+.hw h3{margin:0 0 6px;font-size:1.05rem}
+.hw label{display:block;font-size:.85rem;font-weight:700;margin:8px 0 3px}
+.hw input,.hw select,.hw textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.hw .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hw .pb{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin-top:10px}
+.hw .po{border:1px solid #cfd3e8;border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.hw .po b{display:block}.hw .po small{color:#4b5072}
+.hw .po button{font:inherit;font-size:.85rem;padding:6px 10px;border:1.5px solid #e8c4c1;border-radius:8px;background:#fff;color:#b3261e;cursor:pointer}
+@media(max-width:560px){.hw .g2{grid-template-columns:1fr}}
 </style></head><body>
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -35,6 +45,8 @@ onAuthStateChanged(auth, async u => {
     let h = `<h1>My Classes · فصولي</h1>`;
     if (!items.length) return $("app").innerHTML = h + '<p class="hint">No class has been assigned to you yet. The admin will assign you soon.</p>';
     h += `<p class="hint">The classes and subjects the admin assigned to you.</p>`;
+    const boxes = [];
+    let idx = 0;
     for (const i of items) {
       const p = await getDoc(doc(db, "classPlans", planId(i.section, i.level)));
       const d = p.exists() ? p.data() : {};
@@ -52,9 +64,42 @@ onAuthStateChanged(auth, async u => {
         h += sl.length ? `<ul class="ls">${sl.map(x => `<li>${esc(DN[x.day])} · ${esc(x.start)}–${esc(x.end)} (${esc((x.tz || d.tzId || "Africa/Lagos").replace(/_/g, " "))})${x.where ? " · " + esc(x.where) : ""}</li>`).join("")}</ul>` : `<ul class="ls"><li>No lesson time set yet.</li></ul>`;
         h += `</div>`;
       });
-      h += `</div>`;
+      const n = idx++; boxes.push({ n, i, names });
+      h += `<div class="hw" id="hw${n}"></div></div>`;
     }
     $("app").innerHTML = h;
+    const tname = (t.data() && t.data().name) || u.email || "Teacher";
+    boxes.forEach(b => homework(b.n, b.i, b.names, u.uid, tname));
   } catch (e) { $("app").innerHTML = '<h1>My Classes</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
+
+const fmt = s => s ? new Date(s.seconds * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+async function homework(n, i, names, uid, tname) {
+  const box = $("hw" + n), key = i.section + "|" + i.level;
+  const list = async () => {
+    let ps = [];
+    try { ps = (await getDocs(query(collection(db, "classWork"), where("classKey", "==", key)))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 9e9) - ((a.createdAt && a.createdAt.seconds) || 9e9)).slice(0, 15); } catch (e) { return '<p class="er">Could not load posts.</p>'; }
+    return ps.length ? ps.map(p => `<div class="po"><span><b>${esc(p.title)}</b><small>${p.kind === "homework" ? "Homework" : "Note"} · ${esc(p.subject || "General")}${p.due ? " · due " + esc(p.due) : ""} · ${fmt(p.createdAt)}${p.teacherName ? " · " + esc(p.teacherName) : ""}</small><span style="white-space:pre-wrap;display:block;margin-top:4px">${esc(p.body)}</span></span><button data-del="${p.id}" type="button">Delete</button></div>`).join("") : '<p class="hint" style="color:#4b5072">Nothing posted yet.</p>';
+  };
+  const draw = async (msg, good) => {
+    box.innerHTML = `<h3>Homework and notes for students</h3>
+      <div class="g2"><div><label>Subject</label><select id="hs${n}"><option value="">General (whole class)</option>${names.map(x => `<option>${esc(x)}</option>`).join("")}</select></div>
+      <div><label>Type</label><select id="hk${n}"><option value="homework">Homework</option><option value="note">Class note</option></select></div></div>
+      <label>Title</label><input id="ht${n}" placeholder="For example: Exercise 3 on page 12">
+      <label>Details</label><textarea id="hb${n}" rows="3"></textarea>
+      <label>Due date (optional)</label><input id="hd${n}" type="date">
+      <button class="pb" id="hp${n}" type="button">Post to students</button> <span id="hm${n}" class="${good ? "ok" : "er"}">${esc(msg || "")}</span>
+      <div id="hl${n}">${await list()}</div>`;
+    $("hp" + n).onclick = async () => {
+      const title = $("ht" + n).value.trim(), body = $("hb" + n).value.trim();
+      if (!title) return draw("Enter a title.");
+      try {
+        await addDoc(collection(db, "classWork"), { classKey: key, section: i.section, level: i.level, subject: $("hs" + n).value, kind: $("hk" + n).value, title, body, due: $("hd" + n).value, teacherId: uid, teacherName: tname, createdAt: serverTimestamp() });
+        draw("Posted. Students of this class can see it now.", true);
+      } catch (e) { draw("Could not post: " + (e.code || e.message)); }
+    };
+    box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (!confirm("Delete this post?")) return; try { await deleteDoc(doc(db, "classWork", b.dataset.del)); draw("Deleted.", true); } catch (e) { draw("Could not delete: " + (e.code || e.message)); } });
+  };
+  draw();
+}
 </script></body></html>
