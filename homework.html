@@ -20,31 +20,61 @@
 .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin-right:6px}
 .pill.n{background:#e8ebf8;color:#12163a}
 .pill.d{background:#fde4e1;color:#b3261e}
-.er{color:#b3261e}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+.sub{margin-top:10px;border-top:1px dashed #cfd3e8;padding-top:10px}
+.sub textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff;min-height:90px}
+.sub .bt{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin-top:8px}
+.sub .bt.l{background:#fff;color:#12163a;border:1.5px solid #12163a}
+.sub .ans{background:#f4f6fc;border-radius:8px;padding:8px 10px;white-space:pre-wrap;margin:6px 0}
+.pill.g{background:#dff3e7;color:#1c7a4d}
 </style></head><body>
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let data = [], filt = "all";
+let data = [], filt = "all", me = null, myName = "", subs = {}, editing = null, msgs = {};
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>Homework</h1><p>Please <a href="login.html">log in</a> first.</p>';
   try {
     const s = await getDoc(doc(db, "students", u.uid));
+    me = u; myName = s.exists() ? (s.data().name || u.email || "Student") : "Student";
     const classes = s.exists() ? (s.data().classes || {}) : {};
     for (const sec of Object.keys(SN)) {
       const lv = classes[sec]; if (!lv || lv === "none") continue;
       const q = await getDocs(query(collection(db, "classWork"), where("classKey", "==", sec + "|" + lv)));
       data.push({ sec, lv, posts: q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 9e9) - ((a.createdAt && a.createdAt.seconds) || 9e9)) });
     }
+    try { (await getDocs(query(collection(db, "classWorkSubs"), where("uid", "==", u.uid)))).docs.forEach(d => { subs[d.data().workId] = d.data(); }); } catch (e) {}
     draw();
   } catch (e) { $("app").innerHTML = '<h1>Homework</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
+function subBox(p) {
+  const m = msgs[p.id] ? `<div class="${msgs[p.id].g ? "ok" : "er"}">${esc(msgs[p.id].t)}</div>` : "";
+  const sb = subs[p.id];
+  if (sb && editing !== p.id) {
+    const graded = sb.status === "graded";
+    return `<div class="sub"><span class="pill ${graded ? "g" : ""}">${graded ? "Marked" : "Submitted"}</span>Your answer:<div class="ans">${esc(sb.text)}</div>
+      ${graded ? `<div><b>Mark:</b> ${esc(sb.score || "-")}${sb.feedback ? `<br><b>Teacher:</b> ${esc(sb.feedback)}` : ""}</div>` : `<button class="bt l" data-edit="${p.id}" type="button">Change my answer</button>`}${m}</div>`;
+  }
+  return `<div class="sub"><label for="a_${p.id}"><b>Your answer</b></label><textarea id="a_${p.id}" placeholder="Write your answer here">${esc(sb ? sb.text : "")}</textarea>
+    <button class="bt" data-send="${p.id}" type="button">${sb ? "Save answer" : "Submit homework"}</button>${m}</div>`;
+}
+async function send(id) {
+  const t = ($("a_" + id).value || "").trim();
+  if (!t) { msgs[id] = { t: "Write your answer first." }; return draw(); }
+  const p = data.flatMap(g => g.posts).find(x => x.id === id);
+  try {
+    if (subs[id]) { await updateDoc(doc(db, "classWorkSubs", id + "_" + me.uid), { text: t, updatedAt: serverTimestamp() }); subs[id].text = t; }
+    else { const v = { workId: id, uid: me.uid, studentName: myName, classKey: p.classKey, text: t, status: "submitted", createdAt: serverTimestamp() }; await setDoc(doc(db, "classWorkSubs", id + "_" + me.uid), v); subs[id] = v; }
+    editing = null; msgs[id] = { t: "Submitted. Your teacher can see it now.", g: true };
+  } catch (e) { msgs[id] = { t: "Could not submit: " + (e.code || e.message) }; }
+  draw();
+}
 function draw() {
   let h = `<h1>Homework and Notes · الواجبات</h1><div class="seg" id="sg"><button data-f="all" class="${filt === "all" ? "on" : ""}">All</button><button data-f="homework" class="${filt === "homework" ? "on" : ""}">Homework</button><button data-f="note" class="${filt === "note" ? "on" : ""}">Class notes</button></div>`;
   if (!data.length) h += '<p class="hint">You have not chosen your classes yet. Open the Home page and choose them.</p>';
@@ -55,10 +85,12 @@ function draw() {
       const late = p.kind === "homework" && p.due && p.due < today();
       return `<div class="po ${p.kind === "note" ? "note" : ""}"><span class="pill ${p.kind === "note" ? "n" : ""}">${p.kind === "note" ? "Note" : "Homework"}</span><b>${esc(p.title)}</b>
         <div class="mt">${esc(p.subject || "General")}${p.due ? ` · <span class="${late ? "pill d" : ""}">due ${esc(p.due)}${late ? " (past)" : ""}</span>` : ""}${p.teacherName ? " · " + esc(p.teacherName) : ""}</div>
-        ${p.body ? `<div class="tx">${esc(p.body)}</div>` : ""}</div>`;
+        ${p.body ? `<div class="tx">${esc(p.body)}</div>` : ""}${p.kind === "homework" ? subBox(p) : ""}</div>`;
     }).join("") : '<p class="hint">Nothing here yet.</p>';
   });
   $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-send]").forEach(b => b.onclick = () => send(b.dataset.send));
+  $("app").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editing = b.dataset.edit; draw(); });
   $("app").querySelectorAll("#sg button").forEach(b => b.onclick = () => { filt = b.dataset.f; draw(); });
 }
 </script></body></html>
