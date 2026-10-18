@@ -190,6 +190,7 @@ async function addAnn() {
     try { if (!ta) ta = await toArabic(t); if (!ma) ma = await toArabic(m); $("gta").value = ta; $("gma").value = ma; }
     catch (e) { if (!confirm("The Arabic translation did not work. Send the notice in English only?")) return say("gs", "Not sent. Tap Translate again, or type the Arabic yourself."); ta = ""; ma = ""; }
   }
+  if (!confirm($("ge").checked ? "This will show the notice to all students, alert their phones and email them. Emails and alerts cannot be taken back. Send now?" : "This will show the notice to all students and alert their phones. Send now?")) return;
   try {
     const wantEmail = $("ge").checked;
     const ref = await addDoc(collection(db, "announcements"), { title: t, body: m, ...(ta && ma ? { titleAr: ta, bodyAr: ma } : {}), pinned: $("gp").checked, createdAt: serverTimestamp() });
@@ -242,7 +243,17 @@ async function loadAnns() {
   catch (e) { $("gl").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
   $("gl").innerHTML = as.length ? as.map(a => `<div class="it"><span><b>${esc(a.title)}</b>${a.pinned ? " · pinned" : ""}<br><small>${a.createdAt ? a.createdAt.toDate().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""}</small></span>
     <span><button class="sm" data-gp="${a.id}">${a.pinned ? "Unpin" : "Pin"}</button><button class="sm" data-gd="${a.id}">Delete</button></span></div>`).join("") : "<p>No notices sent yet.</p>";
-  $("gl").querySelectorAll("[data-gd]").forEach(b => b.onclick = async () => { if (!confirm("Delete this notice?")) return; await deleteDoc(doc(db, "announcements", b.dataset.gd)); loadAnns(); });
+  $("gl").querySelectorAll("[data-gd]").forEach(b => b.onclick = async () => {
+    const a = as.find(k => k.id === b.dataset.gd);
+    if (!confirm("Delete this notice from the site?")) return;
+    await deleteDoc(doc(db, "announcements", b.dataset.gd)); loadAnns();
+    if (a && confirm("Emails and phone alerts that were already sent cannot be taken back.\n\nSend a short email telling students this notice was cancelled?")) {
+      try {
+        const n = await mailAll("Notice cancelled: " + a.title, 'Please ignore the notice titled "' + a.title + '". It has been cancelled.\n\n━━━━━━━━━━\n\nيُرجى تجاهل الإشعار بعنوان «' + (a.titleAr || a.title) + '». لقد تم إلغاؤه.');
+        alert("Cancellation email sent to " + n + " student" + (n === 1 ? "" : "s") + ".");
+      } catch (e) { alert("The cancellation email did not send: " + (e.message || e)); }
+    }
+  });
   $("gl").querySelectorAll("[data-gp]").forEach(b => b.onclick = async () => { const a = as.find(k => k.id === b.dataset.gp); await updateDoc(doc(db, "announcements", a.id), { pinned: !a.pinned }); loadAnns(); });
 }
 
