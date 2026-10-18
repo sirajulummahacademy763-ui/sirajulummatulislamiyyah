@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Student Report | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script>window.SITE_HOME=false</script><script src="site.js" defer></script>
+<style>.ca{max-width:860px}.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer}.note{color:#4b5072;font-size:.9rem}</style></head><body>
+<main class="page ca" id="app"><p>Loading report...</p></main>
+<script type="module">
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+import { renderReport, reportCss } from "./report-view.js";
+const $ = id => document.getElementById(id);
+const st = document.createElement("style"); st.textContent = reportCss; document.head.appendChild(st);
+(async () => {
+  const c = new URLSearchParams(location.search).get("c");
+  if (!c) return $("app").innerHTML = "<h1>Student Report</h1><p>This link is not complete. Please ask the student for the link again.</p>";
+  try {
+    const s = await getDoc(doc(db, "reportShares", c));
+    if (!s.exists()) return $("app").innerHTML = "<h1>Student Report</h1><p>This report link is not available. The student may have stopped sharing it. Please ask for a new link.</p>";
+    $("app").innerHTML = '<p><button class="b noprint" id="pr" type="button">Print or save as PDF</button></p>' + renderReport(s.data().report) + '<p class="note noprint">This is a read-only copy of the report, as it was when the student shared it.</p>';
+    $("pr").onclick = () => window.print();
+  } catch (e) { $("app").innerHTML = "<h1>Student Report</h1><p>Could not open this report. Please check your internet and try again.</p>"; }
+})();
+</script></body></html>

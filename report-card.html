@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report Card | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:860px}
+.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:0 8px 8px 0;text-decoration:none;display:inline-block}
+.b.o{background:#fff;color:#12163a;border:1.5px solid #cfd3e8}
+.b.g{background:#25a244}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:16px;margin:14px 0}
+.cd h2{margin:0 0 6px;font-size:1.1rem}
+.cd input{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit}
+.hint{color:#4b5072;font-size:.9rem}
+.ok{color:#1c7a4d}.er{color:#b3261e}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading your report...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+import { buildReport, renderReport, reportCss } from "./report-view.js";
+const $ = id => document.getElementById(id);
+const st = document.createElement("style"); st.textContent = reportCss; document.head.appendChild(st);
+let U = null, R = null, shareId = "";
+const mk = () => { const A = "abcdefghjkmnpqrstuvwxyz23456789", a = new Uint32Array(20); crypto.getRandomValues(a); return Array.from(a, x => A[x % A.length]).join(""); };
+const link = () => location.origin + "/parent.html?c=" + shareId;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Report Card</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  U = u;
+  try {
+    const s = await getDoc(doc(db, "students", u.uid));
+    if (!s.exists()) return $("app").innerHTML = "<h1>Report Card</h1><p>The report card is for students.</p>";
+    const d = s.data();
+    R = await buildReport(db, u.uid, d.name || u.email || "Student", d.classes || {});
+    try { const q = await getDocs(query(collection(db, "reportShares"), where("uid", "==", u.uid))); if (q.docs[0]) shareId = q.docs[0].id; } catch (e) {}
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Report Card</h1><p class="er">Could not load: ' + (e.code || e.message) + "</p>"; }
+});
+
+function draw(msg, good) {
+  $("app").innerHTML = `<h1>Report Card · بطاقة التقرير</h1>
+  <p class="noprint"><button class="b" id="pr" type="button">Print or save as PDF</button></p>
+  <div id="rep">${renderReport(R)}</div>
+  <div class="cd noprint"><h2>Share with a parent</h2>
+    <p class="hint">Make a private link that shows this report without a login. Anyone who has the link can see it, so send it only to your parent. The link shows the report as it is now. Tap Refresh to update it later.</p>
+    ${shareId ? `<input id="lk" readonly value="${link()}"><p style="margin:10px 0 0"><button class="b" id="cp" type="button">Copy link</button><a class="b g" id="wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Assalamu alaikum. This is my report card from Sirajul Ummah Islamic Institute: " + link())}">Send on WhatsApp</a><button class="b o" id="rf" type="button">Refresh link</button><button class="b o" id="st" type="button">Stop sharing</button></p>`
+      : `<p style="margin:10px 0 0"><button class="b" id="mkl" type="button">Create parent link</button></p>`}
+    <span id="m" class="${good ? "ok" : "er"}">${msg || ""}</span></div>`;
+  $("pr").onclick = () => window.print();
+  const save = async (id) => { await setDoc(doc(db, "reportShares", id), { uid: U.uid, report: JSON.parse(JSON.stringify(R)), createdAt: serverTimestamp() }); };
+  if ($("mkl")) $("mkl").onclick = async () => { try { shareId = mk(); await save(shareId); draw("Link created.", true); } catch (e) { shareId = ""; draw("Could not create the link: " + (e.code || e.message)); } };
+  if ($("rf")) $("rf").onclick = async () => { try { await save(shareId); draw("Link updated with the latest report.", true); } catch (e) { draw("Could not update: " + (e.code || e.message)); } };
+  if ($("st")) $("st").onclick = async () => { if (!confirm("Stop sharing? The old link will stop working.")) return; try { await deleteDoc(doc(db, "reportShares", shareId)); shareId = ""; draw("Sharing stopped.", true); } catch (e) { draw("Could not stop: " + (e.code || e.message)); } };
+  if ($("cp")) $("cp").onclick = async () => { try { await navigator.clipboard.writeText(link()); $("m").className = "ok"; $("m").textContent = "Copied."; } catch (e) { $("lk").select(); $("m").className = "er"; $("m").textContent = "Press and hold the link, then Copy."; } };
+}
+</script></body></html>

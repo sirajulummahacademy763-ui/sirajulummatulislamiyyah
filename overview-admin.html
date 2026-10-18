@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:960px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.cd h2{margin:0 0 6px;font-size:1.15rem}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 8px}
+.st{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:700px){.st{grid-template-columns:repeat(4,1fr)}}
+.sx{background:linear-gradient(160deg,#12163a,#1c2150);color:#fff;border:1.5px solid rgba(245,185,74,.4);border-radius:14px;padding:12px 14px}
+.sx b{display:block;font-size:1.9rem;color:#f5b94a;line-height:1.1}
+.sx span{font-size:.85rem;color:#c3c7e2}
+.sx.w{border-color:#f5b94a}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th{text-align:left;color:#4b5072;padding:6px 6px;border-bottom:2px solid var(--line);font-size:.78rem}
+.cd{min-width:0}
+main.page{overflow-x:hidden}
+td{padding:7px 6px;border-bottom:1px solid #e6e8f3;vertical-align:middle}
+td select,td input{width:100%;box-sizing:border-box;padding:7px;border:1.5px solid var(--line);border-radius:8px;font:inherit;min-width:0;background:#fff}
+.b{font:inherit;font-weight:700;padding:7px 12px;border:0;border-radius:8px;background:#12163a;color:#fff;cursor:pointer}
+.bad{color:#b3261e;font-weight:700}.good{color:#1c7a4d;font-weight:700}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+.scroll{overflow-x:auto}
+.fx{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.fx label{display:block;font-size:.8rem;font-weight:700;margin:6px 0 3px}
+.fx .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.fx .g2{grid-template-columns:1fr}}
+.sr{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;margin:6px 0 10px}
+</style></head><body>
+<main class="page ca" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+import { COUNTRIES } from "./countries.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const BC = {
+  islamic: ["Rawdatul Atfal 1", "Rawdatul Atfal 2", "Ibtidai 1", "Ibtidai 2", "Ibtidai 3", "I'dadi 1", "I'dadi 2", "I'dadi 3", "Thanawi 1", "Thanawi 2", "Thanawi 3"],
+  western: ["Kindergarten (KG)", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JSS 1", "JSS 2", "JSS 3", "SSS 1", "SSS 2", "SSS 3"],
+  tech: ["Beginner", "Intermediate", "Advanced"]
+};
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+let students = [], q = "";
+const cOk = c => c === "Other" || COUNTRIES.some(x => x.toLowerCase() === String(c).toLowerCase());
+const problems = s => { const p = []; if (!s.gender) p.push("no gender"); if (!s.country) p.push("no country"); else if (!cOk(s.country)) p.push("country not from the list"); const c = s.classes; if (!c || !Object.values(c).some(v => v && v !== "none")) p.push("no class"); return p; };
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Overview</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false; try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Overview</h1><p>You do not have access to this page.</p>";
+  try {
+    const [st, te, ta, pl] = await Promise.all(["students", "teachers", "teacherAssign", "classPlans"].map(c => getDocs(collection(db, c))));
+    students = st.docs.map(d => ({ id: d.id, ...d.data() }));
+    const teachers = te.docs.map(d => ({ id: d.id, ...d.data() }));
+    const assign = {}; ta.docs.forEach(d => assign[d.id] = d.data());
+    const plans = {}; pl.docs.forEach(d => plans[d.id] = d.data());
+    draw(teachers, assign, plans);
+  } catch (e) { $("app").innerHTML = '<h1>Overview</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+function draw(teachers, assign, plans) {
+  const week = Date.now() / 1000 - 7 * 86400;
+  const newW = students.filter(s => s.createdAt && s.createdAt.seconds > week).length;
+  const noClass = students.filter(s => problems(s).includes("no class")).length;
+  const unassigned = teachers.filter(t => !(assign[t.id] && (assign[t.id].items || []).length));
+  const keys = new Set(); Object.values(assign).forEach(a => (a.classKeys || []).forEach(k => keys.add(k)));
+  const cnt = {}; students.forEach(s => Object.keys(SN).forEach(sec => { const l = s.classes && s.classes[sec]; if (l && l !== "none") cnt[sec + "|" + l] = (cnt[sec + "|" + l] || 0) + 1; }));
+  const rows = []; let bad = 0;
+  Object.keys(BC).forEach(sec => BC[sec].forEach(l => {
+    const p = plans[planId(sec, l)], n = cnt[sec + "|" + l] || 0;
+    const sub = p && (p.subjects || []).length, tt = p && (p.slots || []).length, tc = keys.has(sec + "|" + l);
+    const issue = !sub || !tt || !tc;
+    if (issue && n) bad++;
+    rows.push({ sec, l, n, sub: !!sub, tt: !!tt, tc, issue });
+  }));
+  const fix = students.filter(s => problems(s).length);
+  let h = `<h1>Overview · نظرة عامة</h1>
+  <div class="st">
+    <div class="sx"><b>${students.length}</b><span>Students</span></div>
+    <div class="sx"><b>${newW}</b><span>Joined in the last 7 days</span></div>
+    <div class="sx"><b>${teachers.length}</b><span>Teachers</span></div>
+    <div class="sx ${unassigned.length ? "w" : ""}"><b>${unassigned.length}</b><span>Teachers with no class</span></div>
+    <div class="sx ${noClass ? "w" : ""}"><b>${noClass}</b><span>Students with no class</span></div>
+    <div class="sx ${fix.length ? "w" : ""}"><b>${fix.length}</b><span>Student records to fix</span></div>
+    <div class="sx ${bad ? "w" : ""}"><b>${bad}</b><span>Classes with students that need work</span></div>
+  </div>`;
+  const line = r => `<tr><td>${esc(r.l)}<br><small style="color:#4b5072">${SN[r.sec]}</small></td><td>${r.n}</td><td class="${r.sub ? "good" : "bad"}">${r.sub ? "Yes" : "No"}</td><td class="${r.tt ? "good" : "bad"}">${r.tt ? "Yes" : "No"}</td><td class="${r.tc ? "good" : "bad"}">${r.tc ? "Yes" : "No"}</td></tr>`;
+  const head = "<tr><th>Class</th><th>Students</th><th>Subjects</th><th>Timetable</th><th>Teacher</th></tr>";
+  const withS = rows.filter(r => r.n).sort((x, y) => y.issue - x.issue), noS = rows.filter(r => !r.n);
+  h += `<div class="cd"><h2>Classes with students</h2><p class="hint">Each class needs subjects, a timetable and an assigned teacher. Problems are shown in red.</p>` +
+    (withS.length ? `<div class="scroll"><table>${head}${withS.map(line).join("")}</table></div>` : `<p class="hint">No student has chosen a class yet.</p>`) +
+    `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Classes with no students yet (${noS.length})</summary><div class="scroll"><table>${head}${noS.map(line).join("")}</table></div></details></div>`;
+  if (unassigned.length) h += `<div class="cd"><h2>Teachers with no class</h2><p class="hint">Assign them on the Assign Teachers page.</p><p>${unassigned.map(t => esc(t.name || t.email || t.id)).join(", ")}</p></div>`;
+  h += `<div class="cd"><h2>Fix student records</h2><p class="hint">Missing gender, a country that is not from the list, or no class. Choose the right values and tap Save. Students cannot change gender themselves, so fix it here.</p>
+    <input class="sr" id="sq" placeholder="Search any student by name or email to edit..." value="${esc(q)}"><div id="fl"></div></div>`;
+  $("app").innerHTML = h;
+  $("sq").oninput = () => { q = $("sq").value; list(); };
+  list();
+}
+
+function list() {
+  const t = q.trim().toLowerCase();
+  const rows = (t ? students.filter(s => (s.name || "").toLowerCase().includes(t) || (s.email || "").toLowerCase().includes(t)) : students.filter(s => problems(s).length)).slice(0, 60);
+  $("fl").innerHTML = rows.length ? rows.map((s, i) => `<div class="fx"><b>${esc(s.name || "(no name)")}</b> <small style="color:#4b5072">${esc(s.email || "")}</small><br><small class="bad">${esc(problems(s).join(", "))}</small>
+    <div class="g2"><div><label>Gender</label><select id="g${i}"><option value="">—</option><option${s.gender === "Male" ? " selected" : ""}>Male</option><option${s.gender === "Female" ? " selected" : ""}>Female</option></select></div>
+    <div><label>Country</label><select id="c${i}"><option value="">—</option>${!s.country || cOk(s.country) ? "" : `<option selected>${esc(s.country)}</option>`}${COUNTRIES.concat(["Other"]).map(c => `<option${String(c).toLowerCase() === String(s.country || "").toLowerCase() ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div></div>
+    <button class="b" data-i="${i}" type="button" style="margin-top:8px">Save</button> <span id="m${i}"></span></div>`).join("") : `<p class="good">${t ? "No student found." : "All student records look fine."}</p>`;
+  $("fl").querySelectorAll("[data-i]").forEach(b => b.onclick = async () => {
+    const i = +b.dataset.i, s = rows[i], g = $("g" + i).value, c = $("c" + i).value;
+    try {
+      const upd = {}; if (g) upd.gender = g; if (c) upd.country = c;
+      if (!Object.keys(upd).length) { $("m" + i).innerHTML = '<span class="er">Choose a value.</span>'; return; }
+      await updateDoc(doc(db, "students", s.id), upd); Object.assign(s, upd);
+      $("m" + i).innerHTML = '<span class="ok">Saved</span>';
+    } catch (e) { $("m" + i).innerHTML = '<span class="er">' + esc(e.code || e.message) + "</span>"; }
+  });
+}
+</script></body></html>
