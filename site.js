@@ -3,7 +3,7 @@ const PUBLIC=["about","contact","privacy","terms","donate","parent"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
 if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
-const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["wallet.html","My wallet"]];
+const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
 const cta=isPub?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML("beforeend",'<link rel="icon" href="logo.svg">');
 document.body.insertAdjacentHTML("afterbegin",
@@ -20,35 +20,39 @@ document.querySelectorAll(".tabs a").forEach(a=>{if((a.dataset.t||"")===(cat||""
 document.title=document.title.replace(/Sirajul Ummah Academy/g,"Sirajul Ummah Islamic Institute");
 (function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
 while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the institute").replace(/\bacademy services\b/g,"institute services").replace(/\bAcademy\b/g,"Institute")}})();
-// Show "Admin" and "Teacher" links only to the people who have those roles
+// Menu by role: admin sees admin pages, a teacher sees teacher pages only, a student sees student pages only
 if(!isPub){
+  const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html","Home"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const show=list=>{
+    const nv=document.querySelector("header.top nav");if(!nv)return;
+    nv.querySelectorAll(":scope>a:not([data-logout])").forEach(a=>a.remove());
+    const lo=nv.querySelector("[data-logout]");
+    list.forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)});
+  };
+  window.SITE_ROLE_MENU={STU,TCH,ADM,show};
   Promise.all([
     import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
     import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
     import("./firebase-config.js")
   ]).then(([a,f,c])=>{
     a.onAuthStateChanged(c.auth,async u=>{
-      if(!u||document.querySelector("[data-role-link]"))return;
-      const nv=document.querySelector("header.top nav");
-      const add=(href,text)=>{
-        const l=document.createElement("a");
-        l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
-        nv.insertBefore(l,nv.querySelector("[data-logout]"));
-      };
-      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");add("teacher-assign-admin.html","Assign Teachers (admin)");add("overview-admin.html","Overview (admin)");add("countries-admin.html","Students & Teachers by Country (admin)");add("revision-choices-admin.html","Hifz & Revision choices (admin)");} }catch(e){}
-      try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher");add("my-classes.html","My Classes"); }catch(e){}
+      if(!u)return;
+      let role="student";
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())role="admin"; }catch(e){}
+      if(role==="student"){try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())role="teacher"; }catch(e){}}
+      document.documentElement.setAttribute("data-role",role);
+      show(role==="admin"?ADM:role==="teacher"?TCH:STU);
     });
-  }).catch(()=>{});
+  }).catch(()=>{ show(STU); });
 }
 // Copyright line on every page
 if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
  '<div style="background:var(--night,#12163b);color:#c9ccdf;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.<br>Website developed with Alpha Tech Hub</div>');
 // Help bot
 if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
-// Exams, certificates and classroom links
-if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["homework.html","Homework"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
-if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv&&nv.querySelector("[data-logout]");if(nv&&!nv.querySelector('a[href="classroom.html"]')){const a=document.createElement("a");a.href="classroom.html";a.textContent="Classroom";nv.insertBefore(a,lo)}}
 if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
