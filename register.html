@@ -68,7 +68,7 @@ button:disabled{opacity:.6;cursor:wait}
       <div><label for="phone">Phone number *</label><input id="phone" type="tel" autocomplete="tel"></div>
       <div><label for="gender">Gender *</label><select id="gender"><option value="">Select</option><option>Male</option><option>Female</option></select></div>
       <div><label for="dob">Date of birth</label><input id="dob" type="date"></div>
-      <div><label for="country">Country *</label><input id="country" type="text" autocomplete="country-name"></div>
+      <div><label for="country">Country *</label><select id="country" autocomplete="country-name"><option value="">Select your country</option></select></div>
       <div><label for="state">State / city</label><input id="state" type="text"></div>
       <div><label for="gname">Parent / guardian name (for children)</label><input id="gname" type="text"></div>
       <div><label for="gphone">Parent / guardian phone</label><input id="gphone" type="tel"></div>
@@ -120,11 +120,13 @@ button:disabled{opacity:.6;cursor:wait}
 </div>
 
 <script type="module">
+import { COUNTRIES } from "./countries.js";
 import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 
 const $ = id => document.getElementById(id);
+$("country").insertAdjacentHTML("beforeend", COUNTRIES.map(c => `<option>${c}</option>`).join("") + "<option>Other</option>");
 const msg = (t, c) => { $("msg").textContent = t; $("msg").className = c || ""; };
 const steps = [...document.querySelectorAll(".step")], dots = [...document.querySelectorAll("#prog li")];
 let cur = 0;
@@ -162,7 +164,7 @@ function check(n) {
     if (!/^\S+@\S+\.\S+$/.test($("email").value.trim())) return "Enter a valid email address.";
     if ($("phone").value.trim().length < 7) return "Enter your phone number.";
     if (!$("gender").value) return "Select your gender.";
-    if (!$("country").value.trim()) return "Enter your country.";
+    if (!$("country").value.trim()) return "Select your country.";
     if ($("pw").value.length < 8) return "Password must be at least 8 characters.";
     if ($("pw").value !== $("pw2").value) return "The two passwords do not match.";
   }
