@@ -1,5 +1,5 @@
 // Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
-const PUBLIC=["about","contact","privacy","terms","donate"];
+const PUBLIC=["about","contact","privacy","terms","donate","parent"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
 if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
@@ -35,7 +35,7 @@ if(!isPub){
         l.href=href;l.textContent=text;l.setAttribute("data-role-link","");
         nv.insertBefore(l,nv.querySelector("[data-logout]"));
       };
-      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");add("teacher-assign-admin.html","Assign Teachers (admin)");add("countries-admin.html","Students & Teachers by Country (admin)");add("revision-choices-admin.html","Hifz & Revision choices (admin)");} }catch(e){}
+      try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists()){add("admin.html","Admin");add("revision-admin.html","Hifz & Revision (admin)");add("classes-admin.html","Classes & Timetable (admin)");add("teacher-assign-admin.html","Assign Teachers (admin)");add("overview-admin.html","Overview (admin)");add("countries-admin.html","Students & Teachers by Country (admin)");add("revision-choices-admin.html","Hifz & Revision choices (admin)");} }catch(e){}
       try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())add("teacher.html","Teacher");add("my-classes.html","My Classes"); }catch(e){}
     });
   }).catch(()=>{});
@@ -46,7 +46,7 @@ if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
 // Help bot
 if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
 // Exams, certificates and classroom links
-if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
+if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv.querySelector("[data-logout]");[["exams.html","Exams"],["certificate.html","Certificates"],["classroom.html","Classroom"],["homework.html","Homework"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"]].forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)})}
 if(!isPub)import("./classes-check.js");
 if(!isPub){const nv=document.querySelector("header.top nav"),lo=nv&&nv.querySelector("[data-logout]");if(nv&&!nv.querySelector('a[href="classroom.html"]')){const a=document.createElement("a");a.href="classroom.html";a.textContent="Classroom";nv.insertBefore(a,lo)}}
 if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
