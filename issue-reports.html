@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issue Reports | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:860px}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:16px;margin-bottom:16px}
+.cd h2{margin:0 0 8px;font-size:1.15rem}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 8px}
+label{display:block;font-size:.85rem;font-weight:700;margin:10px 0 3px}
+select,input{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:10px 8px 0 0}
+.b.o{background:#fff;color:#12163a;border:1.5px solid #12163a}
+.b.g{background:#1c7a4d}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e6e8f3;padding:8px 0}
+.row .nm{flex:1;font-weight:600}
+.row input{width:96px;text-align:center;font-weight:700}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+table.t{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:6px}
+table.t th{text-align:left;color:#4b5072;padding:6px 6px;border-bottom:2px solid #cfd3e8}
+table.t td{padding:7px 6px;border-bottom:1px solid #e6e8f3}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700}
+.pill.i{background:#d7f3e3;color:#1c7a4d}.pill.d{background:#fdf1d4;color:#8a5a00}
+@media(max-width:560px){.g3{grid-template-columns:1fr}}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const MAX = 100;
+const gradeOf = p => p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
+const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let items = [], terms = [], me = null, tname = "", cur = null;   // cur = loaded class + term data
+let sel = { c: 0, t: "", s: "" }, msg = "", good = false;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Issue Reports</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  me = u;
+  try {
+    const t = await getDoc(doc(db, "teachers", u.uid));
+    if (!t.exists()) return $("app").innerHTML = "<h1>Issue Reports</h1><p>This page is for teachers.</p>";
+    tname = (t.data() && t.data().name) || u.email || "Teacher";
+    const a = await getDoc(doc(db, "teacherAssign", u.uid));
+    items = a.exists() ? (a.data().items || []) : [];
+    if (!items.length) return $("app").innerHTML = '<h1>Issue Reports</h1><p class="hint">No class has been assigned to you yet. The admin will assign you soon.</p>';
+    terms = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((x, y) => String(x.startDate).localeCompare(String(y.startDate)));
+    const td = todayStr();
+    const ct = terms.find(x => td >= x.startDate && td <= x.endDate) || terms.filter(x => td > x.endDate).pop() || terms[0];
+    sel.t = ct ? ct.id : "";
+    await load();
+  } catch (e) { $("app").innerHTML = '<h1>Issue Reports</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+async function load() {
+  const i = items[sel.c], key = i.section + "|" + i.level;
+  const p = await getDoc(doc(db, "classPlans", planId(i.section, i.level)));
+  const all = ((p.exists() ? p.data().subjects : []) || []).map(s => s.name).filter(Boolean);
+  const mine = i.subjects && i.subjects.length ? i.subjects.filter(x => all.includes(x) || !all.length) : all;
+  if (!mine.includes(sel.s)) sel.s = mine[0] || "";
+  let studs = [], cards = {};
+  try { studs = (await getDocs(query(collection(db, "classMembers"), where("classKey", "==", key)))).docs.map(d => d.data()).sort((a, b) => String(a.name).localeCompare(String(b.name))); } catch (e) { msg = "Could not load students: " + (e.code || e.message); good = false; }
+  try { (await getDocs(query(collection(db, "reportCards"), where("classKey", "==", key), where("termId", "==", sel.t)))).docs.forEach(d => { cards[d.data().uid] = d.data(); }); } catch (e) {}
+  cur = { i, key, all, mine, studs, cards };
+  draw();
+}
+
+function calc(c) {
+  const m = (c && c.marks) || {}; let tot = 0, n = 0;
+  cur.all.forEach(s => { if (typeof m[s] === "number") { tot += m[s]; n++; } });
+  const max = cur.all.length * MAX;
+  return { tot, n, max, pct: max ? Math.round(tot / max * 1000) / 10 : 0 };
+}
+
+function draw() {
+  const { i, all, mine, studs, cards } = cur;
+  let h = `<h1>Issue Reports · إصدار الكشوف</h1><p class="hint">Enter the marks of your subject, then issue the report cards. Students see their card only after you issue it.</p>`;
+  h += `<div class="cd"><div class="g3"><div><label>Class</label><select id="sc">${items.map((x, n) => `<option value="${n}" ${n === sel.c ? "selected" : ""}>${esc(x.level)} · ${esc(SN[x.section] || x.section)}</option>`).join("")}</select></div>
+    <div><label>Term</label><select id="st">${terms.map(x => `<option value="${esc(x.id)}" ${x.id === sel.t ? "selected" : ""}>${esc(x.name)}${x.session ? " " + esc(x.session) : ""}</option>`).join("") || "<option value=''>No term yet</option>"}</select></div>
+    <div><label>Subject</label><select id="ss">${mine.map(x => `<option ${x === sel.s ? "selected" : ""}>${esc(x)}</option>`).join("") || "<option value=''>No subjects</option>"}</select></div></div></div>`;
+  h += `<div class="cd"><h2>Marks · ${esc(sel.s || "")}</h2><p class="hint">Out of ${MAX}. Pass mark is 50. Leave a box empty to skip the student.</p>`;
+  if (!terms.length) h += '<p class="er">The admin has not created a term yet.</p>';
+  else if (!studs.length) h += '<p class="hint">No students yet. Students appear here after they open the site once with their class chosen.</p>';
+  else h += studs.map(s => { const v = cards[s.uid] && cards[s.uid].marks ? cards[s.uid].marks[sel.s] : ""; const lock = cards[s.uid] && cards[s.uid].status === "issued";
+    return `<div class="row"><span class="nm">${esc(s.name)}${lock ? ' <span class="pill i">Issued</span>' : ""}</span><input type="number" inputmode="decimal" min="0" max="${MAX}" data-u="${esc(s.uid)}" value="${v == null ? "" : esc(v)}" aria-label="Mark for ${esc(s.name)}"></div>`; }).join("");
+  if (studs.length && terms.length && sel.s) h += `<button class="b" id="sv" type="button">Save marks</button>`;
+  h += `<span id="m" class="${good ? "ok" : "er"}">${esc(msg)}</span></div>`;
+  if (studs.length && terms.length) {
+    h += `<div class="cd"><h2>Issue report cards</h2><p class="hint">Check that every subject has marks, then issue. Total, percentage, grade (A 80+, B 70+, C 60+, D 50+, F below 50) and position are worked out for you.</p>
+    <table class="t"><tr><th>Student</th><th>Marks</th><th>Total</th><th>%</th><th></th></tr>`;
+    h += studs.map(s => { const c = cards[s.uid], k = calc(c); return `<tr><td>${esc(s.name)}</td><td>${k.n}/${all.length}</td><td>${k.tot}</td><td>${k.pct}</td><td><span class="pill ${c && c.status === "issued" ? "i" : "d"}">${c && c.status === "issued" ? "Issued" : "Draft"}</span></td></tr>`; }).join("");
+    h += `</table><button class="b g" id="is" type="button">Issue to students</button><button class="b o" id="tb" type="button">Take back (hide from students)</button></div>`;
+  }
+  $("app").innerHTML = h;
+  $("sc").onchange = async e => { sel.c = +e.target.value; sel.s = ""; msg = ""; await load(); };
+  $("st").onchange = async e => { sel.t = e.target.value; msg = ""; await load(); };
+  $("ss").onchange = e => { sel.s = e.target.value; msg = ""; draw(); };
+  if ($("sv")) $("sv").onclick = save;
+  if ($("is")) $("is").onclick = () => issue(true);
+  if ($("tb")) $("tb").onclick = () => issue(false);
+}
+const rid = (uid) => uid + "__" + sel.t + "__" + cur.i.section;
+const base = (s) => { const t = terms.find(x => x.id === sel.t) || {}; return { uid: s.uid, studentName: s.name || "Student", classKey: cur.key, section: cur.i.section, level: cur.i.level, termId: sel.t, termName: t.name || "", session: t.session || "" }; };
+
+async function save() {
+  const ins = [...document.querySelectorAll("input[data-u]")].filter(x => x.value.trim() !== "");
+  for (const x of ins) { const v = Number(x.value); if (!(v >= 0 && v <= MAX)) { msg = "Marks must be between 0 and " + MAX + "."; good = false; return draw(); } }
+  try {
+    for (const x of ins) {
+      const s = cur.studs.find(z => z.uid === x.dataset.u), old = cur.cards[s.uid], v = Number(x.value);
+      const d = { ...base(s), marks: { [sel.s]: v }, updatedAt: serverTimestamp(), by: me.uid, byName: tname };
+      if (!old) d.status = "draft";
+      await setDoc(doc(db, "reportCards", rid(s.uid)), d, { merge: true });
+    }
+    msg = "Marks saved."; good = true; await load();
+  } catch (e) { msg = "Could not save: " + (e.code || e.message); good = false; draw(); }
+}
+
+async function issue(on) {
+  const have = cur.studs.filter(s => cur.cards[s.uid]);
+  if (!have.length) { msg = "Enter some marks first."; good = false; return draw(); }
+  if (on) {
+    const miss = have.filter(s => calc(cur.cards[s.uid]).n < cur.all.length).length;
+    if (miss && !confirm(miss + " student(s) have missing subject marks. They count as 0. Issue anyway?")) return;
+  } else if (!confirm("Hide these report cards from the students?")) return;
+  const rows = have.map(s => ({ s, k: calc(cur.cards[s.uid]) })).sort((a, b) => b.k.pct - a.k.pct);
+  let pos = 0, prev = null; rows.forEach((r, n) => { if (r.k.pct !== prev) { pos = n + 1; prev = r.k.pct; } r.pos = pos; });
+  try {
+    for (const r of rows) {
+      const d = { ...base(r.s), status: on ? "issued" : "draft", total: r.k.tot, percentage: r.k.pct, grade: gradeOf(r.k.pct), position: r.pos, classSize: cur.studs.length, updatedAt: serverTimestamp(), by: me.uid, byName: tname };
+      if (on) d.issuedAt = serverTimestamp();
+      await setDoc(doc(db, "reportCards", rid(r.s.uid)), d, { merge: true });
+    }
+    msg = on ? "Issued. Students can open their report card now." : "Taken back."; good = true; await load();
+  } catch (e) { msg = "Could not " + (on ? "issue" : "update") + ": " + (e.code || e.message); good = false; draw(); }
+}
+</script></body></html>
