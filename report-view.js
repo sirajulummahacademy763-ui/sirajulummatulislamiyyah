@@ -13,8 +13,10 @@ export async function buildReport(db, uid, name, classes) {
   try {
     const ts = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = todayStr();
-    const cur = ts.find(x => t >= x.startDate && t <= x.endDate) || ts.filter(x => t > x.endDate).pop() || null;
-    if (cur) out.term = { id: cur.id || "", name: cur.name || "", session: cur.session || "", startDate: cur.startDate, endDate: cur.endDate };
+    let cur = ts.find(x => t >= x.startDate && t <= x.endDate) || ts.filter(x => t > x.endDate).pop() || null;
+    let up = false;
+    if (!cur && ts.length) { cur = ts[0]; up = true; }   // every term is still ahead: use the first one
+    if (cur) out.term = { id: cur.id || "", name: cur.name || "", session: cur.session || "", startDate: cur.startDate, endDate: cur.endDate, upcoming: up };
     const nx = cur ? ts.find(x => String(x.startDate) > String(cur.endDate)) : null;
     if (nx) out.nextTerm = { name: nx.name || "", startDate: nx.startDate };
   } catch (e) {}
@@ -36,7 +38,7 @@ export async function buildReport(db, uid, name, classes) {
   } catch (e) {}
   const a = out.term ? new Date(out.term.startDate + "T00:00:00") : null;
   const b = out.term ? new Date(out.term.endDate + "T23:59:59") : null;
-  const inTerm = s => !out.term || (s && s * 1000 >= a.getTime() && s * 1000 <= b.getTime());
+  const inTerm = s => !out.term || out.term.upcoming || (s && s * 1000 >= a.getTime() && s * 1000 <= b.getTime());
 
   // exam results from every course the student joined
   try {
