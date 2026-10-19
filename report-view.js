@@ -11,10 +11,10 @@ export async function buildReport(db, uid, name, classes) {
   const out = { uid, name, classes: classes || {}, term: null, generatedAt: Date.now(), exams: [], attendance: [], progress: [], stars: 0 };
   // current term (or the latest one that ended)
   try {
-    const ts = (await getDocs(collection(db, "terms"))).docs.map(d => d.data()).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    const ts = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = todayStr();
     const cur = ts.find(x => t >= x.startDate && t <= x.endDate) || ts.filter(x => t > x.endDate).pop() || null;
-    if (cur) out.term = { name: cur.name || "", session: cur.session || "", startDate: cur.startDate, endDate: cur.endDate };
+    if (cur) out.term = { id: cur.id || "", name: cur.name || "", session: cur.session || "", startDate: cur.startDate, endDate: cur.endDate };
     const nx = cur ? ts.find(x => String(x.startDate) > String(cur.endDate)) : null;
     if (nx) out.nextTerm = { name: nx.name || "", startDate: nx.startDate };
   } catch (e) {}
@@ -26,6 +26,14 @@ export async function buildReport(db, uid, name, classes) {
     try { const p = await getDoc(doc(db, "classPlans", sec + "__" + String(lv).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, ""))); if (p.exists()) subjects = (p.data().subjects || []).map(x => ({ name: x.name || "", nameAr: x.nameAr || "" })); } catch (e) {}
     out.sheets.push({ sec, level: lv, subjects });
   }
+  // issued term marks (entered and issued by the class teachers)
+  try {
+    const cs = await getDocs(query(collection(db, "reportCards"), where("uid", "==", uid), where("status", "==", "issued")));
+    cs.docs.map(d => d.data()).filter(c => !out.term || !out.term.id || c.termId === out.term.id).forEach(c => {
+      const g = out.sheets.find(x => x.sec === c.section && x.level === c.level);
+      if (g) g.card = { marks: c.marks || {}, total: c.total, percentage: c.percentage, grade: c.grade, position: c.position, classSize: c.classSize };
+    });
+  } catch (e) {}
   const a = out.term ? new Date(out.term.startDate + "T00:00:00") : null;
   const b = out.term ? new Date(out.term.endDate + "T23:59:59") : null;
   const inTerm = s => !out.term || (s && s * 1000 >= a.getTime() && s * 1000 <= b.getTime());
@@ -94,10 +102,11 @@ export const reportCss = `
 .rp table.sc th{background:#eef0f9;font-weight:800;word-break:normal;font-size:clamp(.46rem,1.9vw,.78rem)}
 .rp table.sc th.ar,.rp table.sc td.ar{font-family:Amiri,serif;font-size:clamp(.62rem,2.7vw,1rem)}
 .rp table.sc th.ar{font-size:clamp(.5rem,2.2vw,.85rem)}
-.rp table.sc td.n{text-align:left;font-weight:700;text-transform:uppercase}
+.rp table.sc td.n{text-align:left;font-weight:700;text-transform:uppercase;font-size:clamp(.42rem,1.75vw,.78rem);word-break:normal;overflow-wrap:anywhere;hyphens:auto}
 .rp table.sc td.ar.n{text-align:right;text-transform:none}
 .rp table.sc td{height:2.1em}
 .rp table.sc tr.tt td{font-weight:800}
+.rp table.sc td.lo{color:#b3261e;font-weight:800}
 .rp .hol{margin-top:12px;display:grid;gap:6px}
 .rp .sg{display:flex;gap:12px;justify-content:space-between;margin-top:30px;text-align:center;font-size:clamp(.58rem,2.4vw,.82rem)}
 .rp .sg div{flex:1;border-top:1.5px solid #111;padding-top:3px;font-weight:700}
@@ -125,16 +134,19 @@ const SECAR = { islamic: "القسم العربي والإسلامي", western: 
 
 function sheet(d, g) {
   const MAX = 100, PASS = 50;
-  const rows = g.subjects && g.subjects.length ? g.subjects : Array.from({ length: 8 }, () => ({ name: "", nameAr: "" }));
+  const cd = g.card || null, mk = (cd && cd.marks) || {};
+  let rows = g.subjects && g.subjects.length ? g.subjects.slice() : [];
+  Object.keys(mk).forEach(k => { if (!rows.some(x => x.name === k)) rows.push({ name: k, nameAr: "" }); });
+  if (!rows.length) rows = Array.from({ length: 8 }, () => ({ name: "", nameAr: "" }));
   const termTxt = d.term ? esc(d.term.name) + (d.term.session ? " " + esc(d.term.session) : "") : "";
   const f = (en, v, ar, w) => `<div class="f${w ? " w" : ""}"><b>${en}</b><span class="v">${v || ""}</span><b class="a" dir="rtl">${ar}</b></div>`;
   let h = `<section class="sh"><div class="shh"><div class="a1" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</div><div class="e1">SIRAJUL UMMAH ISLAMIC INSTITUTE</div><div class="tg">For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning</div></div>`;
   h += `<div class="ttl"><span class="l">Report Sheet<br><small>${SEC[g.sec]}</small></span><img src="logo.svg" alt="" onerror="this.style.display='none'"><span class="r" dir="rtl">كشف الدرجات<br><small>${SECAR[g.sec]}</small></span></div>`;
-  h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", 1)}${f("Position:", "", ":درجة")}${f("Term:", termTxt, ":دورة")}${f("Grade:", "", ":التقدير")}${f("No of students:", "", ":عدد الطلاب")}${f("Percentage:", "", ":النسبة")}${f("Class:", esc(g.level), ":السنة")}</div>`;
+  h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", 1)}${f("Position:", cd && cd.position ? esc(cd.position) : "", ":درجة")}${f("Term:", termTxt, ":دورة")}${f("Grade:", cd && cd.grade ? esc(cd.grade) : "", ":التقدير")}${f("No of students:", cd && cd.classSize ? esc(cd.classSize) : "", ":عدد الطلاب")}${f("Percentage:", cd && cd.percentage != null ? esc(cd.percentage) + "%" : "", ":النسبة")}${f("Class:", esc(g.level), ":السنة")}</div>`;
   h += `<table class="sc"><colgroup><col style="width:21%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:11%"><col style="width:20%"></colgroup>`;
   h += `<tr><th>SUBJECT</th><th>MAX</th><th>PASS</th><th>SCORE</th><th class="ar">الميسر</th><th class="ar">النجاح</th><th class="ar">المكسوب</th><th class="ar">المواد</th></tr>`;
-  h += rows.map(x => `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td></td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td></td><td class="ar n" dir="rtl">${esc(x.nameAr)}</td></tr>`).join("");
-  h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="ar n" dir="rtl">المجموع الكلي</td></tr></table>`;
+  h += rows.map(x => `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td class="${typeof mk[x.name] === "number" && mk[x.name] < PASS ? "lo" : ""}">${typeof mk[x.name] === "number" ? esc(mk[x.name]) : ""}</td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td class="ar">${typeof mk[x.name] === "number" ? AR(mk[x.name]) : ""}</td><td class="ar n" dir="rtl">${esc(x.nameAr)}</td></tr>`).join("");
+  h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${cd && cd.total != null ? esc(cd.total) : ""}</td><td></td><td></td><td class="ar">${cd && cd.total != null ? AR(cd.total) : ""}</td><td class="ar n" dir="rtl">المجموع الكلي</td></tr></table>`;
   h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", 1)}</div>`;
   h += `<div class="sg"><div>DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
   return h;
