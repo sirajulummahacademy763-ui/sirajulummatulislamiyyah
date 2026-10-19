@@ -23,7 +23,7 @@ while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the in
 // Menu by role: admin sees admin pages, a teacher sees teacher pages only, a student sees student pages only
 if(!isPub){
   const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const ADM=[["index.html","Home"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const show=list=>{
     const nv=document.querySelector("header.top nav");if(!nv)return;
@@ -43,6 +43,17 @@ if(!isPub){
       try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())role="admin"; }catch(e){}
       if(role==="student"){try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())role="teacher"; }catch(e){}}
       document.documentElement.setAttribute("data-role",role);
+      // A student's class membership record (lets that class's teachers see who is in the class)
+      if(role==="student"){try{
+        const k="cm_"+u.uid+"_v1";
+        if(!sessionStorage.getItem(k)){
+          const sd=await f.getDoc(f.doc(c.db,"students",u.uid));
+          if(sd.exists()){const d=sd.data(),cl=d.classes||{};
+            for(const sec of Object.keys(cl)){const lv=cl[sec];if(!lv||lv==="none")continue;
+              await f.setDoc(f.doc(c.db,"classMembers",u.uid+"__"+sec),{uid:u.uid,name:d.name||u.email||"Student",classKey:sec+"|"+lv,section:sec,level:lv,updatedAt:f.serverTimestamp()});}
+            sessionStorage.setItem(k,"1");}
+        }
+      }catch(e){}}
       show(role==="admin"?ADM:role==="teacher"?TCH:STU);
     });
   }).catch(()=>{ show(STU); });
