@@ -17,6 +17,8 @@ select,input{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #c
 .b.g{background:#1c7a4d}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e6e8f3;padding:8px 0}
 .row .nm{flex:1;font-weight:600}
+.row .nm .na{display:block;margin-top:5px;font-family:Amiri,serif;font-size:1.1rem;font-weight:400;padding:6px 8px}
+.row input.na{width:100%;text-align:right}
 .row input{width:96px;text-align:center;font-weight:700}
 .er{color:#b3261e}.ok{color:#1c7a4d}
 table.t{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:6px}
@@ -39,7 +41,8 @@ const MAX = 100;
 const gradeOf = p => p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
 const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 let items = [], terms = [], me = null, tname = "", cur = null;   // cur = loaded class + term data
-let sel = { c: 0, t: "", s: "" }, msg = "", good = false;
+let sel = { c: 0, t: "", s: "" }, msg = "", good = false, arNames = {};
+const toAr = async t => { try { const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=" + encodeURIComponent(t)); const j = await r.json(); return (j[0] || []).map(x => x[0]).join("").trim(); } catch (e) { return ""; } };
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>Issue Reports</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -70,6 +73,12 @@ async function load() {
   try { (await getDocs(query(collection(db, "reportCards"), where("classKey", "==", key), where("termId", "==", sel.t)))).docs.forEach(d => { cards[d.data().uid] = d.data(); }); } catch (e) {}
   cur = { i, key, all, mine, studs, cards };
   draw();
+  // suggest Arabic names for students who have none yet (the teacher can correct them)
+  for (const s of studs) {
+    if ((cards[s.uid] && cards[s.uid].nameAr) || arNames[s.uid] !== undefined) continue;
+    arNames[s.uid] = "";
+    toAr(s.name || "").then(a => { arNames[s.uid] = a; const el = document.querySelector('input[data-n="' + s.uid + '"]'); if (el && !el.value) el.value = a; });
+  }
 }
 
 function calc(c) {
@@ -85,11 +94,11 @@ function draw() {
   h += `<div class="cd"><div class="g3"><div><label>Class</label><select id="sc">${items.map((x, n) => `<option value="${n}" ${n === sel.c ? "selected" : ""}>${esc(x.level)} · ${esc(SN[x.section] || x.section)}</option>`).join("")}</select></div>
     <div><label>Term</label><select id="st">${terms.map(x => `<option value="${esc(x.id)}" ${x.id === sel.t ? "selected" : ""}>${esc(x.name)}${x.session ? " " + esc(x.session) : ""}</option>`).join("") || "<option value=''>No term yet</option>"}</select></div>
     <div><label>Subject</label><select id="ss">${mine.map(x => `<option ${x === sel.s ? "selected" : ""}>${esc(x)}</option>`).join("") || "<option value=''>No subjects</option>"}</select></div></div></div>`;
-  h += `<div class="cd"><h2>Marks · ${esc(sel.s || "")}</h2><p class="hint">Out of ${MAX}. Pass mark is 50. Leave a box empty to skip the student.</p>`;
+  h += `<div class="cd"><h2>Marks · ${esc(sel.s || "")}</h2><p class="hint">Out of ${MAX}. Pass mark is 50. Leave a mark empty to skip the student. Check each Arabic name under the student. The site suggests it automatically, so correct it if it is wrong. It prints on the report.</p>`;
   if (!terms.length) h += '<p class="er">The admin has not created a term yet.</p>';
   else if (!studs.length) h += '<p class="hint">No students yet. Students appear here after they open the site once with their class chosen.</p>';
   else h += studs.map(s => { const v = cards[s.uid] && cards[s.uid].marks ? cards[s.uid].marks[sel.s] : ""; const lock = cards[s.uid] && cards[s.uid].status === "issued";
-    return `<div class="row"><span class="nm">${esc(s.name)}${lock ? ' <span class="pill i">Issued</span>' : ""}</span><input type="number" inputmode="decimal" min="0" max="${MAX}" data-u="${esc(s.uid)}" value="${v == null ? "" : esc(v)}" aria-label="Mark for ${esc(s.name)}"></div>`; }).join("");
+    return `<div class="row"><span class="nm">${esc(s.name)}${lock ? ' <span class="pill i">Issued</span>' : ""}<input class="na" dir="rtl" lang="ar" data-n="${esc(s.uid)}" placeholder="الاسم بالعربية" value="${esc((cards[s.uid] && cards[s.uid].nameAr) || arNames[s.uid] || "")}" aria-label="Arabic name of ${esc(s.name)}"></span><input type="number" inputmode="decimal" min="0" max="${MAX}" data-u="${esc(s.uid)}" value="${v == null ? "" : esc(v)}" aria-label="Mark for ${esc(s.name)}"></div>`; }).join("");
   if (studs.length && terms.length && sel.s) h += `<button class="b" id="sv" type="button">Save marks</button>`;
   h += `<span id="m" class="${good ? "ok" : "er"}">${esc(msg)}</span></div>`;
   if (studs.length && terms.length) {
@@ -110,12 +119,13 @@ const rid = (uid) => uid + "__" + sel.t + "__" + cur.i.section;
 const base = (s) => { const t = terms.find(x => x.id === sel.t) || {}; return { uid: s.uid, studentName: s.name || "Student", classKey: cur.key, section: cur.i.section, level: cur.i.level, termId: sel.t, termName: t.name || "", session: t.session || "" }; };
 
 async function save() {
-  const ins = [...document.querySelectorAll("input[data-u]")].filter(x => x.value.trim() !== "");
-  for (const x of ins) { const v = Number(x.value); if (!(v >= 0 && v <= MAX)) { msg = "Marks must be between 0 and " + MAX + "."; good = false; return draw(); } }
+  const nameOf = uid => { const e = document.querySelector('input[data-n="' + uid + '"]'); return e ? e.value.trim() : ""; };
+  const ins = [...document.querySelectorAll("input[data-u]")].filter(x => x.value.trim() !== "" || nameOf(x.dataset.u) !== "");
+  for (const x of ins) { if (x.value.trim() === "") continue; const v = Number(x.value); if (!(v >= 0 && v <= MAX)) { msg = "Marks must be between 0 and " + MAX + "."; good = false; return draw(); } }
   try {
     for (const x of ins) {
       const s = cur.studs.find(z => z.uid === x.dataset.u), old = cur.cards[s.uid], v = Number(x.value);
-      const d = { ...base(s), marks: { [sel.s]: v }, updatedAt: serverTimestamp(), by: me.uid, byName: tname };
+      const d = { ...base(s), marks: x.value.trim() === "" ? {} : { [sel.s]: v }, nameAr: nameOf(s.uid), updatedAt: serverTimestamp(), by: me.uid, byName: tname };
       if (!old) d.status = "draft";
       await setDoc(doc(db, "reportCards", rid(s.uid)), d, { merge: true });
     }
@@ -134,7 +144,8 @@ async function issue(on) {
   let pos = 0, prev = null; rows.forEach((r, n) => { if (r.k.pct !== prev) { pos = n + 1; prev = r.k.pct; } r.pos = pos; });
   try {
     for (const r of rows) {
-      const d = { ...base(r.s), status: on ? "issued" : "draft", total: r.k.tot, percentage: r.k.pct, grade: gradeOf(r.k.pct), position: r.pos, classSize: cur.studs.length, updatedAt: serverTimestamp(), by: me.uid, byName: tname };
+      const ne = document.querySelector('input[data-n="' + r.s.uid + '"]');
+      const d = { ...base(r.s), ...(ne && ne.value.trim() ? { nameAr: ne.value.trim() } : {}), status: on ? "issued" : "draft", total: r.k.tot, percentage: r.k.pct, grade: gradeOf(r.k.pct), position: r.pos, classSize: cur.studs.length, updatedAt: serverTimestamp(), by: me.uid, byName: tname };
       if (on) d.issuedAt = serverTimestamp();
       await setDoc(doc(db, "reportCards", rid(r.s.uid)), d, { merge: true });
     }
