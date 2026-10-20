@@ -33,7 +33,7 @@ export async function buildReport(db, uid, name, classes) {
     const cs = await getDocs(query(collection(db, "reportCards"), where("uid", "==", uid), where("status", "==", "issued")));
     cs.docs.map(d => d.data()).filter(c => !out.term || !out.term.id || c.termId === out.term.id).forEach(c => {
       const g = out.sheets.find(x => x.sec === c.section && x.level === c.level);
-      if (g) g.card = { marks: c.marks || {}, total: c.total, percentage: c.percentage, grade: c.grade, position: c.position, classSize: c.classSize };
+      if (g) g.card = { nameAr: c.nameAr || "", marks: c.marks || {}, total: c.total, percentage: c.percentage, grade: c.grade, position: c.position, classSize: c.classSize };
     });
   } catch (e) {}
   const a = out.term ? new Date(out.term.startDate + "T00:00:00") : null;
@@ -95,10 +95,13 @@ export const reportCss = `
 .rp .ttl img{width:clamp(44px,13vw,70px);height:auto}
 .rp .fl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
 .rp .fl .w{grid-column:1/-1}
-.rp .f{display:flex;align-items:flex-end;gap:5px;font-size:clamp(.72rem,2.9vw,1rem)}
+.rp .f{display:flex;gap:14px;font-size:clamp(.72rem,2.9vw,1rem)}
+.rp .f .e,.rp .f .r{flex:1;min-width:0;display:flex;align-items:flex-end;gap:5px}
 .rp .f b{font-weight:800;white-space:nowrap}
-.rp .f .a{font-family:Amiri,serif;font-size:1.12em;white-space:nowrap}
-.rp .f .v{flex:1;min-width:20px;border-bottom:1.5px solid #111;min-height:1.35em;padding:0 3px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp .f .a{font-family:Amiri,serif;font-size:1.12em}
+.rp .f .v{flex:1;min-width:20px;border-bottom:1.5px solid #111;min-height:1.35em;padding:0 3px;font-weight:600;overflow-wrap:anywhere}
+.rp .f .v.va{font-family:Amiri,serif;font-size:1.12em}
+@media(max-width:600px){.rp .fl{grid-template-columns:1fr}.rp .f{flex-direction:column;gap:3px}}
 .rp table.sc{width:100%;border-collapse:collapse;margin-top:12px;table-layout:fixed}
 .rp table.sc th,.rp table.sc td{border:1.5px solid #111;padding:3px 2px;text-align:center;font-size:clamp(.5rem,2.1vw,.82rem);vertical-align:middle;line-height:1.25;word-break:break-word}
 .rp table.sc th{background:#eef0f9;font-weight:800;word-break:normal;font-size:clamp(.46rem,1.9vw,.78rem)}
@@ -131,6 +134,13 @@ export const reportCss = `
 `;
 
 const AR = n => String(n).replace(/\d/g, x => "٠١٢٣٤٥٦٧٨٩"[x]);
+
+const LVAR = { "Rawdatul Atfal": "روضة الأطفال", "Ibtidai": "ابتدائي", "I'dadi": "إعدادي", "Thanawi": "ثانوي", "Primary": "الصف الابتدائي", "JSS": "المتوسط (JSS)", "SSS": "الثانوي (SSS)" };
+const LVFIX = { "Kindergarten (KG)": "رياض الأطفال (KG)", "Beginner": "مبتدئ", "Intermediate": "متوسط", "Advanced": "متقدم" };
+const levelAr = lv => { lv = String(lv || ""); if (LVFIX[lv]) return LVFIX[lv]; const m = lv.match(/^(.*?)\s*(\d+)$/); if (m && LVAR[m[1]]) return LVAR[m[1]] + " " + AR(m[2]); return ""; };
+const termAr = n => { n = String(n || ""); if (/first|1st/i.test(n)) return "الفصل الأول"; if (/second|2nd/i.test(n)) return "الفصل الثاني"; if (/third|3rd/i.test(n)) return "الفصل الثالث"; return ""; };
+const GRAR = { A: "ممتاز", B: "جيد جدًا", C: "جيد", D: "مقبول", F: "راسب" };
+const dfmtAr = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); try { return isNaN(d) ? "" : d.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" }); } catch (e) { return ""; } };
 const dfmt = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return isNaN(d) ? esc(s) : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }); };
 const SECAR = { islamic: "القسم العربي والإسلامي", western: "القسم الغربي", tech: "قسم التقنية" };
 
@@ -141,15 +151,22 @@ function sheet(d, g) {
   Object.keys(mk).forEach(k => { if (!rows.some(x => x.name === k)) rows.push({ name: k, nameAr: "" }); });
   if (!rows.length) rows = Array.from({ length: 8 }, () => ({ name: "", nameAr: "" }));
   const termTxt = d.term ? esc(d.term.name) + (d.term.session ? " " + esc(d.term.session) : "") : "";
-  const f = (en, v, ar, w) => `<div class="f${w ? " w" : ""}"><b>${en}</b><span class="v">${v || ""}</span><b class="a" dir="rtl">${ar}</b></div>`;
+  const f = (en, v, ar, va, w) => `<div class="f${w ? " w" : ""}"><div class="e"><b>${en}</b><span class="v">${v || ""}</span></div><div class="r" dir="rtl" lang="ar"><b class="a">${ar}</b><span class="v va">${va || ""}</span></div></div>`;
   let h = `<section class="sh"><div class="shh"><div class="a1" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</div><div class="e1">SIRAJUL UMMAH ISLAMIC INSTITUTE</div><div class="tg">For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning</div></div>`;
   h += `<div class="ttl"><span class="l">Report Sheet<br><small>${SEC[g.sec]}</small></span><img src="logo.svg" alt="" onerror="this.style.display='none'"><span class="r" dir="rtl">كشف الدرجات<br><small>${SECAR[g.sec]}</small></span></div>`;
-  h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", 1)}${f("Position:", cd && cd.position ? esc(cd.position) : "", ":درجة")}${f("Term:", termTxt, ":دورة")}${f("Grade:", cd && cd.grade ? esc(cd.grade) : "", ":التقدير")}${f("No of students:", cd && cd.classSize ? esc(cd.classSize) : "", ":عدد الطلاب")}${f("Percentage:", cd && cd.percentage != null ? esc(cd.percentage) + "%" : "", ":النسبة")}${f("Class:", esc(g.level), ":السنة")}</div>`;
+  const termA = d.term ? [termAr(d.term.name), d.term.session ? AR(esc(d.term.session)) : ""].filter(Boolean).join(" ") : "";
+  h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", cd ? esc(cd.nameAr) : "", 1)}`
+    + `${f("Term:", termTxt, ":دورة", termA, 1)}`
+    + `${f("Class:", esc(g.level), ":السنة", levelAr(g.level), 1)}`
+    + `${f("Position:", cd && cd.position ? esc(cd.position) : "", ":درجة", cd && cd.position ? AR(cd.position) : "")}`
+    + `${f("Grade:", cd && cd.grade ? esc(cd.grade) : "", ":التقدير", cd && cd.grade ? (GRAR[cd.grade] || "") : "")}`
+    + `${f("No of students:", cd && cd.classSize ? esc(cd.classSize) : "", ":عدد الطلاب", cd && cd.classSize ? AR(cd.classSize) : "")}`
+    + `${f("Percentage:", cd && cd.percentage != null ? esc(cd.percentage) + "%" : "", ":النسبة", cd && cd.percentage != null ? AR(cd.percentage) + "٪" : "")}</div>`;
   h += `<table class="sc"><colgroup><col style="width:21%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:11%"><col style="width:20%"></colgroup>`;
   h += `<tr><th>SUBJECT</th><th>MAX</th><th>PASS</th><th>SCORE</th><th class="ar">الميسر</th><th class="ar">النجاح</th><th class="ar">المكسوب</th><th class="ar">المواد</th></tr>`;
   h += rows.map(x => `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td class="${typeof mk[x.name] === "number" && mk[x.name] < PASS ? "lo" : ""}">${typeof mk[x.name] === "number" ? esc(mk[x.name]) : ""}</td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td class="ar">${typeof mk[x.name] === "number" ? AR(mk[x.name]) : ""}</td><td class="ar n" dir="rtl">${esc(x.nameAr)}</td></tr>`).join("");
   h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${cd && cd.total != null ? esc(cd.total) : ""}</td><td></td><td></td><td class="ar">${cd && cd.total != null ? AR(cd.total) : ""}</td><td class="ar n" dir="rtl">المجموع الكلي</td></tr></table>`;
-  h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", 1)}</div>`;
+  h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
   h += `<div class="sg"><div>DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
   return h;
 }
