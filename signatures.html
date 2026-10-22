@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signature and Stamp | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:640px}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:16px;margin-bottom:16px}
+.cd h2{margin:0 0 6px;font-size:1.15rem}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+.pv{min-height:90px;border:1.5px dashed #cfd3e8;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff;margin:8px 0}
+.pv img{max-width:100%;max-height:150px;object-fit:contain}
+.pv span{color:#8a8fa8;font-size:.9rem}
+input[type=file]{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:10px 8px 0 0}
+.b.o{background:#fff;color:#b3261e;border:1.5px solid #b3261e}
+.m{margin-top:8px;font-size:.92rem}.er{color:#b3261e}.ok{color:#1c7a4d}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const app = document.getElementById("app");
+let ME = "";
+const fit = (file, maxW) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, maxW / im.width), w = Math.round(im.width * k), h = Math.round(im.height * k);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const x = c.getContext("2d"); x.drawImage(im, 0, 0, w, h);
+      let u = c.toDataURL("image/png");
+      if (u.length > 230000) { x.globalCompositeOperation = "destination-over"; x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); u = c.toDataURL("image/jpeg", .8); }
+      res(u);
+    };
+    im.onerror = () => rej(new Error("That file is not a picture."));
+    im.src = r.result;
+  };
+  r.onerror = () => rej(new Error("Could not read the file."));
+  r.readAsDataURL(file);
+});
+async function small(file) {
+  for (const w of [420, 320, 240, 180]) { const u = await fit(file, w); if (u.length < 280000) return u; }
+  throw new Error("The picture is too detailed. Use a simpler one.");
+}
+function card(it) {
+  const d = document.createElement("div"); d.className = "cd";
+  d.innerHTML = `<h2>${it.t}</h2><p class="hint">${it.h}</p><div class="pv"><span>Loading...</span></div><input type="file" accept="image/*"><div><button class="b sv">Save</button><button class="b o rm">Remove</button></div><div class="m"></div>`;
+  const pv = d.querySelector(".pv"), fi = d.querySelector("input"), m = d.querySelector(".m");
+  let cur = "", pick = "";
+  const show = u => { pv.innerHTML = u ? `<img src="${u}" alt="">` : "<span>Nothing uploaded yet</span>"; };
+  getDoc(doc(db, "signatures", it.id)).then(s => { cur = s.exists() ? (s.data().img || "") : ""; show(cur); }).catch(() => show(""));
+  fi.onchange = async () => {
+    m.textContent = ""; pick = "";
+    if (!fi.files[0]) return;
+    try { pick = await small(fi.files[0]); show(pick); m.innerHTML = '<span class="ok">Looks good. Now press Save.</span>'; }
+    catch (e) { m.innerHTML = '<span class="er">' + e.message + "</span>"; }
+  };
+  d.querySelector(".sv").onclick = async () => {
+    if (!pick) { m.innerHTML = '<span class="er">Choose a picture first.</span>'; return; }
+    try { await setDoc(doc(db, "signatures", it.id), { img: pick, by: ME, updatedAt: serverTimestamp() }); cur = pick; pick = ""; fi.value = ""; m.innerHTML = '<span class="ok">Saved. It will show on report sheets.</span>'; }
+    catch (e) { m.innerHTML = '<span class="er">Could not save: ' + (e.code || e.message) + "</span>"; }
+  };
+  d.querySelector(".rm").onclick = async () => {
+    if (!confirm("Remove it?")) return;
+    try { await deleteDoc(doc(db, "signatures", it.id)); cur = ""; pick = ""; fi.value = ""; show(""); m.innerHTML = '<span class="ok">Removed.</span>'; }
+    catch (e) { m.innerHTML = '<span class="er">Could not remove: ' + (e.code || e.message) + "</span>"; }
+  };
+  return d;
+}
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid;
+  let adm = false, tch = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { try { tch = (await getDoc(doc(db, "teachers", u.uid))).exists(); } catch (e) {} }
+  if (!adm && !tch) { app.innerHTML = "<h1>Signature and Stamp</h1><p>This page is only for the director and teachers.</p>"; return; }
+  app.innerHTML = "<h1>" + (adm ? "Signature and Stamp" : "My Signature") + "</h1><p class='hint'>Sign on plain white paper with a dark pen, or press the stamp on white paper. Take a clear, straight photo in good light, then upload it here.</p>";
+  const items = adm
+    ? [{ id: "director", t: "Director’s signature", h: "Shown above DIRECTOR’S SIGN on every report sheet." },
+       { id: "stamp", t: "Official stamp", h: "Shown above OFFICIAL STAMP on every report sheet." }]
+    : [{ id: u.uid, t: "My signature (class teacher)", h: "Shown above CLASS TEACHER’S SIGN on the report sheets you issue." }];
+  items.forEach(it => app.appendChild(card(it)));
+});
+</script>
+</body></html>
