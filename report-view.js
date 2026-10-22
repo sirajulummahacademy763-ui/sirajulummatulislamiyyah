@@ -33,9 +33,14 @@ export async function buildReport(db, uid, name, classes) {
     const cs = await getDocs(query(collection(db, "reportCards"), where("uid", "==", uid), where("status", "==", "issued")));
     cs.docs.map(d => d.data()).filter(c => !out.term || !out.term.id || c.termId === out.term.id).forEach(c => {
       const g = out.sheets.find(x => x.sec === c.section && x.level === c.level);
-      if (g) g.card = { nameAr: c.nameAr || "", marks: c.marks || {}, total: c.total, percentage: c.percentage, grade: c.grade, position: c.position, classSize: c.classSize };
+      if (g) g.card = { nameAr: c.nameAr || "", marks: c.marks || {}, total: c.total, percentage: c.percentage, grade: c.grade, position: c.position, classSize: c.classSize, by: c.by || "" };
     });
   } catch (e) {}
+  // signatures and stamp (uploaded on the Signatures page)
+  out.signs = {};
+  const ldSign = async id => { try { const s = await getDoc(doc(db, "signatures", id)); const u = s.exists() ? String(s.data().img || "") : ""; return /^data:image\//.test(u) ? u : ""; } catch (e) { return ""; } };
+  out.signs.director = await ldSign("director"); out.signs.stamp = await ldSign("stamp");
+  for (const g of out.sheets) if (g.card && g.card.by) g.teacherSign = await ldSign(g.card.by);
   const a = out.term ? new Date(out.term.startDate + "T00:00:00") : null;
   const b = out.term ? new Date(out.term.endDate + "T23:59:59") : null;
   const inTerm = s => !out.term || out.term.upcoming || (s && s * 1000 >= a.getTime() && s * 1000 <= b.getTime());
@@ -120,8 +125,11 @@ export const reportCss = `
 .rp table.sc tr.tt td{font-weight:800}
 .rp table.sc td.lo{color:#b3261e;font-weight:800}
 .rp .hol{margin-top:12px;display:grid;gap:6px}
-.rp .sg{display:flex;gap:12px;justify-content:space-between;margin-top:30px;text-align:center;font-size:clamp(.58rem,2.4vw,.82rem)}
-.rp .sg div{flex:1;border-top:1.5px solid #111;padding-top:3px;font-weight:700}
+.rp .sg{display:flex;gap:12px;justify-content:space-between;margin-top:72px;text-align:center;font-size:clamp(.58rem,2.4vw,.82rem)}
+.rp .sg div{flex:1;border-top:1.5px solid #111;padding-top:3px;font-weight:700;position:relative}
+.rp .sg img{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;max-width:92%;object-fit:contain}
+.rp .sg img.sig{max-height:46px}
+.rp .sg img.stp{max-height:64px;bottom:calc(100% - 4px);opacity:.92}
 .rp .sg .a{font-family:Amiri,serif;font-size:1.15em}
 .rp .rec{margin-top:6px}
 .rp .rec>h2{font-size:1.15rem;margin:6px 0 0;color:#12163a}
@@ -177,7 +185,9 @@ function sheet(d, g) {
   const tot = cd && cd.total != null ? cd.total : "";
   h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${nm(tot)}</td><td class="ar"></td><td class="ar"></td><td class="ar">${na(tot)}</td><td class="ar n">المجموع الكلي</td></tr></table>`;
   h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
-  h += `<div class="sg"><div>DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
+  const im = (u, c) => u ? `<img class="${c}" src="${u}" alt="">` : "";
+  const sg = d.signs || {};
+  h += `<div class="sg"><div>${im(sg.director, "sig")}DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>${im(sg.stamp, "stp")}OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>${im(g.teacherSign, "sig")}CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
   return h;
 }
 
