@@ -93,15 +93,16 @@ export const reportCss = `
 .rp .ttl .r{font-family:Amiri,serif;font-size:clamp(.95rem,3.8vw,1.3rem);font-weight:700;flex:1;text-align:right}
 .rp .ttl small{font-size:.72em;font-style:normal;font-weight:400;color:#4b5072}
 .rp .ttl img{width:clamp(44px,13vw,70px);height:auto}
-.rp .fl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.rp .fl{display:grid;grid-template-columns:1fr;gap:2px}
 .rp .fl .w{grid-column:1/-1}
-.rp .f{display:flex;gap:14px;font-size:clamp(.72rem,2.9vw,1rem)}
-.rp .f .e,.rp .f .r{flex:1;min-width:0;display:flex;align-items:flex-end;gap:5px}
+.rp .f{display:flex;gap:10px;font-size:clamp(.7rem,2.9vw,.95rem);flex-wrap:nowrap;align-items:flex-end}
+.rp .f .e{flex:1.45;min-width:0;display:flex;align-items:flex-end;gap:5px}
+.rp .f .r{flex:1;min-width:0;display:flex;align-items:flex-end;gap:5px}
 .rp .f b{font-weight:800;white-space:nowrap}
 .rp .f .a{font-family:Amiri,serif;font-size:1.12em}
-.rp .f .v{flex:1;min-width:20px;border-bottom:1.5px solid #111;min-height:1.35em;padding:0 3px;font-weight:600;overflow-wrap:anywhere}
+.rp .f .v{flex:1;min-width:12px;border-bottom:1px solid #111;min-height:1.15em;line-height:1.25;padding:0 3px;font-weight:600;overflow-wrap:normal;white-space:nowrap;font-size:.92em}
 .rp .f .v.va{font-family:Amiri,serif;font-size:1.12em}
-@media(max-width:600px){.rp .fl{grid-template-columns:1fr}.rp .f{flex-direction:column;gap:3px}}
+
 .rp table.sc{width:100%;border-collapse:collapse;margin-top:12px;table-layout:fixed}
 .rp table.sc th,.rp table.sc td{border:1.5px solid #111;padding:3px 2px;text-align:center;font-size:clamp(.5rem,2.1vw,.82rem);vertical-align:middle;line-height:1.25;word-break:break-word}
 .rp table.sc th{background:#eef0f9;font-weight:800;word-break:normal;font-size:clamp(.46rem,1.9vw,.78rem)}
@@ -110,6 +111,12 @@ export const reportCss = `
 .rp table.sc td.n{text-align:left;font-weight:700;text-transform:uppercase;font-size:clamp(.42rem,1.75vw,.78rem);word-break:normal;overflow-wrap:anywhere;hyphens:auto}
 .rp table.sc td.ar.n{text-align:right;text-transform:none}
 .rp table.sc td{height:2.1em}
+.rp table.sc .sj{display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left}
+.rp table.sc .sj>span{min-width:0}
+.rp table.sc .sj .a{font-family:Amiri,serif;text-transform:none;font-size:1.25em;text-align:right;white-space:nowrap}
+.rp table.sc .nm{display:inline-flex;gap:6px;justify-content:center;align-items:baseline;white-space:nowrap}
+.rp table.sc .nm .a{font-family:Amiri,serif;font-size:1.2em}
+.rp table.sc th small{display:block;font-family:Amiri,serif;font-size:1.25em;font-weight:700}
 .rp table.sc tr.tt td{font-weight:800}
 .rp table.sc td.lo{color:#b3261e;font-weight:800}
 .rp .hol{margin-top:12px;display:grid;gap:6px}
@@ -141,7 +148,7 @@ const levelAr = lv => { lv = String(lv || ""); if (LVFIX[lv]) return LVFIX[lv]; 
 const termAr = n => { n = String(n || ""); if (/first|1st/i.test(n)) return "الفصل الأول"; if (/second|2nd/i.test(n)) return "الفصل الثاني"; if (/third|3rd/i.test(n)) return "الفصل الثالث"; return ""; };
 const GRAR = { A: "ممتاز", B: "جيد جدًا", C: "جيد", D: "مقبول", F: "راسب" };
 const dfmtAr = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); try { return isNaN(d) ? "" : d.toLocaleDateString("ar-EG", { day: "numeric", month: "long", year: "numeric" }); } catch (e) { return ""; } };
-const dfmt = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return isNaN(d) ? esc(s) : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }); };
+const dfmt = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return isNaN(d) ? esc(s) : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
 const SECAR = { islamic: "القسم العربي والإسلامي", western: "القسم الغربي", tech: "قسم التقنية" };
 
 function sheet(d, g) {
@@ -157,22 +164,23 @@ function sheet(d, g) {
   const termA = d.term ? [termAr(d.term.name), d.term.session ? AR(esc(d.term.session)) : ""].filter(Boolean).join(" ") : "";
   h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", cd ? esc(cd.nameAr) : "", 1)}`
     + `${f("Term:", termTxt, ":دورة", termA, 1)}`
-    + `${f("Class:", esc(g.level), ":السنة", levelAr(g.level), 1)}`
-    + `${f("Position:", cd && cd.position ? esc(cd.position) : "", ":درجة", cd && cd.position ? AR(cd.position) : "")}`
+    + `${f("Class:", esc(g.level), ":الصف", levelAr(g.level), 1)}`
+    + `${f("Position:", cd && cd.position ? esc(cd.position) : "", ":الترتيب", cd && cd.position ? AR(cd.position) : "")}`
     + `${f("Grade:", cd && cd.grade ? esc(cd.grade) : "", ":التقدير", cd && cd.grade ? (GRAR[cd.grade] || "") : "")}`
     + `${f("No of students:", cd && cd.classSize ? esc(cd.classSize) : "", ":عدد الطلاب", cd && cd.classSize ? AR(cd.classSize) : "")}`
     + `${f("Percentage:", cd && cd.percentage != null ? esc(cd.percentage) + "%" : "", ":النسبة", cd && cd.percentage != null ? AR(cd.percentage) + "٪" : "")}</div>`;
-  h += `<table class="sc"><colgroup><col style="width:21%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:11%"><col style="width:20%"></colgroup>`;
-  h += `<tr><th>SUBJECT</th><th>MAX</th><th>PASS</th><th>SCORE</th><th class="ar">الميسر</th><th class="ar">النجاح</th><th class="ar">المكسوب</th><th class="ar">المواد</th></tr>`;
-  h += rows.map(x => `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td class="${typeof mk[x.name] === "number" && mk[x.name] < PASS ? "lo" : ""}">${typeof mk[x.name] === "number" ? esc(mk[x.name]) : ""}</td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td class="ar">${typeof mk[x.name] === "number" ? AR(mk[x.name]) : ""}</td><td class="ar n" dir="rtl">${esc(x.nameAr)}</td></tr>`).join("");
-  h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${cd && cd.total != null ? esc(cd.total) : ""}</td><td></td><td></td><td class="ar">${cd && cd.total != null ? AR(cd.total) : ""}</td><td class="ar n" dir="rtl">المجموع الكلي</td></tr></table>`;
+  const nm = (v) => v === "" || v == null ? "" : `<span class="nm">${esc(v)} <span class="a">${AR(v)}</span></span>`;
+  h += `<table class="sc"><colgroup><col style="width:47%"><col style="width:15%"><col style="width:15%"><col style="width:23%"></colgroup>`;
+  h += `<tr><th>SUBJECT<small>المواد</small></th><th>MAX<small>الميسر</small></th><th>PASS<small>النجاح</small></th><th>SCORE<small>المكسوب</small></th></tr>`;
+  h += rows.map(x => { const m = typeof mk[x.name] === "number" ? mk[x.name] : ""; return `<tr><td class="n"><div class="sj"><span>${esc(x.name)}</span><span class="a" dir="rtl">${esc(x.nameAr)}</span></div></td><td>${nm(MAX)}</td><td>${nm(PASS)}</td><td class="${m !== "" && m < PASS ? "lo" : ""}">${nm(m)}</td></tr>`; }).join("");
+  h += `<tr class="tt"><td class="n"><div class="sj"><span>TOTAL</span><span class="a" dir="rtl">المجموع الكلي</span></div></td><td></td><td></td><td>${nm(cd && cd.total != null ? cd.total : "")}</td></tr></table>`;
   h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
   h += `<div class="sg"><div>DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
   return h;
 }
 
 export function renderReport(d) {
-  const when = d.generatedAt ? new Date(d.generatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+  const when = d.generatedAt ? new Date(d.generatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
   const sheets = d.sheets && d.sheets.length ? d.sheets : Object.keys(SEC).filter(k => d.classes && d.classes[k] && d.classes[k] !== "none").map(k => ({ sec: k, level: d.classes[k], subjects: [] }));
   let h = `<div class="rp">`;
   h += sheets.length ? sheets.map(g => sheet(d, g)).join("") : `<section class="sh"><p class="none">No class has been chosen yet.</p></section>`;
