@@ -109,7 +109,7 @@ export const reportCss = `
 .rp table.sc th.ar,.rp table.sc td.ar{font-family:Amiri,serif;font-size:clamp(.62rem,2.7vw,1rem)}
 .rp table.sc th.ar{font-size:clamp(.5rem,2.2vw,.85rem)}
 .rp table.sc td.n{text-align:left;font-weight:700;text-transform:uppercase;font-size:clamp(.42rem,1.75vw,.78rem);word-break:normal;overflow-wrap:anywhere;hyphens:auto}
-.rp table.sc td.ar.n{text-align:right;text-transform:none}
+.rp table.sc td.ar.n{text-align:right;text-transform:none;font-size:clamp(.6rem,2.6vw,.95rem);line-height:1.3}
 .rp table.sc td{height:2.1em}
 .rp table.sc .sj{display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left}
 .rp table.sc .sj>span{min-width:0}
@@ -169,11 +169,13 @@ function sheet(d, g) {
     + `${f("Grade:", cd && cd.grade ? esc(cd.grade) : "", ":التقدير", cd && cd.grade ? (GRAR[cd.grade] || "") : "")}`
     + `${f("No of students:", cd && cd.classSize ? esc(cd.classSize) : "", ":عدد الطلاب", cd && cd.classSize ? AR(cd.classSize) : "")}`
     + `${f("Percentage:", cd && cd.percentage != null ? esc(cd.percentage) + "%" : "", ":النسبة", cd && cd.percentage != null ? AR(cd.percentage) + "٪" : "")}</div>`;
-  const nm = (v) => v === "" || v == null ? "" : `<span class="nm">${esc(v)} <span class="a">${AR(v)}</span></span>`;
-  h += `<table class="sc"><colgroup><col style="width:47%"><col style="width:15%"><col style="width:15%"><col style="width:23%"></colgroup>`;
-  h += `<tr><th>SUBJECT<small>المواد</small></th><th>MAX<small>الميسر</small></th><th>PASS<small>النجاح</small></th><th>SCORE<small>المكسوب</small></th></tr>`;
-  h += rows.map(x => { const m = typeof mk[x.name] === "number" ? mk[x.name] : ""; return `<tr><td class="n"><div class="sj"><span>${esc(x.name)}</span><span class="a" dir="rtl">${esc(x.nameAr)}</span></div></td><td>${nm(MAX)}</td><td>${nm(PASS)}</td><td class="${m !== "" && m < PASS ? "lo" : ""}">${nm(m)}</td></tr>`; }).join("");
-  h += `<tr class="tt"><td class="n"><div class="sj"><span>TOTAL</span><span class="a" dir="rtl">المجموع الكلي</span></div></td><td></td><td></td><td>${nm(cd && cd.total != null ? cd.total : "")}</td></tr></table>`;
+  const nm = v => v === "" || v == null ? "" : esc(v);
+  const na = v => v === "" || v == null ? "" : AR(v);
+  h += `<table class="sc"><colgroup><col style="width:25%"><col style="width:9.5%"><col style="width:9.5%"><col style="width:10%"><col style="width:9.5%"><col style="width:9.5%"><col style="width:10%"><col style="width:17%"></colgroup>`;
+  h += `<tr><th>SUBJECT</th><th>MAX</th><th>PASS</th><th>SCORE</th><th class="ar">الميسر</th><th class="ar">النجاح</th><th class="ar">المكسوب</th><th class="ar">المواد</th></tr>`;
+  h += rows.map(x => { const m = typeof mk[x.name] === "number" ? mk[x.name] : ""; const lo = m !== "" && m < PASS ? "lo" : ""; return `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td class="${lo}">${nm(m)}</td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td class="ar ${lo}">${na(m)}</td><td class="ar n">${esc(x.nameAr)}</td></tr>`; }).join("");
+  const tot = cd && cd.total != null ? cd.total : "";
+  h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${nm(tot)}</td><td class="ar"></td><td class="ar"></td><td class="ar">${na(tot)}</td><td class="ar n">المجموع الكلي</td></tr></table>`;
   h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
   h += `<div class="sg"><div>DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
   return h;
