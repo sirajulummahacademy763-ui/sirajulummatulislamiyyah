@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Messages (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:760px}.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+.p{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;width:100%;text-align:left;font:inherit}
+.p b{display:block}.p small{color:#4b5072}
+.p .dot{min-width:22px;height:22px;border-radius:50%;background:#b3261e;color:#fff;font-size:.75rem;font-weight:700;display:grid;place-items:center}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.72rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin-left:6px}
+.msg{padding:8px 10px;border-radius:12px;margin:6px 0;font-size:.92rem;max-width:90%}
+.msg.a{background:#12163a;color:#fff;margin-left:auto}.msg.u{background:#eef0fa}
+.msg small{display:block;opacity:.7;font-size:.74rem}
+textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit}
+.b{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:6px 8px 0 0}
+.b.o{background:#fff;color:#12163a;border:1.5px solid #12163a}.er{color:#b3261e}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const ts = d => (d.createdAt && d.createdAt.seconds ? d.createdAt.seconds * 1000 : Date.now());
+let ME = "", P = [], MS = [], sel = "", seen = 0, SUPS = new Set();
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid;
+  let adm = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { $("app").innerHTML = "<h1>Messages</h1><p>This page is only for the admin.</p>"; return; }
+  try { seen = +localStorage.getItem("msgSeen_" + u.uid) || 0; } catch (e) {}
+  try {
+    const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
+    const [te, su, ms] = await Promise.all([g("teachers"), g("supervisors"), g("adminMsgs")]);
+    su.forEach(x => SUPS.add(x.id)); MS = ms;
+    P = te.map(t => ({ id: t.id, name: t.name || t.email || "Teacher", sup: SUPS.has(t.id) }))
+      .sort((a, b) => (b.sup - a.sup) || a.name.localeCompare(b.name));
+    draw();
+    try { localStorage.setItem("msgSeen_" + u.uid, String(Date.now())); sessionStorage.removeItem("msgCnt_" + u.uid); } catch (e) {}
+  } catch (e) { $("app").innerHTML = '<h1>Messages</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+function draw() {
+  if (!sel) {
+    let h = "<h1>Messages</h1><p class='hint'>Write to any supervisor or teacher. Their replies show here, and a strip at the top of every page tells you when something new arrives.</p>";
+    h += P.map(p => {
+      const th = MS.filter(x => x.threadUid === p.id).sort((a, b) => ts(a) - ts(b)), last = th[th.length - 1];
+      const nw = th.filter(x => x.from === "user" && ts(x) > seen).length;
+      return `<button class="p" data-p="${esc(p.id)}"><span style="flex:1"><b>${esc(p.name)}${p.sup ? '<span class="pill">Supervisor</span>' : ""}</b><small>${last ? esc(String(last.text).slice(0, 60)) : "No messages yet"}</small></span>${nw ? `<span class="dot">${nw}</span>` : ""}</button>`;
+    }).join("") || "<p class='hint'>No teachers yet.</p>";
+    $("app").innerHTML = h;
+    $("app").querySelectorAll("[data-p]").forEach(b => b.onclick = () => { sel = b.dataset.p; draw(); });
+    return;
+  }
+  const p = P.find(x => x.id === sel), th = MS.filter(x => x.threadUid === sel).sort((a, b) => ts(a) - ts(b));
+  $("app").innerHTML = `<button class="b o" id="bk">← All people</button><h1>${esc(p.name)}</h1>
+    <div>${th.map(x => `<div class="msg ${x.from === "admin" ? "a" : "u"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("") || '<p class="hint">No messages yet. Write the first one below.</p>'}</div>
+    <textarea id="t" rows="3" maxlength="1000" placeholder="Write your message..."></textarea><button class="b" id="s">Send</button><span id="e" class="er"></span>`;
+  $("bk").onclick = () => { sel = ""; draw(); };
+  $("s").onclick = async () => {
+    const t = $("t").value.trim(); if (!t) return; $("s").disabled = true;
+    try { const rec = { threadUid: sel, from: "admin", fromName: "Director", text: t, createdAt: serverTimestamp() };
+      await addDoc(collection(db, "adminMsgs"), rec); MS.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { $("s").disabled = false; $("e").textContent = "Could not send: " + (e.code || e.message); }
+  };
+}
+</script></body></html>
