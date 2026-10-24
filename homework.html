@@ -27,11 +27,19 @@
 .sub .bt.l{background:#fff;color:#12163a;border:1.5px solid #12163a}
 .sub .ans{background:#f4f6fc;border-radius:8px;padding:8px 10px;white-space:pre-wrap;margin:6px 0}
 .pill.g{background:#dff3e7;color:#1c7a4d}
+.sub .bt.r{background:#b3261e}
+.sub .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.sub .tools label{font:inherit;font-weight:700;padding:9px 16px;border:1.5px solid #12163a;border-radius:10px;background:#fff;color:#12163a;cursor:pointer}
+.sub .tools input[type=file]{display:none}
+.sub audio{width:100%;margin:6px 0}
+.sub img.ph{max-width:100%;max-height:300px;border-radius:8px;display:block;margin:6px 0}
+.sub .rm{background:none;border:0;color:#b3261e;font:inherit;font-weight:700;cursor:pointer;padding:0;margin-left:8px}
+.recdot{display:inline-block;background:#fde4e1;color:#b3261e;border-radius:999px;padding:3px 12px;font-weight:700}
 </style></head><body>
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -53,29 +61,97 @@ onAuthStateChanged(auth, async u => {
     draw();
   } catch (e) { $("app").innerHTML = '<h1>Homework</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
+const draft = {};
+const dr = id => draft[id] || (draft[id] = { text: null, audio: null, photo: null });
+const okAudio = u => /^data:audio\//.test(u || "");
+const okImg = u => /^data:image\//.test(u || "");
+let rec = null, recId = null;
+const keep = id => { const t = $("a_" + id); if (t) dr(id).text = t.value; };
+const blobUrl = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+async function startRec(id) {
+  keep(id);
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mt = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+    rec = new MediaRecorder(st, mt ? { mimeType: mt, audioBitsPerSecond: 20000 } : { audioBitsPerSecond: 20000 });
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      st.getTracks().forEach(t => t.stop());
+      const url = await blobUrl(new Blob(chunks, { type: (rec && rec.mimeType) || mt || "audio/webm" }));
+      if (url.length > 560000) msgs[id] = { t: "The recording is too long. Please keep it under 90 seconds." };
+      else if (!okAudio(url)) msgs[id] = { t: "This phone could not make a voice recording." };
+      else { dr(id).audio = url; msgs[id] = null; }
+      recId = null; rec = null; draw();
+    };
+    rec.start(); recId = id; msgs[id] = null; draw();
+    setTimeout(() => { if (recId === id && rec && rec.state === "recording") rec.stop(); }, 90000);
+  } catch (e) { msgs[id] = { t: "Could not use the microphone. Please allow microphone access and try again." }; draw(); }
+}
+function stopRec() { if (rec && rec.state === "recording") rec.stop(); }
+function shrink(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => { const im = new Image(); im.onload = () => {
+      for (const [w, q] of [[900, .6], [700, .5], [520, .45]]) {
+        const k = Math.min(1, w / Math.max(im.width, im.height)), c = document.createElement("canvas");
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        const cx = c.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, c.width, c.height); cx.drawImage(im, 0, 0, c.width, c.height);
+        const u = c.toDataURL("image/jpeg", q); if (u.length < 380000) return res(u);
+      }
+      rej(new Error("The picture is too big."));
+    }; im.onerror = () => rej(new Error("That file is not a picture.")); im.src = r.result; };
+    r.onerror = () => rej(new Error("Could not read the picture."));
+    r.readAsDataURL(file);
+  });
+}
+async function pickPhoto(id, file) {
+  keep(id);
+  try { dr(id).photo = await shrink(file); msgs[id] = null; } catch (e) { msgs[id] = { t: e.message }; }
+  draw();
+}
+function media(a, ph) {
+  return (okAudio(a) ? `<audio controls preload="none" src="${a}"></audio>` : "") + (okImg(ph) ? `<img class="ph" src="${ph}" alt="Photo of the answer">` : "");
+}
 function subBox(p) {
   const m = msgs[p.id] ? `<div class="${msgs[p.id].g ? "ok" : "er"}">${esc(msgs[p.id].t)}</div>` : "";
   const sb = subs[p.id];
   if (sb && editing !== p.id) {
     const graded = sb.status === "graded";
-    return `<div class="sub"><span class="pill ${graded ? "g" : ""}">${graded ? "Marked" : "Submitted"}</span>Your answer:<div class="ans">${esc(sb.text)}</div>
+    return `<div class="sub"><span class="pill ${graded ? "g" : ""}">${graded ? "Marked" : "Submitted"}</span>Your answer:${sb.text ? `<div class="ans">${esc(sb.text)}</div>` : ""}${media(sb.audio, sb.photo)}
       ${graded ? `<div><b>Mark:</b> ${esc(sb.score || "-")}${sb.feedback ? `<br><b>Teacher:</b> ${esc(sb.feedback)}` : ""}</div>` : `<button class="bt l" data-edit="${p.id}" type="button">Change my answer</button>`}${m}</div>`;
   }
-  return `<div class="sub"><label for="a_${p.id}"><b>Your answer</b></label><textarea id="a_${p.id}" placeholder="Write your answer here">${esc(sb ? sb.text : "")}</textarea>
+  const d = dr(p.id);
+  if (d.text === null) { d.text = sb ? sb.text || "" : ""; if (sb && !d.audio && sb.audio) d.audio = sb.audio; if (sb && !d.photo && sb.photo) d.photo = sb.photo; }
+  const recording = recId === p.id;
+  return `<div class="sub"><label for="a_${p.id}"><b>Your answer</b></label><textarea id="a_${p.id}" placeholder="Write your answer here, or record your voice, or add a photo">${esc(d.text)}</textarea>
+    <div class="tools">${recording ? `<span class="recdot">● Recording...</span><button class="bt r" data-stop="1" type="button">Stop</button>` : `<button class="bt l" data-rec="${p.id}" type="button">🎤 Record my voice</button>`}
+    <label>📷 Add a photo<input type="file" accept="image/*" data-ph="${p.id}"></label></div>
+    ${d.audio ? `<div>${media(d.audio, null)}<button class="rm" data-rma="${p.id}" type="button">Remove voice</button></div>` : ""}
+    ${d.photo ? `<div>${media(null, d.photo)}<button class="rm" data-rmp="${p.id}" type="button">Remove photo</button></div>` : ""}
     <button class="bt" data-send="${p.id}" type="button">${sb ? "Save answer" : "Submit homework"}</button>${m}</div>`;
 }
 async function send(id) {
-  const t = ($("a_" + id).value || "").trim();
-  if (!t) { msgs[id] = { t: "Write your answer first." }; return draw(); }
+  const d = dr(id), el = $("a_" + id), t = ((el ? el.value : d.text) || "").trim();
+  if (!t && !d.audio && !d.photo) { msgs[id] = { t: "Write your answer, record your voice, or add a photo first." }; return draw(); }
   const p = data.flatMap(g => g.posts).find(x => x.id === id);
   try {
-    if (subs[id]) { await updateDoc(doc(db, "classWorkSubs", id + "_" + me.uid), { text: t, updatedAt: serverTimestamp() }); subs[id].text = t; }
-    else { const v = { workId: id, uid: me.uid, studentName: myName, classKey: p.classKey, text: t, status: "submitted", createdAt: serverTimestamp() }; await setDoc(doc(db, "classWorkSubs", id + "_" + me.uid), v); subs[id] = v; }
-    editing = null; msgs[id] = { t: "Submitted. Your teacher can see it now.", g: true };
+    const ref = doc(db, "classWorkSubs", id + "_" + me.uid);
+    if (subs[id]) {
+      const u = { text: t, updatedAt: serverTimestamp(), audio: d.audio || deleteField(), photo: d.photo || deleteField() };
+      await updateDoc(ref, u);
+      subs[id].text = t; subs[id].audio = d.audio || null; subs[id].photo = d.photo || null;
+    } else {
+      const v = { workId: id, uid: me.uid, studentName: myName, classKey: p.classKey, text: t, status: "submitted", createdAt: serverTimestamp() };
+      if (d.audio) v.audio = d.audio; if (d.photo) v.photo = d.photo;
+      await setDoc(ref, v); subs[id] = v;
+    }
+    delete draft[id]; editing = null; msgs[id] = { t: "Submitted. Your teacher can see it now.", g: true };
   } catch (e) { msgs[id] = { t: "Could not submit: " + (e.code || e.message) }; }
   draw();
 }
 function draw() {
+  document.querySelectorAll('textarea[id^="a_"]').forEach(t => { dr(t.id.slice(2)).text = t.value; });
   let h = `<h1>Homework and Notes · الواجبات</h1><div class="seg" id="sg"><button data-f="all" class="${filt === "all" ? "on" : ""}">All</button><button data-f="homework" class="${filt === "homework" ? "on" : ""}">Homework</button><button data-f="note" class="${filt === "note" ? "on" : ""}">Class notes</button></div>`;
   if (!data.length) h += '<p class="hint">You have not chosen your classes yet. Open the Home page and choose them.</p>';
   data.forEach(g => {
@@ -90,7 +166,12 @@ function draw() {
   });
   $("app").innerHTML = h;
   $("app").querySelectorAll("[data-send]").forEach(b => b.onclick = () => send(b.dataset.send));
-  $("app").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editing = b.dataset.edit; draw(); });
+  $("app").querySelectorAll("[data-rec]").forEach(b => b.onclick = () => startRec(b.dataset.rec));
+  $("app").querySelectorAll("[data-stop]").forEach(b => b.onclick = stopRec);
+  $("app").querySelectorAll("[data-ph]").forEach(i => i.onchange = () => { if (i.files[0]) pickPhoto(i.dataset.ph, i.files[0]); });
+  $("app").querySelectorAll("[data-rma]").forEach(b => b.onclick = () => { keep(b.dataset.rma); dr(b.dataset.rma).audio = null; draw(); });
+  $("app").querySelectorAll("[data-rmp]").forEach(b => b.onclick = () => { keep(b.dataset.rmp); dr(b.dataset.rmp).photo = null; draw(); });
+  $("app").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { editing = b.dataset.edit; delete draft[b.dataset.edit]; draw(); });
   $("app").querySelectorAll("#sg button").forEach(b => b.onclick = () => { filt = b.dataset.f; draw(); });
 }
 </script></body></html>
