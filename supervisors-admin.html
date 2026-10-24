@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supervisors (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:760px}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px;margin-bottom:12px}
+.cd h2{margin:0 0 4px;font-size:1.05rem}
+.grp{margin:10px 0 4px;font-weight:700;font-size:.9rem;color:#12163a;display:flex;justify-content:space-between;align-items:center}
+.grp button{font:inherit;font-size:.8rem;border:1.5px solid #cfd3e8;background:#fff;border-radius:999px;padding:3px 10px;cursor:pointer}
+label.k{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px dashed #e1e4f3;font-size:.95rem}
+label.k input{width:20px;height:20px}
+.b{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:10px 8px 0 0}
+.b.o{background:#fff;color:#b3261e;border:1.5px solid #b3261e}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.78rem;font-weight:700;background:#e8ebf8;color:#12163a;margin:2px 4px 2px 0}
+.m{margin-top:8px;font-size:.92rem}.er{color:#b3261e}.ok{color:#1c7a4d}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology", hifz: "Hifz", revision: "Revision" };
+let TE = [], SU = {}, KEYS = [], sel = "", ticks = new Set();
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  let adm = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { $("app").innerHTML = "<h1>Supervisors</h1><p>This page is only for the admin.</p>"; return; }
+  try {
+    const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
+    const [te, su, ta, cm, cw] = await Promise.all([g("teachers"), g("supervisors"), g("teacherAssign"), g("classMembers"), g("classWork")]);
+    TE = te.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    su.forEach(x => SU[x.id] = x);
+    const ks = new Set();
+    ta.forEach(x => (x.classKeys || []).forEach(k => ks.add(k))); cm.forEach(x => x.classKey && ks.add(x.classKey)); cw.forEach(x => x.classKey && ks.add(x.classKey));
+    KEYS = [...ks].sort();
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Supervisors</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+const lab = k => { const [s, ...l] = k.split("|"); return l.join("|") + " (" + (SN[s] || s) + ")"; };
+function draw() {
+  const cur = Object.keys(SU).length ? `<div class="cd"><h2>Current supervisors</h2>${Object.values(SU).map(x => `<div style="margin:6px 0"><b>${esc(x.name)}</b> <span class="pill">${(x.classKeys || []).length} classes</span> <button class="b" style="padding:5px 12px;margin:0" data-e="${esc(x.id)}">Edit</button></div>`).join("")}</div>` : "";
+  let h = `<h1>Supervisors</h1><p class="hint">A supervisor is a teacher who can see everything in the classes you tick, ask those classes' teachers questions, and approve report cards. Their class lessons stay as they are.</p>${cur}
+    <div class="cd"><h2>Make or edit a supervisor</h2><label for="tp"><b>Choose a teacher</b></label>
+    <select id="tp"><option value="">Choose...</option>${TE.map(t => `<option value="${esc(t.id)}" ${t.id === sel ? "selected" : ""}>${esc(t.name)}${SU[t.id] ? " (supervisor)" : ""}</option>`).join("")}</select>`;
+  if (sel) {
+    const secs = {}; KEYS.forEach(k => (secs[k.split("|")[0]] = secs[k.split("|")[0]] || []).push(k));
+    h += `<p class="hint" style="margin-top:12px">Tick the classes this supervisor oversees.</p>`;
+    h += KEYS.length ? Object.keys(secs).map(s => `<div class="grp"><span>${esc(SN[s] || s)}</span><button type="button" data-all="${esc(s)}">Tick all</button></div>${secs[s].map(k => `<label class="k"><input type="checkbox" data-k="${esc(k)}" ${ticks.has(k) ? "checked" : ""}> ${esc(lab(k))}</label>`).join("")}`).join("") : '<p class="hint">No classes found yet. Assign teachers to classes first.</p>';
+    h += `<div><button class="b" id="sv">Save supervisor</button>${SU[sel] ? '<button class="b o" id="rm">Remove supervisor</button>' : ""}</div><div class="m" id="m"></div>`;
+  }
+  h += "</div>";
+  $("app").innerHTML = h;
+  $("tp").onchange = e => { sel = e.target.value; ticks = new Set(SU[sel] ? SU[sel].classKeys || [] : []); draw(); };
+  $("app").querySelectorAll("[data-e]").forEach(b => b.onclick = () => { sel = b.dataset.e; ticks = new Set(SU[sel].classKeys || []); draw(); scrollTo(0, 400); });
+  $("app").querySelectorAll("[data-k]").forEach(c => c.onchange = () => { c.checked ? ticks.add(c.dataset.k) : ticks.delete(c.dataset.k); });
+  $("app").querySelectorAll("[data-all]").forEach(b => b.onclick = () => { KEYS.filter(k => k.split("|")[0] === b.dataset.all).forEach(k => ticks.add(k)); draw(); });
+  if (sel) {
+    $("sv").onclick = async () => {
+      const t = TE.find(x => x.id === sel), m = $("m");
+      if (!ticks.size) { m.innerHTML = '<span class="er">Tick at least one class.</span>'; return; }
+      try { await setDoc(doc(db, "supervisors", sel), { name: t ? t.name : "", classKeys: [...ticks], updatedAt: serverTimestamp() }); SU[sel] = { id: sel, name: t ? t.name : "", classKeys: [...ticks] }; draw(); $("m").innerHTML = '<span class="ok">Saved. They will see the Supervisor page in their menu.</span>'; }
+      catch (e) { m.innerHTML = '<span class="er">Could not save: ' + esc(e.code || e.message) + "</span>"; }
+    };
+    if ($("rm")) $("rm").onclick = async () => {
+      if (!confirm("Remove this supervisor? They stay a teacher.")) return;
+      try { await deleteDoc(doc(db, "supervisors", sel)); delete SU[sel]; sel = ""; ticks = new Set(); draw(); } catch (e) { $("m").innerHTML = '<span class="er">Could not remove: ' + esc(e.code || e.message) + "</span>"; }
+    };
+  }
+}
+</script></body></html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supervisor | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:900px}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.tot div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
+.tot b{display:block;font-size:1.5rem;color:#12163a}.tot span{font-size:.78rem;color:#4b5072}
+.cl{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cl>button{width:100%;text-align:left;font:inherit;background:#fff;border:0;padding:12px 14px;cursor:pointer}
+.cl h2{margin:0;font-size:1.05rem;color:#12163a}
+.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#2b2f55}
+.cl .bar{height:7px;background:#e6e8f3;border-radius:99px;margin-top:8px;overflow:hidden}
+.cl .bar i{display:block;height:100%;background:#1c7a4d}
+.dt{padding:4px 14px 14px;border-top:1px solid #e6e8f3}
+.dt h3{font-size:.95rem;margin:12px 0 4px}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin:2px 4px 2px 0}
+.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e8ebf8;color:#12163a}
+.hw{border-top:1px dashed #cfd3e8;padding:8px 0;font-size:.92rem}
+.b{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:6px 6px 0 0}
+.b.s{padding:4px 10px;font-size:.8rem}
+.msg{padding:8px 10px;border-radius:12px;margin:6px 0;font-size:.92rem;max-width:90%}
+.msg.sup{background:#12163a;color:#fff;margin-left:auto}.msg.tch{background:#eef0fa}
+.msg small{display:block;opacity:.7;font-size:.74rem}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+@media(max-width:560px){.tot{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let ME = null, MYNAME = "", KEYS = [], D = {}, T = [], termId = "", openKey = "";
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid;
+  let sp = null;
+  try { const s = await getDoc(doc(db, "supervisors", u.uid)); if (s.exists()) sp = s.data(); } catch (e) {}
+  if (!sp) { $("app").innerHTML = "<h1>Supervisor</h1><p>You are not a supervisor. The director can make you one.</p>"; return; }
+  MYNAME = sp.name || u.email || "Supervisor"; KEYS = (sp.classKeys || []).slice().sort();
+  await load(); draw();
+});
+async function load() {
+  try {
+    const q = (n, k) => getDocs(query(collection(db, n), where("classKey", "==", k))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })));
+    for (const k of KEYS) {
+      const [m, w, s, r, ms] = await Promise.all([q("classMembers", k), q("classWork", k), q("classWorkSubs", k), q("reportCards", k),
+        getDocs(query(collection(db, "supervisorMsgs"), where("classKey", "==", k), where("supUid", "==", ME))).then(x => x.docs.map(d => ({ id: d.id, ...d.data() })))]);
+      D[k] = { m, w: w.filter(x => x.kind === "homework"), s, r, ms: ms.sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)) };
+    }
+    T = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    const t = today(); const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
+    if (!termId) termId = cur ? cur.id : "";
+  } catch (e) { $("app").innerHTML = '<h1>Supervisor</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; throw e; }
+}
+function draw() {
+  const tot = { st: 0, hw: 0, an: 0, rc: 0 };
+  KEYS.forEach(k => { const d = D[k]; tot.st += d.m.length; tot.hw += d.w.length; tot.an += d.s.length; tot.rc += d.r.filter(x => x.status === "issued" && (!termId || x.termId === termId)).length; });
+  let h = `<h1>Supervisor</h1><p class="hint">Welcome, ${esc(MYNAME)}. These are the classes you oversee. Tap a class to open it.</p>
+    <label for="tm"><b>Term for report cards</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
+    <div class="tot"><div><b>${tot.st}</b><span>Students</span></div><div><b>${tot.hw}</b><span>Homework posted</span></div><div><b>${tot.an}</b><span>Answers received</span></div><div><b>${tot.rc}</b><span>Reports issued</span></div></div>`;
+  KEYS.forEach(k => {
+    const d = D[k], [sec, ...lv] = k.split("|");
+    const exp = d.w.length * d.m.length, pct = exp ? Math.min(100, Math.round(100 * d.s.length / exp)) : 0;
+    const cards = d.r.filter(x => !termId || x.termId === termId);
+    h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(lv.join("|"))} <small style="font-weight:400;color:#4b5072">${SN[sec] || esc(sec)}</small></h2>
+      <div class="sm"><span>👩‍🎓 ${d.m.length}</span><span>📝 ${d.w.length} homework</span><span>✅ ${d.s.length} answers</span><span>📄 ${cards.filter(x => x.status === "issued").length}/${d.m.length} reports</span><span>💬 ${d.ms.length}</span></div><div class="bar"><i style="width:${pct}%"></i></div></button>`;
+    if (openKey === k) {
+      h += `<div class="dt"><h3>Homework</h3>`;
+      h += d.w.length ? d.w.map(p => {
+        const ans = d.s.filter(x => x.workId === p.id), done = new Set(ans.map(x => x.uid)), miss = d.m.filter(s => !done.has(s.uid));
+        return `<div class="hw"><b>${esc(p.title)}</b> <span class="pill n">${esc(p.subject || "General")}</span>${p.due ? `<span class="pill ${p.due < today() ? "r" : ""}">due ${esc(p.due)}</span>` : ""}<br><span class="pill g">${ans.length} of ${d.m.length} answered</span>${miss.length ? `<div style="color:#8a5a00"><small>Not yet: ${miss.map(s => esc(s.name)).join(", ")}</small></div>` : ""}</div>`;
+      }).join("") : '<p class="hint">No homework yet.</p>';
+      h += "<h3>Students and report cards</h3>";
+      h += d.m.map(s => {
+        const rc = cards.find(x => x.uid === s.uid);
+        return `<div class="hw"><b>${esc(s.name)}</b> ${rc ? `<span class="pill ${rc.status === "issued" ? "g" : ""}">${rc.status === "issued" ? "Issued" : "Draft"}${rc.grade ? " · " + esc(rc.grade) : ""}${rc.percentage != null ? " " + esc(rc.percentage) + "%" : ""}</span>${rc.approvedBy ? `<span class="pill g">✓ Approved by ${esc(rc.approvedByName || "supervisor")}</span>` : `<button class="b s" data-ap="${esc(rc.id)}" data-kk="${esc(k)}">Approve</button>`}` : '<span class="pill">No report yet</span>'}</div>`;
+      }).join("") || '<p class="hint">No students yet.</p>';
+      h += `<h3>Ask the teacher of this class</h3><div id="th">${d.ms.map(x => `<div class="msg ${x.from === "supervisor" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("") || '<p class="hint">No messages yet.</p>'}</div>
+        <textarea id="mt" rows="2" maxlength="1000" placeholder="Write your question for the teacher..."></textarea><button class="b" id="ms">Send question</button> <span id="mr"></span></div>`;
+    }
+    h += "</div>";
+  });
+  $("app").innerHTML = h;
+  $("tm").onchange = e => { termId = e.target.value; draw(); };
+  $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { openKey = openKey === b.dataset.k ? "" : b.dataset.k; draw(); });
+  $("app").querySelectorAll("[data-ap]").forEach(b => b.onclick = async () => {
+    try { await updateDoc(doc(db, "reportCards", b.dataset.ap), { approvedBy: ME, approvedByName: MYNAME, approvedAt: serverTimestamp() });
+      const c = D[b.dataset.kk].r.find(x => x.id === b.dataset.ap); c.approvedBy = ME; c.approvedByName = MYNAME; draw(); }
+    catch (e) { alert("Could not approve: " + (e.code || e.message)); }
+  });
+  if ($("ms")) $("ms").onclick = async () => {
+    const t = $("mt").value.trim(); if (!t) return; $("ms").disabled = true;
+    try { const rec = { classKey: openKey, supUid: ME, from: "supervisor", fromName: MYNAME, text: t, createdAt: serverTimestamp() };
+      await addDoc(collection(db, "supervisorMsgs"), rec); D[openKey].ms.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { $("ms").disabled = false; $("mr").innerHTML = '<span class="er">Could not send: ' + esc(e.code || e.message) + "</span>"; }
+  };
+}
+</script></body></html>

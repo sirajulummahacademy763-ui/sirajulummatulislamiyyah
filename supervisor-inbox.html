@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supervisor Questions | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:760px}.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px;margin-bottom:12px}
+.cd h2{margin:0 0 6px;font-size:1.05rem}
+textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit}
+.b{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin-top:6px}
+.msg{padding:8px 10px;border-radius:12px;margin:6px 0;font-size:.92rem;max-width:90%}
+.msg.sup{background:#fdf1d4}.msg.tch{background:#12163a;color:#fff;margin-left:auto}
+.msg small{display:block;opacity:.7;font-size:.74rem}.er{color:#b3261e}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+let ME = "", NAME = "", KEYS = [], MS = {};
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid;
+  let t = null;
+  try { const s = await getDoc(doc(db, "teachers", u.uid)); if (s.exists()) t = s.data(); } catch (e) {}
+  if (!t) { $("app").innerHTML = "<h1>Supervisor Questions</h1><p>This page is only for teachers.</p>"; return; }
+  NAME = t.name || u.email || "Teacher";
+  try { const a = await getDoc(doc(db, "teacherAssign", u.uid)); KEYS = a.exists() ? (a.data().classKeys || []) : []; } catch (e) {}
+  await load(); draw();
+});
+async function load() {
+  for (const k of KEYS) {
+    try { const s = await getDocs(query(collection(db, "supervisorMsgs"), where("classKey", "==", k)));
+      MS[k] = s.docs.map(d => d.data()).sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)); } catch (e) { MS[k] = []; }
+  }
+}
+function draw() {
+  let h = "<h1>Supervisor Questions</h1><p class='hint'>Questions from the supervisor about your classes. Reply here.</p>";
+  const act = KEYS.filter(k => (MS[k] || []).length);
+  if (!KEYS.length) h += "<p class='hint'>You have no classes assigned yet.</p>";
+  else if (!act.length) h += "<p class='hint'>No questions yet.</p>";
+  act.forEach(k => {
+    const ms = MS[k], last = ms.filter(x => x.from === "supervisor").pop();
+    h += `<div class="cd"><h2>${esc(k.split("|").slice(1).join("|"))}</h2>${ms.map(x => `<div class="msg ${x.from === "supervisor" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("")}
+      ${last ? `<textarea rows="2" maxlength="1000" id="t_${esc(k)}" placeholder="Write your reply..."></textarea><button class="b" data-k="${esc(k)}" data-s="${esc(last.supUid)}">Reply</button>` : ""}</div>`;
+  });
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = async () => {
+    const k = b.dataset.k, el = document.getElementById("t_" + k), t = el.value.trim(); if (!t) return; b.disabled = true;
+    try { const rec = { classKey: k, supUid: b.dataset.s, from: "teacher", fromName: NAME, teacherUid: ME, text: t, createdAt: serverTimestamp() };
+      await addDoc(collection(db, "supervisorMsgs"), rec); MS[k].push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { b.disabled = false; alert("Could not send: " + (e.code || e.message)); }
+  });
+}
+</script></body></html>
