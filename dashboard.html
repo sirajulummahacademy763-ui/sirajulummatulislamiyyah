@@ -35,7 +35,7 @@ const lvl = k => String(k || "").split("|").slice(1).join("|") || k;
 const SHORT = [
   ["👩‍🎓", "Students & Teachers", "countries-admin.html"], ["🧑‍🏫", "Assign Teachers", "teacher-assign-admin.html"], ["🏫", "Classes & Timetable", "classes-admin.html"],
   ["📝", "Homework & Reports", "homework-admin.html"], ["📊", "Overview", "overview-admin.html"], ["📖", "Hifz & Revision", "revision-admin.html"],
-  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html"]
+  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
 ];
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
