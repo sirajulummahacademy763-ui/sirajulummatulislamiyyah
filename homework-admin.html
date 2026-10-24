@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homework and Reports (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:900px}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.tot div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
+.tot b{display:block;font-size:1.5rem;color:#12163a}.tot span{font-size:.78rem;color:#4b5072}
+.cl{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cl>button{width:100%;text-align:left;font:inherit;background:#fff;border:0;padding:12px 14px;cursor:pointer}
+.cl h2{margin:0;font-size:1.05rem;color:#12163a}
+.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#2b2f55}
+.cl .bar{height:7px;background:#e6e8f3;border-radius:99px;margin-top:8px;overflow:hidden}
+.cl .bar i{display:block;height:100%;background:#1c7a4d}
+.dt{padding:4px 14px 14px;border-top:1px solid #e6e8f3}
+.dt h3{font-size:.95rem;margin:12px 0 4px}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin:2px 4px 2px 0}
+.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e8ebf8;color:#12163a}
+.hw{border-top:1px dashed #cfd3e8;padding:8px 0;font-size:.92rem}
+.er{color:#b3261e}
+@media(max-width:560px){.tot{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let M = [], W = [], S = [], R = [], T = [], termId = "", openKey = "";
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  let adm = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { $("app").innerHTML = "<h1>Homework and Reports</h1><p>This page is only for the admin.</p>"; return; }
+  try {
+    const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
+    [M, W, S, R, T] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms")]);
+    T.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    const t = today();
+    const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
+    termId = cur ? cur.id : "";
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Homework and Reports</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+function classes() {
+  const keys = new Set();
+  M.forEach(x => x.classKey && keys.add(x.classKey)); W.forEach(x => x.classKey && keys.add(x.classKey)); R.forEach(x => x.classKey && keys.add(x.classKey));
+  return [...keys].sort().map(k => {
+    const [sec, ...lv] = k.split("|"), level = lv.join("|");
+    const studs = M.filter(x => x.classKey === k).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const posts = W.filter(x => x.classKey === k && x.kind === "homework");
+    const subs = S.filter(x => x.classKey === k);
+    const cards = R.filter(x => x.classKey === k && (!termId || x.termId === termId));
+    return { k, sec, level, studs, posts, subs, issued: cards.filter(x => x.status === "issued"), drafts: cards.filter(x => x.status !== "issued") };
+  });
+}
+function draw() {
+  const cs = classes();
+  const tot = { st: 0, hw: 0, an: 0, rc: 0 };
+  cs.forEach(c => { tot.st += c.studs.length; tot.hw += c.posts.length; tot.an += c.subs.length; tot.rc += c.issued.length; });
+  let h = `<h1>Homework and Reports</h1><p class="hint">See every class at a glance. Tap a class to open it.</p>
+    <label for="tm"><b>Term for the report cards</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
+    <div class="tot"><div><b>${tot.st}</b><span>Students</span></div><div><b>${tot.hw}</b><span>Homework posted</span></div><div><b>${tot.an}</b><span>Answers received</span></div><div><b>${tot.rc}</b><span>Reports issued</span></div></div>`;
+  if (!cs.length) h += '<p class="hint">No classes have any students or homework yet.</p>';
+  cs.forEach(c => {
+    const exp = c.posts.length * c.studs.length, pct = exp ? Math.min(100, Math.round(100 * c.subs.length / exp)) : 0;
+    const marked = c.subs.filter(x => x.status === "graded").length;
+    h += `<div class="cl"><button type="button" data-k="${esc(c.k)}"><h2>${esc(c.level)} <small style="font-weight:400;color:#4b5072">${SN[c.sec] || esc(c.sec)}</small></h2>
+      <div class="sm"><span>👩‍🎓 ${c.studs.length} students</span><span>📝 ${c.posts.length} homework</span><span>✅ ${c.subs.length} answers (${marked} marked)</span><span>📄 ${c.issued.length}/${c.studs.length} reports issued${c.drafts.length ? `, ${c.drafts.length} draft` : ""}</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div></button>`;
+    if (openKey === c.k) {
+      h += `<div class="dt"><h3>Homework</h3>`;
+      h += c.posts.length ? c.posts.sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 0) - ((a.createdAt && a.createdAt.seconds) || 0)).map(p => {
+        const ans = c.subs.filter(x => x.workId === p.id), done = new Set(ans.map(x => x.uid));
+        const miss = c.studs.filter(s => !done.has(s.uid));
+        const late = p.due && p.due < today();
+        return `<div class="hw"><b>${esc(p.title)}</b> <span class="pill n">${esc(p.subject || "General")}</span>${p.due ? `<span class="pill ${late ? "r" : ""}">due ${esc(p.due)}</span>` : ""}<br>
+          <span class="pill g">${ans.length} of ${c.studs.length} answered</span><span class="pill">${ans.filter(x => x.status === "graded").length} marked</span>
+          ${miss.length ? `<div style="margin-top:4px;color:#8a5a00"><small>Not yet: ${miss.map(s => esc(s.name)).join(", ")}</small></div>` : ""}</div>`;
+      }).join("") : '<p class="hint">No homework posted yet.</p>';
+      h += `<h3>Students and report cards</h3>`;
+      h += c.studs.length ? c.studs.map(s => {
+        const rc = [...c.issued, ...c.drafts].find(x => x.uid === s.uid);
+        return `<div class="hw"><b>${esc(s.name)}</b> ${rc ? (rc.status === "issued" ? `<span class="pill g">Issued · ${esc(rc.grade || "")} ${rc.percentage != null ? esc(rc.percentage) + "%" : ""}${rc.position ? " · position " + esc(rc.position) : ""}</span>` : '<span class="pill">Draft</span>') : '<span class="pill r">No marks yet</span>'}</div>`;
+      }).join("") : '<p class="hint">No students yet. A student appears here after opening the site once.</p>';
+      h += "</div>";
+    }
+    h += "</div>";
+  });
+  $("app").innerHTML = h;
+  $("tm").onchange = e => { termId = e.target.value; draw(); };
+  $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { openKey = openKey === b.dataset.k ? "" : b.dataset.k; draw(); });
+}
+</script></body></html>
