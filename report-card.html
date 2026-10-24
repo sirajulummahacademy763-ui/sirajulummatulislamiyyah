@@ -20,7 +20,7 @@
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
-import { buildReport, renderReport, reportCss } from "./report-view.js";
+import { buildReport, renderReport, reportCss, forShare } from "./report-view.js?v=7";
 const $ = id => document.getElementById(id);
 const st = document.createElement("style"); st.textContent = reportCss; document.head.appendChild(st);
 let U = null, R = null, shareId = "";
@@ -50,7 +50,7 @@ function draw(msg, good) {
       : `<p style="margin:10px 0 0"><button class="b" id="mkl" type="button">Create parent link</button></p>`}
     <span id="m" class="${good ? "ok" : "er"}">${msg || ""}</span></div>`;
   $("pr").onclick = () => window.print();
-  const save = async (id) => { await setDoc(doc(db, "reportShares", id), { uid: U.uid, report: JSON.parse(JSON.stringify(R)), createdAt: serverTimestamp() }); };
+  const save = async (id) => { await setDoc(doc(db, "reportShares", id), { uid: U.uid, report: forShare(R), createdAt: serverTimestamp() }); };
   if ($("mkl")) $("mkl").onclick = async () => { try { shareId = mk(); await save(shareId); draw("Link created.", true); } catch (e) { shareId = ""; draw("Could not create the link: " + (e.code || e.message)); } };
   if ($("rf")) $("rf").onclick = async () => { try { await save(shareId); draw("Link updated with the latest report.", true); } catch (e) { draw("Could not update: " + (e.code || e.message)); } };
   if ($("st")) $("st").onclick = async () => { if (!confirm("Stop sharing? The old link will stop working.")) return; try { await deleteDoc(doc(db, "reportShares", shareId)); shareId = ""; draw("Sharing stopped.", true); } catch (e) { draw("Could not stop: " + (e.code || e.message)); } };
