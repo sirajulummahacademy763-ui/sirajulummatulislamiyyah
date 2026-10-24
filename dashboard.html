@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:900px}
+.hi{background:linear-gradient(135deg,#12163a,#2b2f55);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.hi h1{margin:0;font-size:1.3rem;color:#fff}.hi p{margin:4px 0 0;color:#dfe2f5;font-size:.92rem}
+.st{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.st div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
+.st b{display:block;font-size:1.5rem;color:#12163a}.st span{font-size:.78rem;color:#4b5072}
+h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#12163a}
+.tk{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #cfd3e8;border-left:6px solid #f4b942;border-radius:12px;padding:12px;margin-bottom:8px;text-decoration:none;color:#12163a}
+.tk.g{border-left-color:#1c7a4d}.tk.r{border-left-color:#b3261e}
+.tk .n{min-width:44px;text-align:center;font-size:1.4rem;font-weight:700}
+.tk small{display:block;color:#4b5072;font-weight:400}
+.tk b{font-size:.98rem}
+.gr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gr a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px 6px;text-decoration:none;color:#12163a;font-weight:700;font-size:.9rem;min-height:84px}
+.gr a i{font-style:normal;font-size:1.7rem}
+.er{color:#b3261e}
+@media(max-width:560px){.st{grid-template-columns:1fr 1fr}.gr{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const lvl = k => String(k || "").split("|").slice(1).join("|") || k;
+const SHORT = [
+  ["👩‍🎓", "Students & Teachers", "countries-admin.html"], ["🧑‍🏫", "Assign Teachers", "teacher-assign-admin.html"], ["🏫", "Classes & Timetable", "classes-admin.html"],
+  ["📝", "Homework & Reports", "homework-admin.html"], ["📊", "Overview", "overview-admin.html"], ["📖", "Hifz & Revision", "revision-admin.html"],
+  ["✍️", "Signature & Stamp", "signatures.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html"]
+];
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  let adm = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { $("app").innerHTML = "<h1>Today</h1><p>This page is only for the admin.</p>"; return; }
+  try {
+    const g = async n => { try { return (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { return []; } };
+    const [M, W, S, R, T, ST, TC] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms"), g("students"), g("teachers")]);
+    T.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    const t = today();
+    const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
+    const tasks = [];
+    // 1. answers waiting to be marked
+    const wait = S.filter(x => x.status === "submitted");
+    const wk = {}; wait.forEach(x => wk[x.classKey] = (wk[x.classKey] || 0) + 1);
+    Object.keys(wk).forEach(k => tasks.push({ c: "", n: wk[k], t: "answers to mark", s: lvl(k), h: "homework-admin.html" }));
+    // 2. homework past its date with students who have not answered
+    const members = {}; M.forEach(x => (members[x.classKey] = members[x.classKey] || []).push(x));
+    W.filter(p => p.kind === "homework" && p.due && p.due < t).forEach(p => {
+      const done = new Set(S.filter(x => x.workId === p.id).map(x => x.uid));
+      const miss = (members[p.classKey] || []).filter(s => !done.has(s.uid));
+      if (miss.length) tasks.push({ c: "r", n: miss.length, t: "students missed “" + esc(p.title) + "”", s: lvl(p.classKey) + " · was due " + esc(p.due), h: "homework-admin.html" });
+    });
+    // 3. report cards not issued for the current term
+    if (cur) Object.keys(members).forEach(k => {
+      const issued = new Set(R.filter(x => x.classKey === k && x.termId === cur.id && x.status === "issued").map(x => x.uid));
+      const left = members[k].filter(s => !issued.has(s.uid)).length;
+      if (left) tasks.push({ c: "", n: left, t: "report cards not issued", s: lvl(k) + " · " + esc(cur.name || ""), h: "homework-admin.html" });
+    });
+    // 4. setup problems
+    if (!T.length) tasks.push({ c: "r", n: "!", t: "No term is set", s: "Add the session and dates in Admin → Terms", h: "admin.html" });
+    else if (cur && !T.some(x => x.startDate > cur.endDate)) tasks.push({ c: "r", n: "!", t: "Add the next term", s: "So “Next term begins” shows on report sheets", h: "admin.html" });
+    const names = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
+    let h = `<div class="hi"><h1>${names}, Director</h1><p>${cur ? esc(cur.name || "") + " " + esc(cur.session || "") + " · " : ""}${new Date().toDateString()}</p></div>
+      <div class="st"><div><b>${ST.length}</b><span>Students</span></div><div><b>${TC.length}</b><span>Teachers</span></div><div><b>${W.filter(x => x.kind === "homework").length}</b><span>Homework posted</span></div><div><b>${R.filter(x => x.status === "issued" && (!cur || x.termId === cur.id)).length}</b><span>Reports issued</span></div></div>
+      <h2 class="sec">Needs your attention</h2>`;
+    h += tasks.length ? tasks.map(k => `<a class="tk ${k.c}" href="${k.h}"><span class="n">${esc(k.n)}</span><span><b>${k.t}</b><small>${k.s}</small></span></a>`).join("") : '<a class="tk g" href="homework-admin.html"><span class="n">✓</span><span><b>All clear today</b><small>Nothing is waiting for you.</small></span></a>';
+    h += `<h2 class="sec">Go to</h2><div class="gr">${SHORT.map(x => `<a href="${x[2]}"><i>${x[0]}</i>${x[1]}</a>`).join("")}</div>`;
+    $("app").innerHTML = h;
+  } catch (e) { $("app").innerHTML = '<h1>Today</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+</script></body></html>
