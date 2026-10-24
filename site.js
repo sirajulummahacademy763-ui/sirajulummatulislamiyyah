@@ -21,10 +21,40 @@ document.title=document.title.replace(/Sirajul Ummah Academy/g,"Sirajul Ummah Is
 (function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
 while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the institute").replace(/\bacademy services\b/g,"institute services").replace(/\bAcademy\b/g,"Institute")}})();
 // Menu by role: admin sees admin pages, a teacher sees teacher pages only, a student sees student pages only
+
+// New-message strip at the top of every page for the director, supervisors and teachers
+async function notify(role,u,isSup,f,c){
+  try{
+    const here=location.pathname.split("/").pop();
+    if(here==="supervisor-inbox.html"||here==="messages-admin.html")return;
+    const db=c.db;let seen=0;try{seen=+localStorage.getItem("msgSeen_"+u.uid)||0}catch(e){}
+    const ck="msgCnt_"+u.uid;let n=-1;
+    try{const x=JSON.parse(sessionStorage.getItem(ck)||"null");if(x&&Date.now()-x.t<60000&&x.seen===seen)n=x.n}catch(e){}
+    if(n<0){
+      n=0;
+      const col=x=>f.collection(db,x),W=f.where,Q=f.query;
+      const cnt=async(q,from,self)=>{try{(await f.getDocs(q)).forEach(s=>{const d=s.data();const tm=d.createdAt&&d.createdAt.seconds?d.createdAt.seconds*1000:Date.now();if(d.from===from&&tm>seen&&!(self&&d.supUid===u.uid))n++})}catch(e){}};
+      if(role==="admin"){await cnt(col("adminMsgs"),"user")}
+      else{
+        await cnt(Q(col("adminMsgs"),W("threadUid","==",u.uid)),"admin");
+        let ks=[];try{const a=await f.getDoc(f.doc(db,"teacherAssign",u.uid));ks=a.exists()?(a.data().classKeys||[]):[]}catch(e){}
+        for(const k of ks.slice(0,20))await cnt(Q(col("supervisorMsgs"),W("classKey","==",k)),"supervisor",true);
+        if(isSup)await cnt(Q(col("supervisorMsgs"),W("supUid","==",u.uid)),"teacher");
+      }
+      try{sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),seen,n}))}catch(e){}
+    }
+    if(n>0&&!document.getElementById("msgbar")){
+      const b=document.createElement("a");b.id="msgbar";b.href=role==="admin"?"messages-admin.html":"supervisor-inbox.html";
+      b.textContent="💬 You have "+n+" new message"+(n>1?"s":"")+" · tap to read";
+      b.style.cssText="position:sticky;top:0;z-index:9990;display:block;background:#f5b94a;color:#12163a;font:700 14px Figtree,system-ui,sans-serif;text-align:center;padding:10px 12px;text-decoration:none";
+      document.body.insertBefore(b,document.body.firstChild);
+    }
+  }catch(e){}
+}
 if(!isPub){
   const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["supervisor-inbox.html","Supervisor Questions"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const show=list=>{
     const nv=document.querySelector("header.top nav");if(!nv)return;
     nv.querySelectorAll(":scope>a:not([data-logout])").forEach(a=>a.remove());
@@ -55,9 +85,10 @@ if(!isPub){
         }
       }catch(e){}}
       if(role==="admin"){const p=location.pathname.split("/").pop();if((p===""||p==="index.html")&&!/[?&]home=1/.test(location.search)){location.replace("dashboard.html");return;}}
-      let tl=TCH;
-      if(role==="teacher"){try{ if((await f.getDoc(f.doc(c.db,"supervisors",u.uid))).exists())tl=TCH.slice(0,3).concat([["supervisor.html","Supervisor"]],TCH.slice(3)); }catch(e){}}
+      let tl=TCH,isSup=false;
+      if(role==="teacher"){try{ if((await f.getDoc(f.doc(c.db,"supervisors",u.uid))).exists()){isSup=true;tl=TCH.slice(0,3).concat([["supervisor.html","Supervisor"]],TCH.slice(3));} }catch(e){}}
       show(role==="admin"?ADM:role==="teacher"?tl:STU);
+      if(role!=="student")notify(role,u,isSup,f,c);
     });
   }).catch(()=>{ show(STU); });
 }
