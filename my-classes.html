@@ -83,7 +83,7 @@ async function homework(n, i, names, uid, tname) {
   const answers = (p, all) => {
     const sl = all.filter(s => s.workId === p.id);
     let h = `<button class="ab" type="button" data-ans="${p.id}">Answers (${sl.length})</button>`;
-    if (open === p.id) h += sl.length ? sl.map(s => `<div class="sa"><b>${esc(s.studentName || "Student")}</b><small>${s.status === "graded" ? "Marked" : "Not marked"}</small><span style="white-space:pre-wrap;display:block;margin:4px 0">${esc(s.text)}</span><div class="g2"><input id="sc_${s.id}" placeholder="Mark (for example 8/10)" value="${esc(s.score || "")}"><input id="fb_${s.id}" placeholder="Feedback" value="${esc(s.feedback || "")}"></div><button class="pb" type="button" data-grade="${s.id}">Save mark</button></div>`).join("") : '<p class="hint">No answers yet.</p>';
+    if (open === p.id) h += sl.length ? sl.map(s => `<div class="sa"><b>${esc(s.studentName || "Student")}</b><small>${s.status === "graded" ? "Marked" : "Not marked"}</small><span style="white-space:pre-wrap;display:block;margin:4px 0">${esc(s.text)}</span>${/^data:audio\//.test(s.audio || "") ? `<audio controls preload="none" style="width:100%;margin:6px 0" src="${s.audio}"></audio>` : ""}${/^data:image\//.test(s.photo || "") ? `<img src="${s.photo}" alt="Photo of the answer" style="max-width:100%;max-height:340px;border-radius:8px;display:block;margin:6px 0;cursor:zoom-in" onclick="window.open(this.src)">` : ""}<div class="g2"><input id="sc_${s.id}" placeholder="Mark (for example 8/10)" value="${esc(s.score || "")}"><input id="fb_${s.id}" placeholder="Feedback" value="${esc(s.feedback || "")}"></div><button class="pb" type="button" data-grade="${s.id}">Save mark</button></div>`).join("") : '<p class="hint">No answers yet.</p>';
     return h;
   };
   const list = async () => {
@@ -116,4 +116,3 @@ async function homework(n, i, names, uid, tname) {
   draw();
 }
 </script></body></html>
-
