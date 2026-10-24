@@ -9,7 +9,7 @@
 <script type="module">
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { db } from "./firebase-config.js";
-import { renderReport, reportCss } from "./report-view.js";
+import { renderReport, reportCss, attachSigns } from "./report-view.js?v=7";
 const $ = id => document.getElementById(id);
 const st = document.createElement("style"); st.textContent = reportCss; document.head.appendChild(st);
 (async () => {
@@ -18,7 +18,7 @@ const st = document.createElement("style"); st.textContent = reportCss; document
   try {
     const s = await getDoc(doc(db, "reportShares", c));
     if (!s.exists()) return $("app").innerHTML = "<h1>Student Report</h1><p>This report link is not available. The student may have stopped sharing it. Please ask for a new link.</p>";
-    $("app").innerHTML = '<p><button class="b noprint" id="pr" type="button">Print or save as PDF</button></p>' + renderReport(s.data().report) + '<p class="note noprint">This is a read-only copy of the report, as it was when the student shared it.</p>';
+    $("app").innerHTML = '<p><button class="b noprint" id="pr" type="button">Print or save as PDF</button></p>' + renderReport(await attachSigns(db, s.data().report)) + '<p class="note noprint">This is a read-only copy of the report, as it was when the student shared it.</p>';
     $("pr").onclick = () => window.print();
   } catch (e) { $("app").innerHTML = "<h1>Student Report</h1><p>Could not open this report. Please check your internet and try again.</p>"; }
 })();
