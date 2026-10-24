@@ -46,6 +46,7 @@ onAuthStateChanged(auth, async u => {
   let sp = null;
   try { const s = await getDoc(doc(db, "supervisors", u.uid)); if (s.exists()) sp = s.data(); } catch (e) {}
   if (!sp) { $("app").innerHTML = "<h1>Supervisor</h1><p>You are not a supervisor. The director can make you one.</p>"; return; }
+  try { localStorage.setItem("msgSeen_" + u.uid, String(Date.now())); sessionStorage.removeItem("msgCnt_" + u.uid); } catch (e) {}
   MYNAME = sp.name || u.email || "Supervisor"; KEYS = (sp.classKeys || []).slice().sort();
   await load(); draw();
 });
