@@ -10,14 +10,14 @@
     en: {
       title: "Siraj Assistant", sub: "AI help · knows the whole site", ph: "Ask me anything...", fab: "Ask Siraj",
       hello: "Assalamu alaikum! 👋 I'm Siraj, the institute's AI assistant. I can help with your courses, coins, classes, exams, the library and anything on this site. What would you like to know?",
-      chips: ["How many coins do I have?", "Is my classroom open now?", "Which courses are for my class?", "How do I buy coins?", "When is my next class?", "How do exams work?"],
+      chips: ["How many coins do I have?", "Is my classroom open now?", "Which courses are for my class?", "How do I buy coins?", "Do I have homework?", "How do I answer by voice?", "Is my report card ready?"],
       err: "Sorry, I could not reach the assistant. Please check your internet and try again.",
       note: "AI can make mistakes. For payments or grades, contact the institute.", fresh: "New chat", close: "Close"
     },
     ar: {
       title: "مساعد سراج", sub: "مساعد ذكي · يعرف كل الموقع", ph: "اسألني أي سؤال...", fab: "اسأل سراج",
       hello: "السلام عليكم ورحمة الله! 👋 أنا سراج، المساعد الذكي للمعهد. أستطيع مساعدتك في الدورات والعملات والفصول والاختبارات والمكتبة وكل ما في الموقع. بماذا أساعدك؟",
-      chips: ["كم عملة لدي؟", "هل فصلي مفتوح الآن؟", "ما الدورات المناسبة لفصلي؟", "كيف أشتري العملات؟", "متى حصتي القادمة؟", "كيف تعمل الاختبارات؟"],
+      chips: ["كم عملة لدي؟", "هل فصلي مفتوح الآن؟", "ما الدورات المناسبة لفصلي؟", "كيف أشتري العملات؟", "هل عندي واجبات؟", "كيف أجيب بالصوت؟", "هل بطاقة تقريري جاهزة؟"],
       err: "عذرًا، تعذر الوصول إلى المساعد. تحقق من الإنترنت وحاول مرة أخرى.",
       note: "الذكاء الاصطناعي قد يخطئ. للمدفوعات أو الدرجات تواصل مع المعهد.", fresh: "محادثة جديدة", close: "إغلاق"
     }
@@ -103,9 +103,24 @@
   $("sb-chips").innerHTML = TX.chips.map(c => `<button type="button">${esc(c)}</button>`).join("");
   $("sb-chips").querySelectorAll("button").forEach(b => b.onclick = () => ask(b.textContent));
 
+
+  // ---- Facts about the institute and every feature (sent with each question so the assistant never has to guess)
+  const ABOUT = [
+    "Sirajul Ummah Islamic Institute (معهد سراج الأمة الإسلامية), website sirajul-ummah.com.ng. Sections: Arabic and Islamic, Western, Technology, plus Hifz and Revision of the Qur'an (separate male and female classes).",
+    "Pages: subjects.html (subjects), timetable.html, classroom.html (live class room: lecture attendance is taken automatically when a student joins an open class), homework.html (homework), exams.html, certificate.html, report-card.html (term report card), revision.html (Hifz and Revision), library.html (books), wallet.html (coins), about.html, contact.html, donate.html, parent link (a private link a student sends to a parent).",
+    "HOMEWORK: the class teacher posts homework on My Classes. A student opens homework.html, types an answer, and may also record a voice answer (up to 90 seconds, with the mic button) and/or add a photo (camera button). The student can change the answer until the teacher marks it. The teacher listens, views the photo, gives a mark and feedback. Admin sees all classes on Homework & Reports (admin).",
+    "ATTENDANCE is automatic: it is counted from the live classroom lectures a student joins. It shows on the report card as 'attended X of Y'. Nobody types it.",
+    "REPORT CARD: the class teacher enters marks and issues it on Issue Reports. The student opens Report Card (it shows only once issued). Grades: A 80 and above, B 70-79, C 60-69, D 50-59, F below 50. Maximum 100 per subject, pass mark 50. The sheet shows English and Arabic, subject table, position, attendance, the date the next term begins, and the signatures and official stamp.",
+    "PARENT LINK: on Report Card the student can create a private link to share with a parent; the parent opens it with no login, can print or save it as PDF, and sees the same signatures and stamp. The student can delete the link any time.",
+    "SIGNATURES: the director and teachers upload a photo of their signature, and the admin uploads the official stamp, on the Signature page. They appear on report sheets.",
+    "COINS: coins are bought on the wallet page (payment by Flutterwave) and spent to unlock paid courses and library books. Free items cost 0. Never promise refunds or confirm a payment; tell the person to contact the institute.",
+    "TERMS: the admin sets the session and term dates. The report card shows when the next term begins.",
+    "Teachers join with a code from the admin, and only see classes the admin assigned to them. Students choose their class at registration. If you do not know a fact (fees, exact admission dates, grades of a person), say so and point to the Contact page. Never invent numbers."
+  ].join(" ");
+
   // ---- What the assistant knows about this visitor and the site right now
   async function buildCtx() {
-    const c = { lang, page: location.pathname.split("/").pop() || "index.html", pageTitle: document.title };
+    const c = { about: ABOUT, lang, page: location.pathname.split("/").pop() || "index.html", pageTitle: document.title };
     try {
       const [a, f, cf] = await Promise.all([
         import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
@@ -128,6 +143,16 @@
       if (tm) { const t = new Date(), ds = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); const cur = tm.docs.map(d => d.data()).find(x => ds >= x.startDate && ds <= x.endDate); if (cur) c.currentTerm = { name: cur.name, session: cur.session, begins: cur.startDate, ends: cur.endDate }; }
       const an = await g(() => f.getDocs(f.collection(db, "announcements")));
       if (an) c.notices = an.docs.map(d => d.data()).sort((x, y) => (y.createdAt ? y.createdAt.seconds : 0) - (x.createdAt ? x.createdAt.seconds : 0)).slice(0, 5).map(x => ({ title: x.title, text: String(x.body || "").slice(0, 200) }));
+      if (c.user.role === "student") {
+        const sb = await g(() => f.getDocs(f.query(f.collection(db, "classWorkSubs"), f.where("uid", "==", u.uid))));
+        const done = {}; if (sb) sb.docs.forEach(d => { const x = d.data(); done[x.workId] = x.status === "graded" ? "marked " + (x.score == null ? "" : x.score) : "answered"; });
+        const ks = s.classes ? Object.keys(s.classes).filter(k => s.classes[k] && s.classes[k] !== "none").map(k => k + "|" + s.classes[k]) : [];
+        const hw = [];
+        for (const k of ks.slice(0, 4)) { const w = await g(() => f.getDocs(f.query(f.collection(db, "classWork"), f.where("classKey", "==", k)))); if (w) w.docs.forEach(d => { const x = d.data(); if (x.kind === "homework") hw.push({ title: String(x.title || "").slice(0, 60), due: x.due || "", status: done[d.id] || "NOT answered yet" }); }); }
+        c.myHomework = hw.slice(0, 15);
+        const rc = await g(() => f.getDocs(f.query(f.collection(db, "reportCards"), f.where("uid", "==", u.uid), f.where("status", "==", "issued"))));
+        if (rc) c.myReportCardsIssued = rc.docs.map(d => ({ term: d.data().termName || d.data().termId, grade: d.data().grade || "", percentage: d.data().percentage == null ? "" : d.data().percentage }));
+      }
       const rooms = [];
       if (s.classes) for (const sec of Object.keys(s.classes)) {
         const lv = s.classes[sec]; if (!lv || lv === "none") continue;
