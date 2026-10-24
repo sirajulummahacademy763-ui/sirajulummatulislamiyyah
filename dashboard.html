@@ -21,7 +21,11 @@ h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#12163a}
 .gr a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px 6px;text-decoration:none;color:#12163a;font-weight:700;font-size:.9rem;min-height:84px}
 .gr a i{font-style:normal;font-size:1.7rem}
 .er{color:#b3261e}
-@media(max-width:560px){.st{grid-template-columns:1fr 1fr}.gr{grid-template-columns:1fr 1fr}}
+.mn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mn>div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px 12px}
+.mn h3{margin:0 0 6px;font-size:.88rem;color:#4b5072}
+.mr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e1e4f3;font-size:.95rem}
+@media(max-width:560px){.mn{grid-template-columns:1fr}.st{grid-template-columns:1fr 1fr}.gr{grid-template-columns:1fr 1fr}}
 </style></head><body>
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
@@ -35,7 +39,7 @@ const lvl = k => String(k || "").split("|").slice(1).join("|") || k;
 const SHORT = [
   ["👩‍🎓", "Students & Teachers", "countries-admin.html"], ["🧑‍🏫", "Assign Teachers", "teacher-assign-admin.html"], ["🏫", "Classes & Timetable", "classes-admin.html"],
   ["📝", "Homework & Reports", "homework-admin.html"], ["📊", "Overview", "overview-admin.html"], ["📖", "Hifz & Revision", "revision-admin.html"],
-  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
+  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["💬", "Messages", "messages-admin.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
 ];
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
@@ -44,7 +48,7 @@ onAuthStateChanged(auth, async u => {
   if (!adm) { $("app").innerHTML = "<h1>Today</h1><p>This page is only for the admin.</p>"; return; }
   try {
     const g = async n => { try { return (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { return []; } };
-    const [M, W, S, R, T, ST, TC] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms"), g("students"), g("teachers")]);
+    const [M, W, S, R, T, ST, TC, PAY, AM] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms"), g("students"), g("teachers"), g("payments"), g("adminMsgs")]);
     T.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = today();
     const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
@@ -66,14 +70,29 @@ onAuthStateChanged(auth, async u => {
       const left = members[k].filter(s => !issued.has(s.uid)).length;
       if (left) tasks.push({ c: "", n: left, t: "report cards not issued", s: lvl(k) + " · " + esc(cur.name || ""), h: "homework-admin.html" });
     });
+    // unread messages for the director
+    let seen = 0; try { seen = +localStorage.getItem("msgSeen_" + u.uid) || 0; } catch (e) {}
+    const unread = AM.filter(x => x.from === "user" && (x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : Date.now()) > seen).length;
+    if (unread) tasks.unshift({ c: "r", n: unread, t: "new messages", s: "From supervisors and teachers", h: "messages-admin.html" });
     // 4. setup problems
     if (!T.length) tasks.push({ c: "r", n: "!", t: "No term is set", s: "Add the session and dates in Admin → Terms", h: "admin.html" });
     else if (cur && !T.some(x => x.startDate > cur.endDate)) tasks.push({ c: "r", n: "!", t: "Add the next term", s: "So “Next term begins” shows on report sheets", h: "admin.html" });
+    // coins and money
+    const walletCoins = ST.reduce((a, x) => a + (Number(x.coins) || 0), 0);
+    const sold = PAY.reduce((a, x) => a + (Number(x.coins) || 0), 0);
+    const nowD = new Date(), mStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1).getTime();
+    const byCur = {}, byCurM = {}; let soldM = 0, nM = 0;
+    PAY.forEach(x => { const c = String(x.currency || "?"), a = Number(x.amount) || 0, tm = x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : 0;
+      byCur[c] = (byCur[c] || 0) + a; if (tm >= mStart) { byCurM[c] = (byCurM[c] || 0) + a; soldM += Number(x.coins) || 0; nM++; } });
+    const fm = o => Object.keys(o).sort().map(c => `<div class="mr"><span>${esc(c)}</span><b>${o[c].toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div>`).join("") || '<div class="mr"><span>No payments yet</span><b>0</b></div>';
+    const money = `<h2 class="sec">Coins and money</h2><div class="st"><div><b>${walletCoins.toLocaleString("en-US")}</b><span>Coins in student wallets</span></div><div><b>${sold.toLocaleString("en-US")}</b><span>Coins bought (all time)</span></div><div><b>${PAY.length}</b><span>Payments received</span></div><div><b>${soldM.toLocaleString("en-US")}</b><span>Coins bought this month (${nM})</span></div></div>
+      <div class="mn"><div><h3>Money received, all time</h3>${fm(byCur)}</div><div><h3>Money received, this month</h3>${fm(byCurM)}</div></div>`;
     const names = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
     let h = `<div class="hi"><h1>${names}, Director</h1><p>${cur ? esc(cur.name || "") + " " + esc(cur.session || "") + " · " : ""}${new Date().toDateString()}</p></div>
       <div class="st"><div><b>${ST.length}</b><span>Students</span></div><div><b>${TC.length}</b><span>Teachers</span></div><div><b>${W.filter(x => x.kind === "homework").length}</b><span>Homework posted</span></div><div><b>${R.filter(x => x.status === "issued" && (!cur || x.termId === cur.id)).length}</b><span>Reports issued</span></div></div>
       <h2 class="sec">Needs your attention</h2>`;
     h += tasks.length ? tasks.map(k => `<a class="tk ${k.c}" href="${k.h}"><span class="n">${esc(k.n)}</span><span><b>${k.t}</b><small>${k.s}</small></span></a>`).join("") : '<a class="tk g" href="homework-admin.html"><span class="n">✓</span><span><b>All clear today</b><small>Nothing is waiting for you.</small></span></a>';
+    h += money;
     h += `<h2 class="sec">Go to</h2><div class="gr">${SHORT.map(x => `<a href="${x[2]}"><i>${x[0]}</i>${x[1]}</a>`).join("")}</div>`;
     $("app").innerHTML = h;
   } catch (e) { $("app").innerHTML = '<h1>Today</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
