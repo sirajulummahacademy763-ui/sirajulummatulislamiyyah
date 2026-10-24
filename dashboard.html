@@ -27,6 +27,7 @@ h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#12163a}
 .pl{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:4px 12px}
 .pr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #e1e4f3}
 .pr:last-child{border-bottom:0}.pr small{display:block;color:#4b5072}
+.tb{font:inherit;font-size:.75rem;font-weight:700;border:1.5px solid #cfd3e8;background:#fff;color:#12163a;border-radius:999px;padding:3px 10px;cursor:pointer;margin-left:8px}
 .pr .am{font-weight:700;color:#1c7a4d;white-space:nowrap}
 .mr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e1e4f3;font-size:.95rem}
 @media(max-width:560px){.mn{grid-template-columns:1fr}.st{grid-template-columns:1fr 1fr}.gr{grid-template-columns:1fr 1fr}}
@@ -34,7 +35,7 @@ h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#12163a}
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -52,7 +53,7 @@ onAuthStateChanged(auth, async u => {
   if (!adm) { $("app").innerHTML = "<h1>Today</h1><p>This page is only for the admin.</p>"; return; }
   try {
     const g = async n => { try { return (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { return []; } };
-    const [M, W, S, R, T, ST, TC, PAY, AM] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms"), g("students"), g("teachers"), g("payments"), g("adminMsgs")]);
+    let [M, W, S, R, T, ST, TC, PAY, AM] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms"), g("students"), g("teachers"), g("payments"), g("adminMsgs")]);
     T.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = today();
     const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
@@ -83,6 +84,7 @@ onAuthStateChanged(auth, async u => {
     else if (cur && !T.some(x => x.startDate > cur.endDate)) tasks.push({ c: "r", n: "!", t: "Add the next term", s: "So “Next term begins” shows on report sheets", h: "admin.html" });
     // coins and money
     PAY.forEach(x => { if (x.currency == null && x.naira != null) { x.currency = "NGN"; x.amount = Number(x.naira) || 0; } else if (x.amount == null && x.naira != null) { x.amount = Number(x.naira) || 0; } });
+    const ALLP = PAY.slice(); PAY = PAY.filter(x => x.ignored !== true);
     const walletCoins = ST.reduce((a, x) => a + (Number(x.coins) || 0), 0);
     const sold = PAY.reduce((a, x) => a + (Number(x.coins) || 0), 0);
     const nowD = new Date(), mStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1).getTime();
@@ -90,12 +92,12 @@ onAuthStateChanged(auth, async u => {
     PAY.forEach(x => { const c = String(x.currency || "?"), a = Number(x.amount) || 0, tm = x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : 0;
       byCur[c] = (byCur[c] || 0) + a; if (tm >= mStart) { byCurM[c] = (byCurM[c] || 0) + a; soldM += Number(x.coins) || 0; nM++; } });
     const fm = o => Object.keys(o).sort().map(c => `<div class="mr"><span>${esc(c)}</span><b>${o[c].toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div>`).join("") || '<div class="mr"><span>No payments yet</span><b>0</b></div>';
-    const money = `<h2 class="sec">Coins and money</h2><div class="st"><div><b>${walletCoins.toLocaleString("en-US")}</b><span>Coins in student wallets</span></div><div><b>${sold.toLocaleString("en-US")}</b><span>Coins bought (all time)</span></div><div><b>${PAY.length}</b><span>Payments received</span></div><div><b>${soldM.toLocaleString("en-US")}</b><span>Coins bought this month (${nM})</span></div></div>
+    const money = `<h2 class="sec">Coins and money</h2><div class="st"><div><b>${walletCoins.toLocaleString("en-US")}</b><span>Coins in student wallets</span></div><div><b>${sold.toLocaleString("en-US")}</b><span>Coins bought (all time)</span></div><div><b>${PAY.length}</b><span>Real payments${ALLP.length > PAY.length ? " (" + (ALLP.length - PAY.length) + " test ignored)" : ""}</span></div><div><b>${soldM.toLocaleString("en-US")}</b><span>Coins bought this month (${nM})</span></div></div>
       <div class="mn"><div><h3>Money received, all time</h3>${fm(byCur)}</div><div><h3>Money received, this month</h3>${fm(byCurM)}</div></div>`;
     const nm = {}; ST.forEach(x => nm[x.id] = x.name || x.email || "Student");
     const tms = x => (x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : 0);
-    const plist = PAY.slice().sort((a, b) => tms(b) - tms(a));
-    const prow = x => `<div class="pr"><div><b>${esc(nm[x.uid] || "Student")}</b><small>${tms(x) ? new Date(tms(x)).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · " : ""}${Number(x.coins) || 0} coins</small></div>${x.currency && Number(x.amount) ? `<div class="am">${esc(x.currency)} ${Number(x.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>` : `<div class="am" style="color:#8a8fa8;font-weight:400;font-size:.8rem;text-align:right">Amount not<br>recorded${x.provider ? " · " + esc(x.provider) : ""}</div>`}</div>`;
+    const plist = ALLP.slice().sort((a, b) => tms(b) - tms(a));
+    const prow = x => `<div class="pr" style="${x.ignored === true ? "opacity:.5" : ""}"><div><b>${esc(nm[x.uid] || "Student")}</b><small>${tms(x) ? new Date(tms(x)).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · " : ""}${Number(x.coins) || 0} coins</small></div>${x.currency && Number(x.amount) ? `<div class="am">${esc(x.currency)} ${Number(x.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>` : `<div class="am" style="color:#8a8fa8;font-weight:400;font-size:.8rem;text-align:right">Amount not<br>recorded${x.provider ? " · " + esc(x.provider) : ""}</div>`}<button type="button" class="tb" data-t="${esc(x.id)}" data-v="${x.ignored === true ? "0" : "1"}">${x.ignored === true ? "Count it" : "Test"}</button></div>`;
     const pays = `<h2 class="sec">Payments (currency and amount paid)</h2><div class="pl" id="pl">${plist.slice(0, 10).map(prow).join("") || '<p class="hint" style="margin:6px">No payments yet.</p>'}</div>${plist.length > 10 ? '<button class="b" id="pall" type="button" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;margin-top:8px">Show all ' + plist.length + "</button>" : ""}`;
     const names = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
     let h = `<div class="hi"><h1>${names}, Director</h1><p>${cur ? esc(cur.name || "") + " " + esc(cur.session || "") + " · " : ""}${new Date().toDateString()}</p></div>
@@ -105,6 +107,12 @@ onAuthStateChanged(auth, async u => {
     h += money + pays;
     h += `<h2 class="sec">Go to</h2><div class="gr">${SHORT.map(x => `<a href="${x[2]}"><i>${x[0]}</i>${x[1]}</a>`).join("")}</div>`;
     $("app").innerHTML = h;
+    $("app").onclick = async e => {
+      const b = e.target.closest && e.target.closest("[data-t]"); if (!b) return;
+      b.disabled = true;
+      try { await updateDoc(doc(db, "payments", b.dataset.t), { ignored: b.dataset.v === "1" }); location.reload(); }
+      catch (er) { b.disabled = false; alert("Could not save: " + (er.code || er.message)); }
+    };
     if ($("pall")) $("pall").onclick = () => { $("pl").innerHTML = plist.map(prow).join(""); $("pall").remove(); };
   } catch (e) { $("app").innerHTML = '<h1>Today</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
