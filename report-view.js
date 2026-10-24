@@ -74,7 +74,7 @@ export async function buildReport(db, uid, name, classes) {
       ss = ss.filter(d => inTerm(secs(d.data().openedAt)));
       let att = 0;
       for (const d of ss.slice(0, 120)) { try { if ((await getDoc(doc(db, "classrooms", rid, "sessions", d.id, "attendance", uid))).exists()) att++; } catch (x) {} }
-      out.attendance.push({ room: lv + " · " + SEC[sec], attended: att, total: Math.min(ss.length, 120) });
+      out.attendance.push({ sec, room: lv + " · " + SEC[sec], attended: att, total: Math.min(ss.length, 120) });
       try { const st = await getDocs(query(collection(db, "classrooms", rid, "starLog"), where("uid", "==", uid))); out.stars += st.docs.filter(d => inTerm(secs(d.data().createdAt))).length; } catch (x) {}
       try {
         const pr = await getDocs(query(collection(db, "classrooms", rid, "progress"), where("uid", "==", uid)));
@@ -84,6 +84,20 @@ export async function buildReport(db, uid, name, classes) {
   }
   out.progress.sort((x, y) => y.at - x.at); out.progress = out.progress.slice(0, 20);
   return out;
+}
+
+// Load the director's signature, the stamp and each class teacher's signature (used by the parent link, which keeps no pictures)
+export async function attachSigns(db, d) {
+  const ld = async id => { try { const x = await getDoc(doc(db, "signatures", id)); const u = x.exists() ? String(x.data().img || "") : ""; return /^data:image\//.test(u) ? u : ""; } catch (e) { return ""; } };
+  d.signs = { director: await ld("director"), stamp: await ld("stamp") };
+  for (const g of (d.sheets || [])) if (g.card && g.card.by) g.teacherSign = await ld(g.card.by);
+  return d;
+}
+// A copy of the report without the signature pictures (keeps the shared document small)
+export function forShare(d) {
+  const c = JSON.parse(JSON.stringify(d)); delete c.signs;
+  (c.sheets || []).forEach(g => { delete g.teacherSign; });
+  return c;
 }
 
 export const reportCss = `
@@ -184,7 +198,10 @@ function sheet(d, g) {
   h += rows.map(x => { const m = typeof mk[x.name] === "number" ? mk[x.name] : ""; const lo = m !== "" && m < PASS ? "lo" : ""; return `<tr><td class="n">${esc(x.name)}</td><td>${MAX}</td><td>${PASS}</td><td class="${lo}">${nm(m)}</td><td class="ar">${AR(MAX)}</td><td class="ar">${AR(PASS)}</td><td class="ar ${lo}">${na(m)}</td><td class="ar n">${esc(x.nameAr)}</td></tr>`; }).join("");
   const tot = cd && cd.total != null ? cd.total : "";
   h += `<tr class="tt"><td class="n">TOTAL</td><td></td><td></td><td>${nm(tot)}</td><td class="ar"></td><td class="ar"></td><td class="ar">${na(tot)}</td><td class="ar n">المجموع الكلي</td></tr></table>`;
-  h += `<div class="hol">${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
+  const at = (d.attendance || []).find(x => x.sec === g.sec);
+  const atTxt = at && at.total ? at.attended + " of " + at.total + " (" + Math.round(100 * at.attended / at.total) + "%)" : "";
+  const atAr = at && at.total ? AR(at.attended) + " من " + AR(at.total) + " (" + AR(Math.round(100 * at.attended / at.total)) + "٪)" : "";
+  h += `<div class="hol">${f("ATTENDANCE:", atTxt, ":الحضور", atAr, 1)}${f("HOLIDAY BEGIN:", d.term ? dfmt(d.term.endDate) : "", ":بداية العطلة", d.term ? dfmtAr(d.term.endDate) : "", 1)}${f("NEXT TERM BEGIN:", d.nextTerm ? dfmt(d.nextTerm.startDate) : "", ":الدورة الجديدة", d.nextTerm ? dfmtAr(d.nextTerm.startDate) : "", 1)}</div>`;
   const im = (u, c) => u ? `<img class="${c}" src="${u}" alt="">` : "";
   const sg = d.signs || {};
   h += `<div class="sg"><div>${im(sg.director, "sig")}DIRECTOR’S SIGN <span class="a" dir="rtl">توقيع المدير</span></div><div>${im(sg.stamp, "stp")}OFFICIAL STAMP <span class="a" dir="rtl">ختم رسمي</span></div><div>${im(g.teacherSign, "sig")}CLASS TEACHER’S SIGN <span class="a" dir="rtl">توقيع المعلم</span></div></div></section>`;
