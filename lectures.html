@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded Lectures | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:760px}.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px;margin-bottom:12px}
+.cd h2{margin:0 0 8px;font-size:1.05rem}
+h2.cls{font-size:1.1rem;margin:18px 0 8px;color:#12163a}
+label{display:block;font-weight:700;font-size:.9rem;margin:10px 0 4px}
+input,select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.b{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:8px 8px 0 0;text-decoration:none;display:inline-block}
+.b.o{background:#fff;color:#12163a;border:1.5px solid #12163a}.b.r{background:#fff;color:#b3261e;border:1.5px solid #b3261e}
+.lc{background:#fff;border:1.5px solid #cfd3e8;border-left:6px solid #f4b942;border-radius:12px;padding:12px;margin-bottom:10px}
+.lc b{font-size:1rem}.lc small{display:block;color:#4b5072;margin:2px 0 6px}
+.lc .nt{white-space:pre-wrap;font-size:.92rem;margin:6px 0}
+.vw{position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000}.vw iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+.rc{background:#f7f4ea;border:1.5px dashed #c9a24a;border-radius:12px;padding:12px;margin:6px 0 4px;text-align:center}
+.rc .tm{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;margin:4px 0}
+.rc .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#b3261e;margin-right:6px;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.2}}
+.rc audio,.lc audio{width:100%;margin-top:8px}
+.big{font-size:1.05rem;padding:13px 22px}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology", hifz: "Hifz", revision: "Revision" };
+const lab = k => { const [s, ...l] = k.split("|"); return l.join("|") + " (" + (SN[s] || s) + ")"; };
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let ME = "", NAME = "", ROLE = "student", KEYS = [], POSTABLE = [], L = {}, open = "";
+// ---- one-tap audio recording (saved in small parts inside Firestore) ----
+const MAXSEC = 3600, PART = 700000; // up to 60 minutes; 700,000 characters per saved part
+let R = { st: null, mr: null, chunks: [], t0: 0, tick: null, secs: 0, blob: null, mime: "", wl: null, busy: false };
+const fmt = n => String(Math.floor(n / 60)).padStart(2, "0") + ":" + String(n % 60).padStart(2, "0");
+const b64 = b => new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(",")[1] || ""); f.onerror = rej; f.readAsDataURL(b); });
+async function keepAwake() { try { if (navigator.wakeLock) R.wl = await navigator.wakeLock.request("screen"); } catch (e) {} }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && R.mr && R.mr.state === "recording") keepAwake(); });
+window.addEventListener("beforeunload", e => { if (R.mr && R.mr.state === "recording") { e.preventDefault(); e.returnValue = ""; } });
+function recUI() {
+  const el = $("rc"); if (!el) return;
+  const rec = R.mr && R.mr.state === "recording";
+  if (rec) el.innerHTML = `<div class="tm"><span class="dot"></span><span id="rt">${fmt(R.secs)}</span></div><p class="hint">Recording... keep this page open and the screen on.</p><button class="b r big" id="rstop" type="button">■ Stop recording</button>`;
+  else if (R.blob) el.innerHTML = `<div class="tm">${fmt(R.secs)}</div><audio controls src="${R.url}"></audio><p class="hint">Listen to check it, then fill the title below and press Post.</p><button class="b o" id="rredo" type="button">Record again</button>`;
+  else el.innerHTML = `<p class="hint" style="margin-top:0">Tap the button, teach your lesson, then tap Stop.</p><button class="b big" id="rstart" type="button">🎙 Start recording</button>`;
+  if ($("rstart")) $("rstart").onclick = startRec;
+  if ($("rstop")) $("rstop").onclick = stopRec;
+  if ($("rredo")) $("rredo").onclick = () => { if (R.url) URL.revokeObjectURL(R.url); R.blob = null; R.url = ""; recUI(); };
+}
+async function startRec() {
+  const m = $("pm"); if (m) m.innerHTML = "";
+  try {
+    R.st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mt = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+    R.mr = new MediaRecorder(R.st, mt ? { mimeType: mt, audioBitsPerSecond: 24000 } : { audioBitsPerSecond: 24000 });
+    R.chunks = []; R.secs = 0; R.mime = R.mr.mimeType || mt || "audio/webm";
+    R.mr.ondataavailable = e => { if (e.data && e.data.size) R.chunks.push(e.data); };
+    R.mr.onstop = finishRec;
+    R.st.getTracks().forEach(t => t.addEventListener("ended", () => { if (R.mr && R.mr.state === "recording") R.mr.stop(); }));
+    R.mr.start(10000); R.t0 = Date.now(); keepAwake();
+    R.tick = setInterval(() => { R.secs = Math.round((Date.now() - R.t0) / 1000); const t = $("rt"); if (t) t.textContent = fmt(R.secs); if (R.secs >= MAXSEC) stopRec(); }, 500);
+    recUI();
+  } catch (e) { if (m) m.innerHTML = ' <span class="er">Could not use the microphone. Allow microphone access for this website, then try again.</span>'; }
+}
+function stopRec() { try { if (R.mr && R.mr.state === "recording") R.mr.stop(); } catch (e) {} }
+function finishRec() {
+  clearInterval(R.tick); try { R.st.getTracks().forEach(t => t.stop()); } catch (e) {} try { if (R.wl) R.wl.release(); } catch (e) {} R.wl = null;
+  R.secs = Math.max(1, Math.round((Date.now() - R.t0) / 1000));
+  R.blob = new Blob(R.chunks, { type: R.mime }); R.url = URL.createObjectURL(R.blob); recUI();
+}
+async function loadAudio(x) { // join the saved parts and make a playable address
+  let all = "";
+  for (let n = 0; n < x.audioParts; n++) { const p = await getDoc(doc(db, "lectureParts", x.id + "_" + n)); if (!p.exists()) throw new Error("A part of the recording is missing"); all += p.data().d; }
+  const bin = atob(all), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([a], { type: x.audioMime || "audio/webm" }));
+}
+const AU = {};
+// Turn a YouTube or Google Drive link into an embeddable address (other links just open in a new tab)
+function embed(u) {
+  try {
+    const x = new URL(u), h = x.hostname.replace(/^www\./, "");
+    let id = "";
+    if (h === "youtu.be") id = x.pathname.slice(1);
+    else if (h.endsWith("youtube.com")) id = x.searchParams.get("v") || (x.pathname.match(/^\/(?:shorts|live|embed)\/([\w-]{6,})/) || [])[1] || "";
+    if (/^[\w-]{6,}$/.test(id)) return "https://www.youtube-nocookie.com/embed/" + id;
+    const m = x.pathname.match(/\/file\/d\/([\w-]+)/);
+    if (h === "drive.google.com" && m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
+  } catch (e) {}
+  return "";
+}
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid; NAME = u.email || "Teacher";
+  const g = async (c, d) => { try { return await getDoc(doc(db, c, d)); } catch (e) { return null; } };
+  const [ad, te] = await Promise.all([g("admins", u.uid), g("teachers", u.uid)]);
+  try {
+    if (ad && ad.exists()) {
+      ROLE = "admin"; NAME = "Director";
+      const ks = new Set();
+      for (const c of ["teacherAssign", "classMembers", "classWork"]) { try { (await getDocs(collection(db, c))).docs.forEach(d => { const x = d.data(); (x.classKeys || []).forEach(k => ks.add(k)); if (x.classKey) ks.add(x.classKey); }); } catch (e) {} }
+      KEYS = [...ks].sort(); POSTABLE = KEYS;
+    } else if (te && te.exists()) {
+      ROLE = "teacher"; NAME = te.data().name || NAME;
+      const a = await g("teacherAssign", u.uid); KEYS = a && a.exists() ? (a.data().classKeys || []) : []; POSTABLE = KEYS;
+    } else {
+      const s = await g("students", u.uid); const cl = s && s.exists() ? (s.data().classes || {}) : {};
+      KEYS = Object.keys(cl).filter(k => cl[k] && cl[k] !== "none").map(k => k + "|" + cl[k]);
+    }
+    for (const k of KEYS) { try { L[k] = (await getDocs(query(collection(db, "lectures"), where("classKey", "==", k)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { L[k] = []; } }
+    draw(); try { localStorage.setItem("lecSeen_" + u.uid, String(Date.now())); sessionStorage.removeItem("lecCnt_" + u.uid); } catch (e) {}
+  } catch (e) { $("app").innerHTML = '<h1>Recorded Lectures</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+const ts = x => (x.createdAt && x.createdAt.seconds ? x.createdAt.seconds : 9e9);
+function draw() {
+  let h = "<h1>Recorded Lectures</h1><p class='hint'>Missed a live class, or in a different time zone? Watch or listen to the lecture here, and read the notes.</p>";
+  if (POSTABLE.length) h += `<div class="cd"><h2>Post a lecture</h2>
+    <label for="pc">Class</label><select id="pc">${POSTABLE.map(k => `<option value="${esc(k)}">${esc(lab(k))}</option>`).join("")}</select>
+    <label for="pt">Title</label><input id="pt" maxlength="120" placeholder="e.g. Lesson 3: Tajweed rules">
+    <label for="pd">Date of the lecture</label><input id="pd" type="date" value="${today()}">
+    <label>Record the lecture here</label><div class="rc" id="rc"></div>
+    <label for="pu">Or paste a link instead (optional)</label><input id="pu" inputmode="url" placeholder="https://youtu.be/... (Unlisted) or a Google Drive link">
+    <p class="hint">If you already recorded a video on YouTube or Google Drive, paste its link. If you recorded above, leave this empty.</p>
+    <label for="pn">Notes (optional)</label><textarea id="pn" rows="4" maxlength="3000" placeholder="Summary of the lecture, homework, key points..."></textarea>
+    <button class="b" id="ps" type="button">Post lecture</button><span id="pm"></span></div>`;
+  if (!KEYS.length) h += "<p class='hint'>" + (ROLE === "student" ? "You have not chosen a class yet. Choose your class on the Subjects page." : "No classes are assigned to you yet.") + "</p>";
+  KEYS.forEach(k => {
+    const list = (L[k] || []).slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || ts(b) - ts(a));
+    h += `<h2 class="cls">${esc(lab(k))}</h2>`;
+    h += list.length ? list.map(x => {
+      const em = x.url ? embed(x.url) : "", canDel = ROLE === "admin" || POSTABLE.includes(x.classKey), aud = x.audioParts > 0;
+      if (x.ready === false && !canDel) return "";
+      return `<div class="lc"><b>${esc(x.title)}</b><small>${esc(x.date || "")}${x.teacherName ? " · " + esc(x.teacherName) : ""}${aud && x.audioSecs ? " · 🎧 " + fmt(x.audioSecs) : ""}${x.ready === false ? " · NOT FINISHED SAVING" : ""}</small>${x.notes ? `<div class="nt">${esc(x.notes)}</div>` : ""}
+        ${aud && x.ready !== false ? (AU[x.id] === "loading" ? '<p class="hint">Loading the recording...</p>' : AU[x.id] === "err" ? '<p class="er">Could not load the recording. Check your internet and try again.</p><button class="b o" data-a="' + esc(x.id) + '" type="button">Try again</button>' : AU[x.id] ? `<audio controls autoplay src="${AU[x.id]}"></audio>` : `<button class="b" data-a="${esc(x.id)}" type="button">▶ Listen to the lecture</button>`) : ""}
+        ${em ? `<button class="b" data-w="${esc(x.id)}" type="button">${open === x.id ? "Close player" : "▶ Watch / listen here"}</button>` : ""}${x.url ? `<a class="b o" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Open link</a>` : ""}${canDel ? `<button class="b r" data-d="${esc(x.id)}" data-k="${esc(k)}" type="button">Delete</button>` : ""}
+        ${open === x.id && em ? `<div class="vw"><iframe src="${esc(em)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ""}</div>`;
+    }).join("") : '<p class="hint">No recorded lectures for this class yet.</p>';
+  });
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-w]").forEach(b => b.onclick = () => { open = open === b.dataset.w ? "" : b.dataset.w; draw(); });
+  $("app").querySelectorAll("[data-a]").forEach(b => b.onclick = async () => {
+    const id = b.dataset.a, x = Object.values(L).flat().find(v => v.id === id); if (!x) return;
+    AU[id] = "loading"; draw();
+    try { AU[id] = await loadAudio(x); } catch (e) { AU[id] = "err"; }
+    draw();
+  });
+  $("app").querySelectorAll("[data-d]").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete this lecture?")) return;
+    try {
+      const x = (L[b.dataset.k] || []).find(v => v.id === b.dataset.d);
+      if (x && x.audioParts > 0) for (let n = 0; n < x.audioParts; n++) { try { await deleteDoc(doc(db, "lectureParts", x.id + "_" + n)); } catch (e) {} }
+      await deleteDoc(doc(db, "lectures", b.dataset.d)); L[b.dataset.k] = L[b.dataset.k].filter(x => x.id !== b.dataset.d); draw(); } catch (e) { alert("Could not delete: " + (e.code || e.message)); }
+  });
+  recUI();
+  if ($("ps")) $("ps").onclick = async () => {
+    const m = $("pm"), k = $("pc").value, t = $("pt").value.trim(), u = $("pu").value.trim();
+    if (R.mr && R.mr.state === "recording") { m.innerHTML = ' <span class="er">Stop the recording first.</span>'; return; }
+    if (!t) { m.innerHTML = ' <span class="er">Write a title.</span>'; return; }
+    if (!R.blob && !/^https:\/\/[^\s]+$/.test(u)) { m.innerHTML = ' <span class="er">Record the lecture above, or paste a full link that starts with https://</span>'; return; }
+    $("ps").disabled = true;
+    const base = { classKey: k, title: t, date: $("pd").value || today(), url: R.blob ? "" : u, notes: $("pn").value.trim(), teacherId: ME, teacherName: NAME, createdAt: serverTimestamp() };
+    let lid = "", saved = 0;
+    try {
+      if (!R.blob) {
+        const r = await addDoc(collection(db, "lectures"), base);
+        (L[k] = L[k] || []).push({ id: r.id, ...base, createdAt: null });
+      } else {
+        m.innerHTML = " Preparing the recording...";
+        const data = await b64(R.blob), n = Math.ceil(data.length / PART);
+        if (n < 1 || n > 24) throw new Error("The recording is too big. Please keep it under 60 minutes.");
+        const rec = { ...base, audioParts: n, audioMime: R.mime, audioSecs: R.secs, ready: false };
+        const r = await addDoc(collection(db, "lectures"), rec); lid = r.id;
+        for (let i = 0; i < n; i++) {
+          m.innerHTML = " Saving part " + (i + 1) + " of " + n + "... please wait, do not close this page.";
+          let ok = false;
+          for (let a = 0; a < 3 && !ok; a++) { try { await setDoc(doc(db, "lectureParts", lid + "_" + i), { lid, n: i, d: data.slice(i * PART, (i + 1) * PART) }); ok = true; } catch (e) { if (a === 2) throw e; } }
+          saved++;
+        }
+        await updateDoc(doc(db, "lectures", lid), { ready: true });
+        (L[k] = L[k] || []).push({ id: lid, ...rec, ready: true, createdAt: null });
+        if (R.url) URL.revokeObjectURL(R.url); R.blob = null; R.url = "";
+      }
+      draw(); $("pm").innerHTML = ' <span class="ok">Posted.</span>';
+    } catch (e) {
+      if (lid) { for (let i = 0; i < saved + 1; i++) { try { await deleteDoc(doc(db, "lectureParts", lid + "_" + i)); } catch (x) {} } try { await deleteDoc(doc(db, "lectures", lid)); } catch (x) {} }
+      $("ps").disabled = false; m.innerHTML = ' <span class="er">Could not post: ' + esc(e.code || e.message) + ". Your recording is still here, try Post again.</span>";
+    }
+  };
+}
+</script></body></html>
