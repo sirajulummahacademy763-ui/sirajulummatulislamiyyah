@@ -55,10 +55,25 @@ const SEC = { islamic: "Arabic and Islamic", western: "Western", tech: "Technolo
 const DN = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"], DL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const parseDays = t => [...new Set(String(t).toLowerCase().split(/[\s,،]+/).map(x => DN.indexOf(x.slice(0, 3))).filter(i => i >= 0))];
 const fmtWhen = d => d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }) + " at " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+// Class times are set in the class's own time zone (set by the admin on Classes & Timetable); each student sees them in their own zone
+let CLASS_TZ = "Africa/Lagos";
+const MY = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return ""; } })();
+const tzName = z => String(z || "").split("/").pop().replace(/_/g, " ");
+const tzParts = (ms, tz, o) => Object.fromEntries(new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: tz, hourCycle: "h23" }, o)).formatToParts(new Date(ms)).map(p => [p.type, p.value]));
+const tzOff = (ms, tz) => { const p = tzParts(ms, tz, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }); return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000; };
+const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return t; return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
+const planKey = (sec, lvl) => sec + "__" + String(lvl || "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 function nextClass(r) {
   if (!r || !r.schedDays || !r.schedDays.length || !r.schedTime) return null;
-  const [h, m] = r.schedTime.split(":").map(Number), now = new Date();
-  for (let i = 0; i < 8; i++) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, h, m); if (r.schedDays.includes(d.getDay()) && d > now) return d; }
+  try {
+    const [h, m] = r.schedTime.split(":").map(Number), now = Date.now(), tz = CLASS_TZ;
+    const p = tzParts(now, tz, { year: "numeric", month: "2-digit", day: "2-digit" });
+    for (let i = 0; i < 8; i++) {
+      const base = Date.UTC(+p.year, +p.month - 1, +p.day + i, h, m), wd = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + i)).getUTCDay();
+      const ms = base - tzOff(base, tz);
+      if (r.schedDays.includes(wd) && ms > now) return new Date(ms);
+    }
+  } catch (e) {}
   return null;
 }
 const weekStart = () => { const d = new Date(); const k = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - k); return d; };
@@ -182,7 +197,7 @@ function room(id) {
 
   unsubs.push(onSnapshot(rr, s => {
     if (!s.exists()) return $("rtt").textContent = "Classroom not found";
-    R = s.data(); drawTop(); drawComposer(); drawVid(); markAttendance(); drawChat(); drawQuiz();
+    R = s.data(); if (R.section && R.level && !R._tz) { R._tz = 1; getDoc(doc(db, "classPlans", planKey(R.section, R.level))).then(x => { if (x.exists() && x.data().tzId) { CLASS_TZ = x.data().tzId; drawTop(); } }).catch(() => {}); } drawTop(); drawComposer(); drawVid(); markAttendance(); drawChat(); drawQuiz();
   }, () => { $("rtt").textContent = "You do not have access to this classroom."; }));
   unsubs.push(onSnapshot(sub("sessions"), s => { sessions = {}; s.docs.forEach(d => sessions[d.id] = d.data()); rendered = []; drawChat(true); }, () => {}));
   unsubs.push(onSnapshot(query(mc, orderBy("createdAt", "desc"), limit(low() ? 40 : 100)), s => {
@@ -202,7 +217,7 @@ function room(id) {
     $("rtt").textContent = R.title || "Classroom";
     const nx = nextClass(R);
     $("rs").innerHTML = `<span class="badge ${open ? "on" : "off"}">${open ? "Class is open" : "Class is closed"}</span> · Teacher: ${esc(R.teacherName || "")}${open && R.sessionTitle ? " · " + esc(R.sessionTitle) : ""}` +
-      (R.schedDays && R.schedDays.length ? `<br><small>📅 ${esc(R.schedDays.map(i => DL[i]).join(", "))} at ${esc(R.schedTime || "")}${nx ? " · Next class: " + esc(fmtWhen(nx)) : ""}</small>` : "");
+      (R.schedDays && R.schedDays.length ? `<br><small>📅 ${esc(R.schedDays.map(i => DL[i]).join(", "))} at ${esc(t12(R.schedTime || ""))} (${esc(tzName(CLASS_TZ))} time)${nx ? "<br>⏰ Next class, in YOUR time (" + esc(tzName(MY)) + "): <b>" + esc(fmtWhen(nx)) + "</b>" : ""}</small>` : "");
     $("note").innerHTML = R.note ? `<div class="cd">📌 ${esc(R.note)}</div>` : "";
     $("tools").innerHTML = ((open || st) ? (vidMode ? '<button class="b r" id="bx" type="button">Leave call</button>' : '<button class="b g" id="bp" type="button">🎧 Voice call</button>' + (low() ? "" : '<button class="b g" id="bv" type="button">📹 Video class</button>')) : "") +
       `<button class="b o" id="bl" type="button">📉 Low data: ${low() ? "ON" : "OFF"}</button><button class="b o" id="bk" type="button">⭐ Stars</button>` +
@@ -264,7 +279,7 @@ function room(id) {
     const d = prompt("Class days (for example: Mon, Wed, Sat). Leave empty to clear:", (R.schedDays || []).map(i => DL[i]).join(", ")); if (d === null) return;
     const days = parseDays(d);
     if (!days.length) { try { await updateDoc(rr, { schedDays: [], schedTime: "" }); } catch (e) { alert("Failed: " + (e.code || e.message)); } return; }
-    const t = prompt("Class time, 24-hour (for example 17:00 for 5:00 PM):", R.schedTime || "17:00"); if (t === null) return;
+    const t = prompt("Class time, 24-hour (for example 17:00 for 5:00 PM). This is " + tzName(CLASS_TZ) + " time; students will see it in their own time:", R.schedTime || "17:00"); if (t === null) return;
     if (!/^\d{1,2}:\d{2}$/.test(t.trim())) return alert("Please use a time like 17:00");
     try { await updateDoc(rr, { schedDays: days, schedTime: t.trim() }); } catch (e) { alert("Failed: " + (e.code || e.message)); }
   }
