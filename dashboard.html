@@ -44,7 +44,7 @@ const lvl = k => String(k || "").split("|").slice(1).join("|") || k;
 const SHORT = [
   ["👩‍🎓", "Students & Teachers", "countries-admin.html"], ["🧑‍🏫", "Assign Teachers", "teacher-assign-admin.html"], ["🏫", "Classes & Timetable", "classes-admin.html"],
   ["📝", "Homework & Reports", "homework-admin.html"], ["📊", "Overview", "overview-admin.html"], ["📖", "Hifz & Revision", "revision-admin.html"],
-  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["💬", "Messages", "messages-admin.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
+  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["💬", "Messages", "messages-admin.html"], ["🎥", "Recorded lectures", "lectures.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
 ];
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
@@ -83,6 +83,7 @@ onAuthStateChanged(auth, async u => {
     if (!T.length) tasks.push({ c: "r", n: "!", t: "No term is set", s: "Add the session and dates in Admin → Terms", h: "admin.html" });
     else if (cur && !T.some(x => x.startDate > cur.endDate)) tasks.push({ c: "r", n: "!", t: "Add the next term", s: "So “Next term begins” shows on report sheets", h: "admin.html" });
     // coins and money
+    PAY.forEach(x => { if (x.mode === "test" && x.ignored == null) x.ignored = true; });
     PAY.forEach(x => { if (x.currency == null && x.naira != null) { x.currency = "NGN"; x.amount = Number(x.naira) || 0; } else if (x.amount == null && x.naira != null) { x.amount = Number(x.naira) || 0; } });
     const ALLP = PAY.slice(); PAY = PAY.filter(x => x.ignored !== true);
     const walletCoins = ST.reduce((a, x) => a + (Number(x.coins) || 0), 0);
@@ -97,7 +98,7 @@ onAuthStateChanged(auth, async u => {
     const nm = {}; ST.forEach(x => nm[x.id] = x.name || x.email || "Student");
     const tms = x => (x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : 0);
     const plist = ALLP.slice().sort((a, b) => tms(b) - tms(a));
-    const prow = x => `<div class="pr" style="${x.ignored === true ? "opacity:.5" : ""}"><div><b>${esc(nm[x.uid] || "Student")}</b><small>${tms(x) ? new Date(tms(x)).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · " : ""}${Number(x.coins) || 0} coins</small></div>${x.currency && Number(x.amount) ? `<div class="am">${esc(x.currency)} ${Number(x.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>` : `<div class="am" style="color:#8a8fa8;font-weight:400;font-size:.8rem;text-align:right">Amount not<br>recorded${x.provider ? " · " + esc(x.provider) : ""}</div>`}<button type="button" class="tb" data-t="${esc(x.id)}" data-v="${x.ignored === true ? "0" : "1"}">${x.ignored === true ? "Count it" : "Test"}</button></div>`;
+    const prow = x => `<div class="pr" style="${x.ignored === true ? "opacity:.5" : ""}"><div><b>${esc(nm[x.uid] || "Student")}</b><small>${x.mode === "test" ? "<b style=\"color:#b3261e\">TEST MODE</b> · " : x.mode === "live" ? "<b style=\"color:#1c7a4d\">LIVE</b> · " : "Old record · "}${x.email ? esc(x.email) + " · " : ""}${tms(x) ? new Date(tms(x)).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · " : ""}${Number(x.coins) || 0} coins</small></div>${x.currency && Number(x.amount) ? `<div class="am">${esc(x.currency)} ${Number(x.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>` : `<div class="am" style="color:#8a8fa8;font-weight:400;font-size:.8rem;text-align:right">Amount not<br>recorded${x.provider ? " · " + esc(x.provider) : ""}</div>`}<button type="button" class="tb" data-t="${esc(x.id)}" data-v="${x.ignored === true ? "0" : "1"}">${x.ignored === true ? "Count it" : "Test"}</button></div>`;
     const pays = `<h2 class="sec">Payments (currency and amount paid)</h2><div class="pl" id="pl">${plist.slice(0, 10).map(prow).join("") || '<p class="hint" style="margin:6px">No payments yet.</p>'}</div>${plist.length > 10 ? '<button class="b" id="pall" type="button" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;margin-top:8px">Show all ' + plist.length + "</button>" : ""}`;
     const names = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
     let h = `<div class="hi"><h1>${names}, Director</h1><p>${cur ? esc(cur.name || "") + " " + esc(cur.session || "") + " · " : ""}${new Date().toDateString()}</p></div>
