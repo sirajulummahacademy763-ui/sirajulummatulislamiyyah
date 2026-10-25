@@ -24,7 +24,6 @@
 .m.star{background:#fff4c2;border-color:#e6c200;text-align:center;font-weight:700}
 .m.mk{background:#d7f3e3;border-color:#1c7a4d;text-align:center;font-weight:700}
 .sep{text-align:center;margin:14px 0 6px;font-size:.8rem;font-weight:700;color:var(--night)}
-iframe.v{width:100%;height:60vh;border:0;border-radius:12px;margin-bottom:12px;background:#000}
 .kb{width:150px;height:150px;border-radius:50%;border:0;background:#1c7a4d;color:#fff;font-size:4rem;cursor:pointer;display:block;margin:6px auto}
 .kb.rc{background:#b3261e}
 .kr{display:flex;justify-content:center;gap:12px;margin-top:10px}
@@ -34,6 +33,7 @@ iframe.v{width:100%;height:60vh;border:0;border-radius:12px;margin-bottom:12px;b
 #cele{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:#fff4c2;border:3px solid #e6c200;border-radius:20px;padding:24px 30px;font-size:1.6rem;font-weight:700;z-index:50;text-align:center}
 .tb{border-collapse:collapse;font-size:.85rem}.tb td,.tb th{border:1px solid var(--line);padding:5px 8px;text-align:center}.tb td:first-child,.tb th:first-child{text-align:left;white-space:nowrap}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vw{position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000}.vw iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
 </style></head><body>
 <main class="page cr" id="app"><p>Loading...</p></main>
@@ -41,6 +41,9 @@ iframe.v{width:100%;height:60vh;border:0;border-radius:12px;margin-bottom:12px;b
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, onSnapshot, orderBy, limit, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
+import { WORKER_URL } from "./notice-config.js";
+const QURAN = false; // true on quran-classroom.html (Hifz and Revision classes, with live calls)
+const isQ = r => r && (r.section === "hifz" || r.section === "revision");
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const say = (id, t, ok) => { if (!$(id)) return; $(id).textContent = t; $(id).className = ok ? "ok" : "er"; };
@@ -78,7 +81,20 @@ function nextClass(r) {
 }
 const weekStart = () => { const d = new Date(); const k = (d.getDay() + 6) % 7; d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - k); return d; };
 const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); };
-const me = { uid: "", name: "User", admin: false, teacher: false, classes: null, keys: new Set() };
+// Turn a YouTube or Google Drive link into an embeddable address (other links just open in a new tab)
+function embed(u) {
+  try {
+    const x = new URL(u), h = x.hostname.replace(/^www\./, "");
+    let id = "";
+    if (h === "youtu.be") id = x.pathname.slice(1);
+    else if (h.endsWith("youtube.com")) id = x.searchParams.get("v") || (x.pathname.match(/^\/(?:shorts|live|embed)\/([\w-]{6,})/) || [])[1] || "";
+    if (/^[\w-]{6,}$/.test(id)) return "https://www.youtube-nocookie.com/embed/" + id;
+    const m = x.pathname.match(/\/file\/d\/([\w-]+)/);
+    if (h === "drive.google.com" && m) return "https://drive.google.com/file/d/" + m[1] + "/preview";
+  } catch (e) {}
+  return "";
+}
+const me = { uid: "", gender: "", name: "User", admin: false, teacher: false, classes: null, keys: new Set() };
 let unsubs = [];
 const tryGet = async ref => { try { return await getDoc(ref); } catch (e) { return null; } };
 
@@ -89,7 +105,7 @@ onAuthStateChanged(auth, async u => {
   me.admin = !!(a && a.exists()); me.teacher = !!(t && t.exists());
   if (me.teacher) { const ta = await tryGet(doc(db, "teacherAssign", u.uid)); if (ta && ta.exists()) me.keys = new Set(ta.data().classKeys || []); }
   const sd = s && s.exists() ? s.data() : {};
-  me.classes = sd.classes || null;
+  me.classes = sd.classes || null; me.gender = String(sd.gender || "").toLowerCase();
   me.name = (t && t.exists() && t.data().name) || sd.name || u.email || "User";
   const id = new URLSearchParams(location.search).get("id");
   id ? room(id) : list();
@@ -97,30 +113,38 @@ onAuthStateChanged(auth, async u => {
 
 async function list() {
   unsubs.forEach(f => f()); unsubs = [];
-  $("app").innerHTML = '<h1>Classrooms</h1><div id="cw"></div><div id="nw"></div><div class="cd" id="ls">Loading...</div>';
-  if (me.admin) { codeCard(); newForm(); } else if (!me.teacher) redeemCard();
+  $("app").innerHTML = '<h1>' + (QURAN ? "Quran Classroom" : "Classrooms") + '</h1><div id="cw"></div><div id="nw"></div><div class="cd" id="ls">Loading...</div>';
+  if (!QURAN) { if (me.admin) { codeCard(); newForm(); } else if (!me.teacher) redeemCard(); }
   let docs = [];
   try {
     if (me.admin) docs = (await getDocs(collection(db, "classrooms"))).docs;
     else {
       const seen = new Set();
       // Hifz and Revision rooms: the teacher set on the Hifz & Revision admin page
-      if (me.teacher) (await getDocs(query(collection(db, "classrooms"), where("teacherId", "==", me.uid), where("section", "in", ["hifz", "revision"])))).docs.forEach(d => { seen.add(d.id); docs.push(d); });
+      if (me.teacher && QURAN) (await getDocs(query(collection(db, "classrooms"), where("teacherId", "==", me.uid), where("section", "in", ["hifz", "revision"])))).docs.forEach(d => { seen.add(d.id); docs.push(d); });
       // other classes: only the ones the admin assigned to him or her (Assign Teachers page)
-      if (me.teacher) for (const k of me.keys) {
+      if (me.teacher && !QURAN) for (const k of me.keys) {
         const [sec, lv] = k.split("|"), id = sec + "__" + slug(lv); if (seen.has(id)) continue;
         try { const d = await getDoc(doc(db, "classrooms", id)); if (d.exists()) { seen.add(id); docs.push(d); } } catch (e) {}
       }
-      if (me.classes) for (const sec of Object.keys(BC)) {
+      if (QURAN && !me.teacher) {
+        const ch = await tryGet(doc(db, "revisionChoices", me.uid));
+        if (ch && ch.exists() && me.gender) {
+          const c = ch.data(), tr = c.track === "both" ? ["hifz", "revision"] : [c.track];
+          for (const t of tr) { const id = t + "__Juz-" + c.juz + "-" + me.gender; try { const d = await getDoc(doc(db, "classrooms", id)); if (d.exists()) { seen.add(id); docs.push(d); } } catch (e) {} }
+        }
+      }
+      if (me.classes && !QURAN) for (const sec of Object.keys(BC)) {
         const lv = me.classes[sec]; if (!lv || lv === "none") continue;
         const id = sec + "__" + slug(lv); if (seen.has(id)) continue;
         try { const d = await getDoc(doc(db, "classrooms", id)); if (d.exists()) { seen.add(id); docs.push(d); } } catch (e) {}
       }
     }
+    docs = docs.filter(d => isQ(d.data()) === QURAN);
   } catch (e) { $("ls").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
   $("ls").innerHTML = docs.length ? docs.map(d => { const r = d.data(), open = r.status === "open", nx = nextClass(r);
     return `<div class="it"><span><b>${esc(r.title)}</b><br><small>Teacher: ${esc(r.teacherName || "")}${nx ? " · Next: " + esc(fmtWhen(nx)) : ""}</small><br><span class="badge ${open ? "on" : "off"}">${open ? "Live now" : "Closed"}</span></span><a class="b" href="classroom.html?id=${encodeURIComponent(d.id)}" style="text-decoration:none">Enter</a></div>`; }).join("")
-    : (me.teacher ? "<p>No classroom for you yet. The admin must assign a class to you (and create its classroom).</p>" : "<p>No classroom for you yet. The admin creates classrooms for each class.</p>");
+    : (me.teacher ? "<p>No classroom for you yet. The admin must assign a class to you (and create its classroom).</p>" : "<p>" + (QURAN ? "You have no Quran classroom yet. Choose Hifz or Revision on the Hifz &amp; Revision page first, then your class appears here once the admin has set its teacher." : "No classroom for you yet. The admin creates classrooms for each class.") + "</p>");
 }
 
 function codeCard() {
@@ -187,17 +211,18 @@ async function newForm() {
 
 function room(id) {
   const rr = doc(db, "classrooms", id), mc = collection(db, "classrooms", id, "messages"), sub = n => collection(db, "classrooms", id, n);
-  let R = null, sessions = {}, msgs = [], rendered = [], compKey = "", vidKey = "", vidMode = "", prevOpen = false, attended = "", rosterDone = false, latestKey = "", starsSeen = null;
+  let R = null, sessions = {}, msgs = [], rendered = [], compKey = "", prevOpen = false, attended = "", rosterDone = false, latestKey = "", starsSeen = null;
   let rec = null, chunks = [], stream = null, tmr = null, secs = 0, blob = null, mime = "";
   let replyTo = null, quiz = null, qUnsub = null, qKey = "", myAns = null, qAns = [];
   const staff = () => me.admin || (me.teacher && R && (me.keys.has(R.section + "|" + R.level) || (R.teacherId === me.uid && (R.section === "hifz" || R.section === "revision"))));
   const kids = () => !staff() && R && ["Rawdatul Atfal 1", "Rawdatul Atfal 2", "Kindergarten (KG)"].includes(R.level);
   const low = () => { try { const v = localStorage.getItem("sirajLow"); return v === null ? !(me.admin || me.teacher) : v === "1"; } catch (e) { return !(me.admin || me.teacher); } };
-  $("app").innerHTML = `<p><a href="classroom.html">← All classrooms</a></p><h1 id="rtt">Classroom</h1><p id="rs"></p><div id="note"></div><div id="tools"></div><div id="panel"></div><div id="vid"></div><div id="quiz"></div><div id="latest"></div><div id="chat" translate="no"></div><div id="rbar"></div><div class="cd" id="comp"></div>`;
+  $("app").innerHTML = `<p><a href="classroom.html">← ${QURAN ? "Quran Classroom" : "All classrooms"}</a></p><h1 id="rtt">Classroom</h1><p id="rs"></p><div id="note"></div><div id="tools"></div><div id="panel"></div><div id="quiz"></div><div id="latest"></div><div id="chat" translate="no"></div><div id="rbar"></div><div class="cd" id="comp"></div>`;
 
   unsubs.push(onSnapshot(rr, s => {
     if (!s.exists()) return $("rtt").textContent = "Classroom not found";
-    R = s.data(); if (R.section && R.level && !R._tz) { R._tz = 1; getDoc(doc(db, "classPlans", planKey(R.section, R.level))).then(x => { if (x.exists() && x.data().tzId) { CLASS_TZ = x.data().tzId; drawTop(); } }).catch(() => {}); } drawTop(); drawComposer(); drawVid(); markAttendance(); drawChat(); drawQuiz();
+    R = s.data(); if (isQ(R) !== QURAN) { location.replace((isQ(R) ? "quran-classroom.html" : "classroom.html") + "?id=" + encodeURIComponent(id)); return; }
+    if (R.section && R.level && !R._tz) { R._tz = 1; getDoc(doc(db, "classPlans", planKey(R.section, R.level))).then(x => { if (x.exists() && x.data().tzId) { CLASS_TZ = x.data().tzId; drawTop(); } }).catch(() => {}); } drawTop(); drawComposer(); markAttendance(); drawChat(); drawQuiz();
   }, () => { $("rtt").textContent = "You do not have access to this classroom."; }));
   unsubs.push(onSnapshot(sub("sessions"), s => { sessions = {}; s.docs.forEach(d => sessions[d.id] = d.data()); rendered = []; drawChat(true); }, () => {}));
   unsubs.push(onSnapshot(query(mc, orderBy("createdAt", "desc"), limit(low() ? 40 : 100)), s => {
@@ -212,34 +237,22 @@ function room(id) {
 
   function drawTop() {
     const open = R.status === "open", st = staff();
-    if (prevOpen && !open) vidMode = ""; prevOpen = open;
-    if (low() && vidMode === "video") { vidMode = "voice"; vidKey = ""; drawVid(); }
+    prevOpen = open;
     $("rtt").textContent = R.title || "Classroom";
     const nx = nextClass(R);
     $("rs").innerHTML = `<span class="badge ${open ? "on" : "off"}">${open ? "Class is open" : "Class is closed"}</span> · Teacher: ${esc(R.teacherName || "")}${open && R.sessionTitle ? " · " + esc(R.sessionTitle) : ""}` +
       (R.schedDays && R.schedDays.length ? `<br><small>📅 ${esc(R.schedDays.map(i => DL[i]).join(", "))} at ${esc(t12(R.schedTime || ""))} (${esc(tzName(CLASS_TZ))} time)${nx ? "<br>⏰ Next class, in YOUR time (" + esc(tzName(MY)) + "): <b>" + esc(fmtWhen(nx)) + "</b>" : ""}</small>` : "");
     $("note").innerHTML = R.note ? `<div class="cd">📌 ${esc(R.note)}</div>` : "";
-    $("tools").innerHTML = ((open || st) ? (vidMode ? '<button class="b r" id="bx" type="button">Leave call</button>' : '<button class="b g" id="bp" type="button">🎧 Voice call</button>' + (low() ? "" : '<button class="b g" id="bv" type="button">📹 Video class</button>')) : "") +
-      `<button class="b o" id="bl" type="button">📉 Low data: ${low() ? "ON" : "OFF"}</button><button class="b o" id="bk" type="button">⭐ Stars</button>` +
+    $("tools").innerHTML = `<button class="b o" id="bk" type="button">⭐ Stars</button><button class="b o" id="blec" type="button">🎧 Lectures</button>` +
       (st ? (open ? '<button class="b r" id="bc" type="button">Close class</button>' : '<button class="b g" id="bo" type="button">Open class</button>') +
         `<button class="b o" id="bt" type="button">Student typing: ${R.studentsCanType === false ? "OFF" : "ON"}</button><button class="b o" id="bn" type="button">📌 Note</button><button class="b o" id="ba" type="button">Who joined</button><button class="b o" id="bs" type="button">⭐ Praise class</button><button class="b o" id="bq" type="button">❓ Quiz</button><button class="b o" id="bg" type="button">📖 Progress</button><button class="b o" id="br" type="button">📊 Report</button><button class="b o" id="bm" type="button">📅 Timetable</button><button class="b o" id="bw" type="button">📲 Share reminder</button>`
         : '<button class="b o" id="bme" type="button">📊 My progress</button>');
     const b = (i, f) => $(i) && ($(i).onclick = f);
-    b("bv", () => { vidMode = "video"; drawVid(); drawTop(); });
-    b("bp", () => { vidMode = "voice"; drawVid(); drawTop(); });
-    b("bx", () => { vidMode = ""; drawVid(); drawTop(); });
-    b("bl", () => { try { localStorage.setItem("sirajLow", low() ? "0" : "1"); } catch (e) {} drawTop(); });
-    b("bk", showStars); b("bme", showMe);
+    b("bk", showStars); b("bme", showMe); b("blec", showLectures);
     b("bo", openClass); b("bc", closeClass);
     b("bt", () => updateDoc(rr, { studentsCanType: R.studentsCanType === false }));
     b("bn", () => { const v = prompt("Pinned note for students (lesson topic, homework). Leave empty to remove:", R.note || ""); if (v !== null) updateDoc(rr, { note: v.trim() }); });
     b("ba", showAttendance); b("bs", () => starSend("everyone", "")); b("bq", newQuiz); b("bg", showProgress); b("br", showReport); b("bm", setTimetable); b("bw", shareReminder);
-  }
-  function drawVid() {
-    const key = vidMode ? vidMode + R.room : "";
-    if (key === vidKey) return; vidKey = key;
-    const cfg = "config.prejoinPageEnabled=false" + (vidMode === "voice" ? "&config.startWithVideoMuted=true" : "") + (staff() ? "" : "&config.startWithAudioMuted=true") + "&userInfo.displayName=" + encodeURIComponent(JSON.stringify(me.name));
-    $("vid").innerHTML = vidMode ? `<iframe class="v" style="height:${vidMode === "voice" ? "34vh" : "60vh"}" allow="camera; microphone; fullscreen; display-capture; autoplay" src="https://meet.jit.si/${encodeURIComponent(R.room)}#${cfg}"></iframe>` : "";
   }
   const closeBtn = () => { if ($("pc")) $("pc").onclick = () => { $("panel").innerHTML = ""; }; };
 
@@ -299,6 +312,129 @@ function room(id) {
   }
   function celebrate(t) {
     const c = document.createElement("div"); c.id = "cele"; c.textContent = t; document.body.appendChild(c); setTimeout(() => c.remove(), 3500);
+  }
+
+  // ---- recorded lectures: the teacher records the lecture (voice) or uploads an audio file; it is saved in small parts and students can play it later or save it on their phone
+  let lrec = null, lstream = null, lid = "", lidx = 0, lbuf = [], lbytes = 0, lsecs = 0, ltmr = null, lq = Promise.resolve(), lfail = 0, lmime = "";
+  const lcol = () => sub("lectures");
+  let lmail = true, openVid = "";
+  // Email the students of this class about a new lecture (never blocks saving)
+  async function emailLec(lecId) {
+    const el = $("lst"); const out = (h) => { const e = $("lst"); if (e) e.innerHTML = h; };
+    try {
+      if (!WORKER_URL || WORKER_URL.indexOf("YOUR-NAME") > -1) return;
+      out('<span class="ok">Saved.</span> Sending emails...');
+      const tok = await auth.currentUser.getIdToken();
+      const r = await fetch(WORKER_URL + "/lecture", { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ rid: id, id: lecId }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.status);
+      out('<span class="ok">Saved. Emailed ' + (j.sent || 0) + " student" + (j.sent === 1 ? "" : "s") + ".</span>");
+    } catch (e) { out('<span class="ok">Saved.</span> <span class="er">The email could not be sent (' + esc(e.message) + ").</span>"); }
+  }
+  async function lecLink() {
+    const t = $("lk_t").value.trim(), u = $("lk_u").value.trim(), n = $("lk_n").value.trim();
+    if (!t) return $("lst").innerHTML = '<span class="er">Write a title.</span>';
+    if (!/^https:\/\/[^\s]+$/.test(u) || u.length > 600) return $("lst").innerHTML = '<span class="er">Paste a full link that starts with https://</span>';
+    $("lk_b").disabled = true;
+    try {
+      const lref = doc(lcol());
+      await setDoc(lref, { title: t, url: u, notes: n, mime: "", parts: 0, secs: 0, status: "done", by: me.uid, byName: me.name, createdAt: serverTimestamp() });
+      await showLectures(); if (lmail) emailLec(lref.id);
+    } catch (e) { $("lk_b").disabled = false; $("lst").innerHTML = '<span class="er">Could not post: ' + esc(e.code || e.message) + "</span>"; }
+  }
+  const b64 = blob => new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(",")[1] || ""); f.onerror = rej; f.readAsDataURL(blob); });
+  const fromB64 = s => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; };
+  const mmss = n => Math.floor(n / 60) + ":" + String(n % 60).padStart(2, "0");
+  async function putPart(n, blob) {
+    const data = await b64(blob);
+    for (let t = 0; t < 4; t++) {
+      try { await setDoc(doc(db, "classrooms", id, "lectures", lid, "parts", String(n).padStart(4, "0")), { n, b: data }); return true; }
+      catch (e) { await new Promise(r => setTimeout(r, 1500 * (t + 1))); }
+    }
+    lfail++; return false;
+  }
+  function flush(force) {
+    if (!lbuf.length || (!force && lbytes < 380000)) return;
+    const blob = new Blob(lbuf, { type: lmime || "audio/webm" }), n = lidx++; lbuf = []; lbytes = 0;
+    lq = lq.then(() => putPart(n, blob)).then(() => updateDoc(doc(db, "classrooms", id, "lectures", lid), { parts: lidx, secs: lsecs }).catch(() => {}));
+  }
+  async function lecStart() {
+    const title = prompt("Title of this lecture:", R.sessionTitle || "Lecture"); if (title === null) return;
+    try { lstream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { return alert("Please allow the microphone. You can also record the lecture with your phone's voice recorder and upload the file here."); }
+    lmime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+    const lref = doc(lcol()); lid = lref.id; lidx = 0; lbuf = []; lbytes = 0; lsecs = 0; lfail = 0; lq = Promise.resolve();
+    try { await setDoc(lref, { title: title.trim() || "Lecture", mime: lmime || "audio/webm", parts: 0, secs: 0, status: "recording", by: me.uid, byName: me.name, createdAt: serverTimestamp() }); }
+    catch (e) { lstream.getTracks().forEach(t => t.stop()); return alert("Could not start: " + (e.code || e.message)); }
+    lrec = new MediaRecorder(lstream, { ...(lmime ? { mimeType: lmime } : {}), audioBitsPerSecond: 24000 });
+    lrec.ondataavailable = e => { if (e.data && e.data.size) { lbuf.push(e.data); lbytes += e.data.size; flush(false); } };
+    lrec.onstop = async () => {
+      clearInterval(ltmr); lstream.getTracks().forEach(t => t.stop()); flush(true); await lq;
+      try { await updateDoc(doc(db, "classrooms", id, "lectures", lid), { parts: lidx, secs: lsecs, status: lfail ? "incomplete" : "done" }); } catch (e) {}
+      lrec = null; await showLectures();
+      if (lfail) alert("Some parts could not be saved because of the internet. The lecture may be incomplete."); else if (lmail) emailLec(lid);
+    };
+    lrec.start(20000); ltmr = setInterval(() => { lsecs++; const el = $("lrt"); if (el) el.textContent = "● Recording " + mmss(lsecs); }, 1000);
+    showLectures();
+  }
+  function lecStop() { if (lrec && lrec.state !== "inactive") { $("lrt") && ($("lrt").textContent = "Saving..."); lrec.stop(); } }
+  async function lecUpload(file) {
+    if (!file) return;
+    if (file.size > 60 * 1024 * 1024) return alert("This file is too big (over 60 MB). Please use a shorter or smaller audio file.");
+    const title = prompt("Title of this lecture:", file.name.replace(/\.[^.]+$/, "")); if (title === null) return;
+    const lref = doc(lcol()); lid = lref.id; lfail = 0;
+    const total = Math.ceil(file.size / 450000);
+    try { await setDoc(lref, { title: title.trim() || "Lecture", mime: file.type || "audio/mpeg", parts: 0, secs: 0, status: "uploading", by: me.uid, byName: me.name, createdAt: serverTimestamp() }); } catch (e) { return alert("Could not start: " + (e.code || e.message)); }
+    for (let n = 0; n < total; n++) {
+      $("lst") && ($("lst").textContent = "Uploading part " + (n + 1) + " of " + total + "...");
+      if (!(await putPart(n, file.slice(n * 450000, (n + 1) * 450000)))) { await updateDoc(lref, { parts: n, status: "incomplete" }).catch(() => {}); return alert("The upload stopped because of the internet. Please try again."); }
+    }
+    let secs = 0; try { secs = await new Promise(r => { const a = new Audio(URL.createObjectURL(file)); a.onloadedmetadata = () => r(Math.round(a.duration) || 0); a.onerror = () => r(0); }); } catch (e) {}
+    await updateDoc(lref, { parts: total, secs, status: "done" }).catch(() => {});
+    await showLectures(); if (lmail) emailLec(lref.id);
+  }
+  async function lecPlay(lecId, mimeT, nparts, holder, saveAs) {
+    holder.innerHTML = "<small>Loading the lecture...</small>";
+    try {
+      const arr = [];
+      for (let n = 0; n < nparts; n++) {
+        const s = await getDoc(doc(db, "classrooms", id, "lectures", lecId, "parts", String(n).padStart(4, "0")));
+        if (!s.exists()) throw new Error("Part " + (n + 1) + " is missing");
+        arr.push(fromB64(s.data().b)); holder.innerHTML = "<small>Loading " + Math.round(100 * (n + 1) / nparts) + "%...</small>";
+      }
+      const url = URL.createObjectURL(new Blob(arr, { type: mimeT || "audio/webm" }));
+      holder.innerHTML = `<audio controls autoplay src="${url}" style="width:100%"></audio><p style="margin:6px 0 0"><a href="${url}" download="${esc(saveAs)}">⬇ Save to my phone</a></p>`;
+    } catch (e) { holder.innerHTML = '<small class="er">Could not load: ' + esc(e.message || e.code) + "</small>"; }
+  }
+  async function showLectures() {
+    let items = [], err = "";
+    try { const s = await getDocs(query(lcol(), orderBy("createdAt", "desc"), limit(40))); items = s.docs.map(x => ({ id: x.id, ...x.data() })); }
+    catch (e) { err = e.code || e.message; }
+    try { const sk = "lecSeen_" + me.uid, m = JSON.parse(localStorage.getItem(sk) || "{}") || {}; m[id] = Date.now(); localStorage.setItem(sk, JSON.stringify(m)); sessionStorage.removeItem("lecCnt_" + me.uid); } catch (e) {}
+    const st = staff(), recording = lrec && lrec.state === "recording";
+    let h = `<div class="cd"><b>🎧 Recorded lectures</b>`;
+    if (st) h += `<div style="margin:10px 0">${recording ? '<span id="lrt" style="color:#b3261e;font-weight:700">● Recording ' + mmss(lsecs) + '</span> <button class="b r" id="lstop" type="button">Stop and save</button>' : '<button class="b g" id="lrec" type="button">⏺ Record this lecture</button> <label class="b o" style="display:inline-block;cursor:pointer">⬆ Upload audio file<input id="lfile" type="file" accept="audio/*,video/mp4" style="display:none"></label>'}
+      <div style="border:1.5px dashed #c9a24a;border-radius:10px;padding:10px;margin:10px 0"><b>🔗 Post a video link</b><br><small>Upload your video to YouTube (choose <b>Unlisted</b>) or Google Drive (<b>Anyone with the link</b>), then paste the link.</small>
+      <input id="lk_t" maxlength="120" placeholder="Lecture title" style="width:100%;box-sizing:border-box;margin-top:6px"><input id="lk_u" inputmode="url" placeholder="https://youtu.be/..." style="width:100%;box-sizing:border-box;margin-top:6px"><textarea id="lk_n" rows="3" maxlength="3000" placeholder="Notes for the students (optional)" style="width:100%;box-sizing:border-box;margin-top:6px"></textarea>
+      <button class="b" id="lk_b" type="button" style="margin-top:6px">Post link</button></div>
+      <label style="display:block"><input type="checkbox" id="lk_e" ${lmail ? "checked" : ""} style="margin-right:6px">Email the students when I post or save a lecture</label>
+      <div id="lst" class="small" style="margin-top:6px"></div><p class="small" style="margin:6px 0 0">Recording uses your microphone only (the teacher's voice). Students can play it any time, or save it to listen without internet.</p></div>`;
+    if (err) h += `<p class="er">Could not load: ${esc(err)}</p>`;
+    else h += items.length ? items.map(x => { const em = x.url ? embed(x.url) : "";
+      return `<div class="it" style="display:block;border-top:1px dashed #cfd3e8;padding:10px 0"><b>${esc(x.title || "Lecture")}</b><br><small>${x.createdAt && x.createdAt.seconds ? esc(new Date(x.createdAt.seconds * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })) : ""}${x.secs ? " · " + mmss(x.secs) : ""} · ${esc(x.byName || "")}${x.status === "recording" ? " · recording now" : x.status === "incomplete" ? " · incomplete" : ""}${!x.url && x.parts ? " · about " + (Math.max(0.1, x.parts * 0.34)).toFixed(1) + " MB" : ""}</small>${x.notes ? `<div style="white-space:pre-wrap;margin:6px 0">${esc(x.notes)}</div>` : ""}<div data-h="${esc(x.id)}" style="margin-top:6px">${x.parts > 0 ? `<button class="b o" data-p="${esc(x.id)}" data-n="${x.parts}" data-m="${esc(x.mime || "")}" data-t="${esc(x.title || "lecture")}" type="button">▶ Play</button>` : ""}${em ? ` <button class="b" data-w="${esc(x.id)}" type="button">${openVid === x.id ? "Close player" : "▶ Watch / listen here"}</button>` : ""}${x.url ? ` <a class="b o" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Open link</a>` : ""}${st ? ` <button class="b o" data-x="${esc(x.id)}" data-n="${x.parts || 0}" type="button" style="color:#b3261e">Delete</button>` : ""}</div>${openVid === x.id && em ? `<div class="vw"><iframe src="${esc(em)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ""}</div>`; }).join("") : '<p class="hint">No recorded lectures yet.</p>';
+    h += ` <button class="b o" id="pc" type="button">Close</button></div>`;
+    $("panel").innerHTML = h; closeBtn();
+    if ($("lrec")) $("lrec").onclick = lecStart;
+    if ($("lk_b")) $("lk_b").onclick = lecLink;
+    if ($("lk_e")) $("lk_e").onchange = e => { lmail = e.target.checked; };
+    $("panel").querySelectorAll("[data-w]").forEach(b => b.onclick = () => { openVid = openVid === b.dataset.w ? "" : b.dataset.w; showLectures(); });
+    if ($("lstop")) $("lstop").onclick = lecStop;
+    if ($("lfile")) $("lfile").onchange = e => lecUpload(e.target.files[0]);
+    $("panel").querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const hd = $("panel").querySelector('[data-h="' + b.dataset.p + '"]'); lecPlay(b.dataset.p, b.dataset.m, +b.dataset.n, hd, (b.dataset.t || "lecture").replace(/[^\w\- ]+/g, "") + ".webm"); });
+    $("panel").querySelectorAll("[data-x]").forEach(b => b.onclick = async () => {
+      if (!confirm("Delete this lecture for everyone?")) return;
+      try { for (let n = 0; n < +b.dataset.n; n++) await deleteDoc(doc(db, "classrooms", id, "lectures", b.dataset.x, "parts", String(n).padStart(4, "0"))); await deleteDoc(doc(db, "classrooms", id, "lectures", b.dataset.x)); showLectures(); }
+      catch (e) { alert("Could not delete: " + (e.code || e.message)); }
+    });
   }
   async function showStars() {
     try {
@@ -457,6 +593,11 @@ function room(id) {
     const open = R.status === "open", st = staff(), canType = st || R.studentsCanType !== false;
     const key = [open, canType, st, !!kids()].join();
     if (key === compKey) return; compKey = key; stopRec();
+    if (!open && !st && !kids() && !QURAN && canType) {
+      $("comp").innerHTML = '<p style="margin:0 0 6px">The class is closed, but you can still ask your teacher a question by text. Voice notes work when the class is open.</p><textarea id="tx" rows="2" maxlength="1000" placeholder="Type your question..."></textarea><p><button class="b" id="sx" type="button">Send</button></p><span id="cm"></span>';
+      $("sx").onclick = async () => { const t = $("tx").value.trim(); if (!t) return; $("tx").value = ""; await send({ kind: "text", text: t }); };
+      return;
+    }
     if (!open) { $("comp").innerHTML = `<p style="margin:0">${st ? "The class is closed. Press <b>Open class</b> to start a lecture." : "The class is closed. You can read and listen to previous lectures. Sending opens again when your teacher starts the next lecture."}</p>`; return; }
     if (kids()) {
       $("comp").innerHTML = '<div><button class="kb" id="kr" type="button">🎤</button><p id="kt" style="text-align:center;font-weight:700;margin:0">Tap to talk</p><div class="kr"><button id="k1" type="button">✋</button><button id="k2" type="button">👍</button><button id="k3" type="button">😊</button><button id="k4" type="button">❤️</button></div></div><span id="cm"></span>';
@@ -480,7 +621,7 @@ function room(id) {
       await addDoc(mc, { uid: me.uid, name: me.name, role: staff() ? "teacher" : "student", sessionId: R.sessionId || "", createdAt: serverTimestamp(), ...rp, ...extra });
       if (rp.replyTo) { replyTo = null; drawReply(); }
       say("cm", "");
-    } catch (e) { say("cm", R.status !== "open" ? "The class is closed." : "Failed: " + (e.code || e.message)); }
+    } catch (e) { say("cm", "Failed: " + (e.code || e.message)); }
   }
   async function recToggle() {
     if (rec && rec.state === "recording") { rec.stop(); return; }
