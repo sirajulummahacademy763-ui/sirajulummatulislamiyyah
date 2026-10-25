@@ -106,7 +106,7 @@ function planCard() {
       (tn ? `<small>Teacher: ${esc(tn)}</small><span class="badge ${open ? "on" : "off"}">${open ? "Live now" : "Closed"}</span>` +
         (r && r.schedDays && r.schedDays.length ? `<br><small>📅 ${esc(r.schedDays.map(d => DL[d]).join(", "))} at ${esc(r.schedTime || "")}</small>` : "")
         : "<small>No teacher yet for this class.</small>") + "</div>" +
-      (tn && r ? `<a class="b" href="classroom.html?id=${encodeURIComponent(cid(t, n, selGender))}">Enter class</a>` : "") + "</div>";
+      (tn && r ? `<a class="b" href="quran-classroom.html?id=${encodeURIComponent(cid(t, n, selGender))}">Enter class</a>` : "") + "</div>";
   });
   return h + "</div>";
 }
@@ -119,6 +119,8 @@ function draw() {
   if (!selGender) { h += '<div class="cd"><b class="er">Your gender is not recorded on your account. Please tell the admin, so you can be placed in the right class.</b></div>'; $("app").innerHTML = h; return; }
   h += `<div class="cd"><h3>Your classes · فصولك</h3><p style="margin:2px 0 0">${esc(GEN[selGender].en)} classes · ${GEN[selGender].ar}. <small>This comes from the gender you chose when you registered.</small></p></div>`;
   const locked = !!(choice && TRK[choice.track]);
+  const anyReady = Object.keys(pub).some(k => k.indexOf(selGender + "-") === 0 && pub[k].teacherId);
+  if (!anyReady && !denied) h += `<div class="cd"><b class="er">No teacher has been assigned yet for ${esc(GEN[selGender].en.toLowerCase())} Hifz and Revision classes.</b><p style="margin:4px 0 0"><small>The admin assigns a teacher to each juz. When that is done, the juz you can join will appear below.</small></p></div>`;
   if (locked) h += `<div class="cd"><h3>1. What you chose · اختيارك</h3><p style="margin:2px 0 0"><b>${esc(TRK[choice.track].en)}</b> · ${TRK[choice.track].ar}</p><p style="margin:4px 0 0"><small>🔒 This is locked. Only the admin can change it. Please contact the admin if you need to change it.</small></p></div>`;
   else h += `<div class="cd"><h3>1. What do you want to do?</h3><p style="margin:2px 0 0"><small>Choose carefully. After you choose, you cannot change it unless the admin allows it.</small></p><div class="tk">` +
     ["hifz", "revision"].map(k => `<button type="button" data-t="${k}" class="${selTrack === k ? "sel" : ""}"><span class="ar">${TRK[k].ar}</span><b>${esc(TRK[k].en)}</b><small>${esc(TRK[k].d)}</small></button>`).join("") + `</div></div>`;
