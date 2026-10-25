@@ -51,10 +51,36 @@ async function notify(role,u,isSup,f,c){
     }
   }catch(e){}
 }
+
+// "New lecture posted" strip for students and teachers (lectures of their own classes, newer than the last visit to Recorded Lectures)
+async function notifyLec(role,u,f,c){
+  try{
+    const here=location.pathname.split("/").pop();
+    if(here==="lectures.html"||here.indexOf("login")===0)return;
+    const sk="lecSeen_"+u.uid;let seen=0;try{seen=+localStorage.getItem(sk)||0}catch(e){}
+    if(!seen){try{localStorage.setItem(sk,String(Date.now()))}catch(e){}return}
+    const ck="lecCnt_"+u.uid;let n=-1;
+    try{const x=JSON.parse(sessionStorage.getItem(ck)||"null");if(x&&Date.now()-x.t<60000&&x.seen===seen)n=x.n}catch(e){}
+    if(n<0){
+      n=0;const db=c.db;let ks=[];
+      if(role==="student"){const s=await f.getDoc(f.doc(db,"students",u.uid));const cl=s.exists()?(s.data().classes||{}):{};ks=Object.keys(cl).filter(k=>cl[k]&&cl[k]!=="none").map(k=>k+"|"+cl[k])}
+      else{const a=await f.getDoc(f.doc(db,"teacherAssign",u.uid));ks=a.exists()?(a.data().classKeys||[]):[]}
+      for(const k of ks.slice(0,20)){try{(await f.getDocs(f.query(f.collection(db,"lectures"),f.where("classKey","==",k)))).docs.forEach(d=>{const x=d.data();const tm=x.createdAt&&x.createdAt.seconds?x.createdAt.seconds*1000:0;if(tm>seen&&x.ready!==false&&x.teacherId!==u.uid)n++})}catch(e){}}
+      try{sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),seen,n}))}catch(e){}
+    }
+    if(n>0&&!document.getElementById("lecbar")){
+      const m=document.getElementById("msgbar");
+      const b=document.createElement("a");b.id="lecbar";b.href="lectures.html";
+      b.textContent="🎧 "+n+" new lecture"+(n>1?"s":"")+" posted · tap to listen";
+      b.style.cssText="position:sticky;top:"+(m?m.offsetHeight:0)+"px;z-index:9989;display:block;background:#1c7a4d;color:#fff;font:700 14px Figtree,system-ui,sans-serif;text-align:center;padding:10px 12px;text-decoration:none";
+      document.body.insertBefore(b,m?m.nextSibling:document.body.firstChild);
+    }
+  }catch(e){}
+}
 if(!isPub){
-  const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["lectures.html","Recorded Lectures"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["lectures.html","Recorded Lectures"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["lectures.html","Recorded Lectures"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const show=list=>{
     const nv=document.querySelector("header.top nav");if(!nv)return;
     nv.querySelectorAll(":scope>a:not([data-logout])").forEach(a=>a.remove());
@@ -89,6 +115,7 @@ if(!isPub){
       if(role==="teacher"){try{ if((await f.getDoc(f.doc(c.db,"supervisors",u.uid))).exists()){isSup=true;tl=TCH.slice(0,3).concat([["supervisor.html","Supervisor"]],TCH.slice(3));} }catch(e){}}
       show(role==="admin"?ADM:role==="teacher"?tl:STU);
       if(role!=="student")notify(role,u,isSup,f,c);
+      if(role!=="admin")setTimeout(()=>notifyLec(role,u,f,c),400);
     });
   }).catch(()=>{ show(STU); });
 }
