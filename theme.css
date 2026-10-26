@@ -107,3 +107,18 @@ header.top nav.grp .nvz{flex:none;font:inherit;font-weight:700;font-size:.85rem;
 header.top nav.grp .nvz.on{background:#f5b94a;color:#12163a;border-color:#f5b94a}
 header.top nav.grp>.gh{order:0;flex:1 1 100%;margin:10px 2px 0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#f5b94a;font-weight:700}
 header.top nav.grp>.nvn{order:0;flex:1 1 100%;color:#c9ccdf;padding:14px 4px;text-align:center}
+
+/* ---------- Page structure layer (site.js): breadcrumb, intro, find box, back to top ---------- */
+.crumb{font-size:.82rem;color:#6a6f92;margin:-8px 0 14px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.crumb a{color:#12163a;font-weight:600;text-decoration:none}.crumb a:hover{text-decoration:underline}
+.crumb b{font-weight:600;color:#4b5072}.crumb span{opacity:.6}
+.pgin{font-size:1.02rem;color:#4b5072;max-width:62ch;margin:0 0 16px;line-height:1.55}
+.pgs{position:sticky;top:64px;z-index:35;margin:0 -16px 16px;padding:10px 16px;background:rgba(238,241,250,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line,#d5d9ee);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pgs .pgq{flex:1 1 220px;min-width:0;box-sizing:border-box;font:inherit;padding:11px 14px;min-height:44px;border-radius:12px;border:1.5px solid #cfd3e8;background:#fff}
+.pgs .pgq:focus{outline:3px solid rgba(245,185,74,.55);border-color:#f5b94a}
+.pgs .pgc{font-size:.85rem;color:#6a6f92;font-weight:600}
+.pgx{display:none!important}
+.totop{position:fixed;left:14px;bottom:18px;z-index:80;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:#12163a;color:#f5b94a;font-size:1.4rem;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -6px rgba(0,0,0,.5)}
+.totop[hidden]{display:none}
+@media(max-width:600px){main.page table{display:block;max-width:100%;overflow-x:auto}}
+.jb ~ .pgs{position:static}
