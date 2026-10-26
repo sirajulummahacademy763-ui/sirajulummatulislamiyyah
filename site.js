@@ -192,7 +192,7 @@ if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
-if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=2">');
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=3">');
 if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#12163a">');
 (function(){
  const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
@@ -218,5 +218,51 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
     cs.forEach((c,i)=>{c.id=c.id||"sec"+i;const a=document.createElement("a");a.href="#"+c.id;a.textContent=c.querySelector(":scope>h2").textContent.trim();bar.appendChild(a)});
     const h1=m.querySelector("h1");(h1?h1.after(bar):m.prepend(bar));clearInterval(iv)}}
   if(n>40)clearInterval(iv)},250);
+})();
+// ---- Page structure layer: breadcrumb, short intro, "find on this page" box, back-to-top button ----
+(function(){
+ if(typeof isPub!=="undefined"&&isPub)return;
+ const here=(location.pathname.split("/").pop()||"index.html");
+ if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
+ const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
+ const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Use the buttons below to jump to a section.","revision.html":"Choose Hifz (new memorization) or Revision, then pick your juz and enter your class.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
+ const group=GN[here]||"";
+ const ttl=h=>{const c=h.cloneNode(true);c.querySelectorAll("small").forEach(x=>x.remove());const p=c.textContent.split("\u00b7").map(x=>x.trim()).filter(Boolean);return (p.find(x=>/[A-Za-z]/.test(x))||p[0]||"").replace(/[<>&]/g,"")};
+ let done=false,tries=0;
+ const place=()=>{
+  const m=document.querySelector("main.page");if(!m)return false;
+  const h1=m.querySelector("h1");if(!h1)return false;
+  if(!m.querySelector(".crumb")){
+   const c=document.createElement("nav");c.className="crumb";c.setAttribute("aria-label","Where you are");
+   c.innerHTML='<a href="'+(document.documentElement.getAttribute("data-role")==="admin"?"dashboard.html":"index.html")+'">Home</a>'+(group&&group!=="Start"?' <span>›</span> <b>'+group+"</b>":"")+' <span>›</span> <b>'+ttl(h1)+"</b>";
+   h1.after(c);
+   const nx=c.nextElementSibling;
+   if(DESC[here]&&!(nx&&/^(P|DIV)$/.test(nx.tagName)&&/lead|hint|pgin/.test(nx.className))&&!m.querySelector(".lead,p.hint")){
+    const p=document.createElement("p");p.className="pgin";p.textContent=DESC[here];c.after(p)}
+  }
+  return true};
+ const ITEMS=".it,.item,.lc,details,main.page tbody tr";
+ const findItems=m=>[...m.querySelectorAll(ITEMS)].filter(x=>!x.closest("#chat,#panel,.pgs,.jb,header,nav,#quiz"));
+ const filter=()=>{
+  const m=document.querySelector("main.page"),i=m&&m.querySelector(".pgq");if(!i)return;
+  const t=i.value.trim().toLowerCase(),words=t.split(/\s+/).filter(Boolean);let shown=0,all=0;
+  findItems(m).forEach(x=>{all++;const ok=!words.length||words.every(w=>x.textContent.toLowerCase().indexOf(w)>-1);x.classList.toggle("pgx",!ok);if(ok)shown++});
+  const c=m.querySelector(".pgc");if(c)c.textContent=words.length?(shown+" of "+all+" shown"):"";
+ };
+ const addSearch=()=>{
+  const m=document.querySelector("main.page");if(!m||m.querySelector(".pgs"))return;
+  if(m.querySelector("#chat"))return;
+  if(m.querySelector('input[type=search],input[placeholder*="earch"],input[placeholder*="Find"]'))return;
+  if(findItems(m).length<8)return;
+  const anchor=m.querySelector(".pgin")||m.querySelector(".crumb");if(!anchor)return;
+  const w=document.createElement("div");w.className="pgs";
+  w.innerHTML='<input type="search" class="pgq" placeholder="🔍 Find on this page (a name, a class, a word)..." aria-label="Find on this page" autocomplete="off"><span class="pgc" aria-live="polite"></span>';
+  anchor.after(w);w.querySelector("input").oninput=filter;
+  new MutationObserver(()=>{clearTimeout(window.__pgt);window.__pgt=setTimeout(filter,200)}).observe(m,{childList:true,subtree:true});
+ };
+ const iv=setInterval(()=>{tries++;const ok=place();if(ok)addSearch();if(tries>50)clearInterval(iv)},300);
+ const tt=document.createElement("button");tt.type="button";tt.className="totop";tt.setAttribute("aria-label","Back to top");tt.textContent="↑";tt.hidden=true;
+ tt.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});document.body.appendChild(tt);
+ window.addEventListener("scroll",()=>{tt.hidden=window.scrollY<700},{passive:true});
 })();
 import("./lang.js");
