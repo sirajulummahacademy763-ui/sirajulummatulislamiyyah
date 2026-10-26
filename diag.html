@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Site check</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;background:#eef1fa;color:#12163a;margin:0;padding:16px;line-height:1.5}
+h1{font-size:1.3rem;margin:0 0 4px}.s{color:#4b5072;font-size:.9rem;margin:0 0 14px}
+.c{background:#fff;border:1.5px solid #cfd3e8;border-left:6px solid #f5b94a;border-radius:12px;padding:12px;margin-bottom:10px;word-break:break-word}
+.c b{display:block;margin-bottom:4px}.ok{color:#1c7a4d;font-weight:700}.no{color:#b3261e;font-weight:700}code{font-size:.82rem;background:#f1f2f9;padding:1px 4px;border-radius:4px}
+button{font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:10px;background:#12163a;color:#fff;margin-bottom:12px}
+</style></head><body>
+<h1>Site check</h1>
+<p class="s">This page checks which files your Admin page really loads. Wait a few seconds, then send a screenshot of the whole page to Claude.</p>
+<button id="go" type="button">Run the check again</button>
+<div id="out">Checking...</div>
+<script>
+const out = document.getElementById("out");
+const esc = t => String(t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const card = (t, h) => { out.insertAdjacentHTML("beforeend", '<div class="c"><b>' + t + "</b>" + h + "</div>"); };
+const tag = (ok, y, n) => '<span class="' + (ok ? "ok" : "no") + '">' + (ok ? y : n) + "</span>";
+async function get(u, mode) {
+  try {
+    const r = await fetch(u, { cache: mode });
+    const t = await r.text();
+    return { ok: r.ok, status: r.status, text: t, cf: r.headers.get("cf-cache-status") || "-", age: r.headers.get("age") || "-", lm: r.headers.get("last-modified") || "-", cc: r.headers.get("cache-control") || "-" };
+  } catch (e) { return { ok: false, status: 0, text: "", err: String(e.message || e) }; }
+}
+async function run() {
+  out.innerHTML = "";
+  card("Time on your phone", esc(new Date().toString()));
+  // 1. What the live Admin page refers to
+  const a = await get("admin.html", "no-store");
+  if (!a.ok) { card("Admin page", tag(false, "", "Could not read admin.html (status " + a.status + ")")); return; }
+  const scripts = [...a.text.matchAll(/<script[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi)].map(m => m[1]);
+  const links = [...a.text.matchAll(/<link[^>]*href=["']([^"']+\.css[^"']*)["'][^>]*>/gi)].map(m => m[1]);
+  card("Files the Admin page asks for", "Scripts: " + (scripts.map(s => "<code>" + esc(s) + "</code>").join(" ") || "none") + "<br>Styles: " + (links.map(s => "<code>" + esc(s) + "</code>").join(" ") || "none"));
+  // 2. site.js exactly as the Admin page asks for it
+  const sj = scripts.find(s => /(^|\/)site\.js/.test(s)) || "site.js";
+  const f = await get(sj, "no-store"), d = await get(sj, "default");
+  card("site.js the Admin page uses: <code>" + esc(sj) + "</code>",
+    "Fresh copy from the server: " + tag(/site v18/.test(f.text), "NEW (v18)", "OLD") + " · " + f.text.length + " letters<br>" +
+    "Copy your phone would use: " + tag(/site v18/.test(d.text), "NEW (v18)", "OLD") + " · " + d.text.length + " letters<br>" +
+    "<small>Cloudflare status: " + esc(f.cf) + " · age: " + esc(f.age) + " s · last changed: " + esc(f.lm) + "<br>Cache rule: " + esc(f.cc) + "</small>");
+  // 3. Plain site.js, theme.css
+  const p = await get("site.js", "no-store");
+  card("Plain <code>site.js</code>", tag(/site v18/.test(p.text), "NEW (v18)", "OLD") + " · " + p.text.length + " letters · Cloudflare: " + esc(p.cf));
+  const th = await get("theme.css", "no-store");
+  card("<code>theme.css</code>", "Has the folding style: " + tag(/Folding sections/.test(th.text), "yes", "NO") + " · Cloudflare: " + esc(th.cf));
+  // 4. Service workers and cache storage
+  let sw = "not supported";
+  try { if ("serviceWorker" in navigator) { const r = await navigator.serviceWorker.getRegistrations(); sw = r.length + " service worker(s)"; } } catch (e) { sw = "error"; }
+  let cs = "-";
+  try { if (window.caches) cs = (await caches.keys()).length + " cache store(s)"; } catch (e) {}
+  card("Phone storage", esc(sw) + " · " + esc(cs));
+  // 5. Does the page contain the check line from the new site.js
+  card("Verdict", (/site v18/.test(f.text) && /site v18/.test(d.text)) ? '<span class="ok">The Admin page should be loading the new site.js. If it still looks old, tell Claude.</span>' : (/site v18/.test(f.text) ? '<span class="no">The server has the new file, but your phone would use an old copy. Clear your browser cache again, or use a private tab.</span>' : '<span class="no">The server is still serving the old site.js to the Admin page. Purge Cloudflare after the GitHub build shows a green tick.</span>'));
+}
+document.getElementById("go").onclick = run;
+run();
+</script></body></html>
