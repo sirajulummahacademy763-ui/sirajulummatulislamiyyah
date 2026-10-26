@@ -91,12 +91,55 @@ async function notifyLec(role,u,f,c){
 if(!isPub){
   const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  // ---- Menu: grouped by purpose, with a search box and an A-Z switch ----
+  const GROUPS=["Start","Classes & learning","Teaching","Results & reports","People & messages","Admin settings","Wallet & giving","The institute"];
+  const ICON={"Start":"🏠","Classes & learning":"📚","Teaching":"🧑‍🏫","Results & reports":"📝","People & messages":"👥","Admin settings":"⚙️","Wallet & giving":"💰","The institute":"ℹ️"};
+  const MAP={"index.html":["Start","home main"],"dashboard.html":["Start","today tasks money coins payments dashboard"],
+   "subjects.html":["Classes & learning","lessons courses books"],"timetable.html":["Classes & learning","schedule time table days"],"classroom.html":["Classes & learning","live class lecture lectures recorded video youtube voice"],
+   "quran-classroom.html":["Classes & learning","quran hifz revision live call lecture lectures recorded"],"homework.html":["Classes & learning","assignment answer voice photo"],"exams.html":["Classes & learning","test quiz exam"],
+   "revision.html":["Classes & learning","hifz revision quran juz memorize"],"library.html":["Classes & learning","books pdf read"],
+   "teacher.html":["Teaching","teacher courses lessons"],"my-classes.html":["Teaching","students homework marks classes attendance"],
+   "report-card.html":["Results & reports","result grade term marks"],"certificate.html":["Results & reports","certificates award"],"issue-reports.html":["Results & reports","report cards issue term"],
+   "homework-admin.html":["Results & reports","homework reports overview marks"],"overview-admin.html":["Results & reports","overview classes students"],"signatures.html":["Results & reports","signature stamp sign"],
+   "messages-admin.html":["People & messages","messages inbox chat supervisors teachers"],"supervisor-inbox.html":["People & messages","messages inbox director questions"],"supervisor.html":["People & messages","supervisor approve reports"],
+   "supervisors-admin.html":["People & messages","supervisors"],"teacher-assign-admin.html":["People & messages","assign teachers classes subjects"],"countries-admin.html":["People & messages","students teachers country list"],
+   "admin.html":["Admin settings","students teachers codes terms notices library coins"],"classes-admin.html":["Admin settings","classes timetable time zone"],"revision-admin.html":["Admin settings","hifz revision juz teachers"],"revision-choices-admin.html":["Admin settings","hifz revision choices students"],
+   "wallet.html":["Wallet & giving","coins buy money balance"],"donate.html":["Wallet & giving","sadaqah charity give donation"],
+   "about.html":["The institute","about us"],"contact.html":["The institute","contact phone whatsapp email"]};
+  const grp=h=>{const k=String(h).split("?")[0].split("/").pop();return MAP[k]||["The institute",""]};
+  let AZ=false;try{AZ=localStorage.getItem("menuAZ")==="1"}catch(e){}
   const show=list=>{
     const nv=document.querySelector("header.top nav");if(!nv)return;
-    nv.querySelectorAll(":scope>a:not([data-logout])").forEach(a=>a.remove());
+    nv.classList.add("grp");
+    nv.querySelectorAll(":scope>a:not([data-logout]),:scope>.gh,:scope>.nvs,:scope>.nvn").forEach(a=>a.remove());
     const lo=nv.querySelector("[data-logout]");
-    list.forEach(n=>{const a=document.createElement("a");a.href=n[0];a.textContent=n[1];nv.insertBefore(a,lo)});
+    const bar=document.createElement("div");bar.className="nvs";
+    bar.innerHTML='<input type="search" class="nvq" placeholder="🔍 Search the menu..." aria-label="Search the menu" autocomplete="off"><button type="button" class="nvz" title="Sort A to Z">A–Z</button>';
+    nv.insertBefore(bar,lo);
+    const q=bar.querySelector("input"),zb=bar.querySelector("button");
+    const empty=document.createElement("div");empty.className="nvn";empty.textContent="Nothing found. Try another word.";empty.hidden=true;
+    const draw=()=>{
+      nv.querySelectorAll(":scope>a:not([data-logout]),:scope>.gh,:scope>.nvn").forEach(a=>a.remove());
+      zb.classList.toggle("on",AZ);
+      const items=list.map(n=>({h:n[0],t:n[1],g:grp(n[0])}));
+      const mk=n=>{const a=document.createElement("a");a.href=n.h;a.textContent=n.t;a.dataset.k=(n.t+" "+n.g[1]+" "+n.g[0]).toLowerCase();return a};
+      if(AZ){items.slice().sort((x,y)=>x.t.localeCompare(y.t)).forEach(n=>nv.insertBefore(mk(n),lo))}
+      else GROUPS.forEach(g=>{const its=items.filter(n=>n.g[0]===g);if(!its.length)return;
+        const h=document.createElement("div");h.className="gh";h.textContent=ICON[g]+" "+g;h.dataset.g=g;nv.insertBefore(h,lo);
+        its.forEach(n=>{const a=mk(n);a.dataset.g=g;nv.insertBefore(a,lo)})});
+      nv.insertBefore(empty,lo);filter();
+    };
+    const filter=()=>{
+      const t=q.value.trim().toLowerCase();let any=false;const seen={};
+      nv.querySelectorAll(":scope>a:not([data-logout])").forEach(a=>{const ok=!t||t.split(/\s+/).every(w=>a.dataset.k.indexOf(w)>-1);a.hidden=!ok;if(ok){any=true;seen[a.dataset.g]=1}});
+      nv.querySelectorAll(":scope>.gh").forEach(h=>{h.hidden=!seen[h.dataset.g]});
+      empty.hidden=any;
+    };
+    q.oninput=filter;
+    q.onkeydown=e=>{if(e.key==="Enter"){const a=[...nv.querySelectorAll(":scope>a:not([data-logout])")].find(x=>!x.hidden);if(a)location.href=a.href}};
+    zb.onclick=e=>{e.stopPropagation();AZ=!AZ;try{localStorage.setItem("menuAZ",AZ?"1":"0")}catch(x){}draw()};
+    draw();
   };
   window.SITE_ROLE_MENU={STU,TCH,ADM,show};
   Promise.all([
@@ -149,7 +192,7 @@ if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
-if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=1">');
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=2">');
 if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#12163a">');
 (function(){
  const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
