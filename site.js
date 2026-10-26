@@ -230,7 +230,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
   if(n>40)clearInterval(iv)},250);
 })();
 // ---- Page structure layer: breadcrumb, short intro, "find on this page" box, back-to-top button ----
-(function(){
+(function(){try{
  if(typeof isPub!=="undefined"&&isPub)return;
  const here=(location.pathname.split("/").pop()||"index.html");
  if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
@@ -274,5 +274,14 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  const tt=document.createElement("button");tt.type="button";tt.className="totop";tt.setAttribute("aria-label","Back to top");tt.textContent="↑";tt.hidden=true;
  tt.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});document.body.appendChild(tt);
  window.addEventListener("scroll",()=>{tt.hidden=window.scrollY<700},{passive:true});
-})();
+ window.__layer="ran";
+}catch(e){window.__layer="failed: "+(e&&e.message)}})();
+// Admin-only line at the bottom of each page: which site.js is running (helps find caching problems)
+setTimeout(()=>{try{
+ if(document.documentElement.getAttribute("data-role")!=="admin")return;
+ const d=document.createElement("div");d.style.cssText="text-align:center;font:11px Figtree,system-ui,sans-serif;color:#9aa0c8;background:#12163a;padding:0 8px 10px";
+ const jb=document.querySelector(".jb"),fold=document.querySelectorAll(".cd.fold").length,crumb=!!document.querySelector(".crumb");
+ d.textContent="site v18 · layer: "+(window.__layer||"not run")+" · crumb: "+(crumb?"yes":"no")+" · folding: "+fold+" · page: "+(location.pathname.split("/").pop()||"/");
+ document.body.appendChild(d);
+}catch(e){}},4000);
 import("./lang.js");
