@@ -192,7 +192,7 @@ if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
-if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=3">');
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=4">');
 if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#12163a">');
 (function(){
  const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
@@ -216,7 +216,17 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
   if(m&&!m.querySelector(".jb")){const cs=[...m.querySelectorAll(".cd")].filter(c=>c.querySelector(":scope>h2"));
    if(cs.length>=5){const bar=document.createElement("div");bar.className="jb";
     cs.forEach((c,i)=>{c.id=c.id||"sec"+i;const a=document.createElement("a");a.href="#"+c.id;a.textContent=c.querySelector(":scope>h2").textContent.trim();bar.appendChild(a)});
-    const h1=m.querySelector("h1");(h1?h1.after(bar):m.prepend(bar));clearInterval(iv)}}
+    const h1=m.querySelector("h1");(h1?h1.after(bar):m.prepend(bar));clearInterval(iv);
+    // On the Admin page the long sections fold: only the titles show, tap one to open it
+    if((location.pathname.split("/").pop()||"")==="admin.html"){
+     const setO=(c,o)=>{c.classList.toggle("shut",!o);const t=c.querySelector(":scope>h2");if(t)t.setAttribute("aria-expanded",o?"true":"false")};
+     cs.forEach(c=>{c.classList.add("fold");const t=c.querySelector(":scope>h2");t.tabIndex=0;t.setAttribute("role","button");
+      const tg=()=>setO(c,c.classList.contains("shut"));t.onclick=tg;t.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tg()}};setO(c,false)});
+     bar.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{const c=document.getElementById(a.getAttribute("href").slice(1));if(c)setO(c,true)}));
+     const all=document.createElement("a");all.href="#";all.textContent="Open all";all.dataset.all="0";
+     all.onclick=e=>{e.preventDefault();const o=all.dataset.all==="0";cs.forEach(c=>setO(c,o));all.dataset.all=o?"1":"0";all.textContent=o?"Close all":"Open all"};bar.appendChild(all);
+     if(location.hash){const c=document.getElementById(location.hash.slice(1));if(c&&c.classList.contains("fold"))setO(c,true)}
+    }}}
   if(n>40)clearInterval(iv)},250);
 })();
 // ---- Page structure layer: breadcrumb, short intro, "find on this page" box, back-to-top button ----
@@ -225,7 +235,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  const here=(location.pathname.split("/").pop()||"index.html");
  if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
  const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
- const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Use the buttons below to jump to a section.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
+ const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Tap a section to open it, or use the round buttons to jump straight to one.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
  const group=GN[here]||"";
  const ttl=h=>{const c=h.cloneNode(true);c.querySelectorAll("small").forEach(x=>x.remove());const p=c.textContent.split("\u00b7").map(x=>x.trim()).filter(Boolean);return (p.find(x=>/[A-Za-z]/.test(x))||p[0]||"").replace(/[<>&]/g,"")};
  let done=false,tries=0;
