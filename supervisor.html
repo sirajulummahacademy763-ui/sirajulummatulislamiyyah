@@ -35,11 +35,18 @@ select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, getDocs, doc, getDoc, setDoc, updateDoc, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
+import { loadAttendance, loadAttendanceByRoom, loadRoster, attendanceHtml } from "./attendance-load.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 let ME = null, MYNAME = "", KEYS = [], D = {}, T = [], termId = "", openKey = "";
+const ATT = {};
+function ensureAtt(k) {
+  const key = k + "|" + termId; if (ATT[key] !== undefined) return;
+  ATT[key] = "loading";
+  (D[k] && D[k].room ? loadAttendanceByRoom(db, D[k].rid, T.find(x => x.id === termId)) : loadAttendance(db, k, T.find(x => x.id === termId))).then(r => { ATT[key] = r; if (openKey === k) draw(); });
+}
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
   ME = u.uid;
@@ -54,6 +61,12 @@ async function load() {
   try {
     const q = (n, k) => getDocs(query(collection(db, n), where("classKey", "==", k))).then(s => s.docs.map(d => ({ id: d.id, ...d.data() })));
     for (const k of KEYS) {
+      if (k.indexOf("room|") === 0) { // a Hifz or Revision room: attendance only
+        const rid = k.slice(5);
+        let rm = {}; try { const x = await getDoc(doc(db, "classrooms", rid)); if (x.exists()) rm = x.data(); } catch (e) {}
+        D[k] = { room: true, rid, rm, m: await loadRoster(db, rid), w: [], s: [], r: [], ms: [] };
+        continue;
+      }
       const [m, w, s, r, ms] = await Promise.all([q("classMembers", k), q("classWork", k), q("classWorkSubs", k), q("reportCards", k),
         getDocs(query(collection(db, "supervisorMsgs"), where("classKey", "==", k), where("supUid", "==", ME))).then(x => x.docs.map(d => ({ id: d.id, ...d.data() })))]);
       D[k] = { m, w: w.filter(x => x.kind === "homework"), s, r, ms: ms.sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)) };
@@ -65,12 +78,18 @@ async function load() {
 }
 function draw() {
   const tot = { st: 0, hw: 0, an: 0, rc: 0 };
-  KEYS.forEach(k => { const d = D[k]; tot.st += d.m.length; tot.hw += d.w.length; tot.an += d.s.length; tot.rc += d.r.filter(x => x.status === "issued" && (!termId || x.termId === termId)).length; });
+  KEYS.forEach(k => { const d = D[k]; if (d.room) return; tot.st += d.m.length; tot.hw += d.w.length; tot.an += d.s.length; tot.rc += d.r.filter(x => x.status === "issued" && (!termId || x.termId === termId)).length; });
   let h = `<h1>Supervisor</h1><p class="hint">Welcome, ${esc(MYNAME)}. These are the classes you oversee. Tap a class to open it.</p>
-    <label for="tm"><b>Term for report cards</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
+    <label for="tm"><b>Term (report cards and attendance)</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
     <div class="tot"><div><b>${tot.st}</b><span>Students</span></div><div><b>${tot.hw}</b><span>Homework posted</span></div><div><b>${tot.an}</b><span>Answers received</span></div><div><b>${tot.rc}</b><span>Reports issued</span></div></div>`;
   KEYS.forEach(k => {
     const d = D[k], [sec, ...lv] = k.split("|");
+    if (d.room) {
+      h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(d.rm.title || d.rid)} <small style="font-weight:400;color:#4b5072">Quran class</small></h2>
+        <div class="sm"><span>👩‍🎓 ${d.m.length} entered the class</span><span>🧑‍🏫 ${esc(d.rm.teacherName || "")}</span></div></button>`;
+      if (openKey === k) { ensureAtt(k); h += `<div class="dt">${attendanceHtml(d.m, ATT[k + "|" + termId])}<p class="hint">Only students who have entered this class at least once are listed.</p></div>`; }
+      h += "</div>"; return;
+    }
     const exp = d.w.length * d.m.length, pct = exp ? Math.min(100, Math.round(100 * d.s.length / exp)) : 0;
     const cards = d.r.filter(x => !termId || x.termId === termId);
     h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(lv.join("|"))} <small style="font-weight:400;color:#4b5072">${SN[sec] || esc(sec)}</small></h2>
@@ -86,6 +105,7 @@ function draw() {
         const rc = cards.find(x => x.uid === s.uid);
         return `<div class="hw"><b>${esc(s.name)}</b> ${rc ? `<span class="pill ${rc.status === "issued" ? "g" : ""}">${rc.status === "issued" ? "Issued" : "Draft"}${rc.grade ? " · " + esc(rc.grade) : ""}${rc.percentage != null ? " " + esc(rc.percentage) + "%" : ""}</span>${rc.approvedBy ? `<span class="pill g">✓ Approved by ${esc(rc.approvedByName || "supervisor")}</span>` : `<button class="b s" data-ap="${esc(rc.id)}" data-kk="${esc(k)}">Approve</button>`}` : '<span class="pill">No report yet</span>'}</div>`;
       }).join("") || '<p class="hint">No students yet.</p>';
+      ensureAtt(k); h += attendanceHtml(d.m, ATT[k + "|" + termId]);
       h += `<h3>Ask the teacher of this class</h3><div id="th">${d.ms.map(x => `<div class="msg ${x.from === "supervisor" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("") || '<p class="hint">No messages yet.</p>'}</div>
         <textarea id="mt" rows="2" maxlength="1000" placeholder="Write your question for the teacher..."></textarea><button class="b" id="ms">Send question</button> <span id="mr"></span></div>`;
     }
