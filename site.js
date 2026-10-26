@@ -225,7 +225,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  const here=(location.pathname.split("/").pop()||"index.html");
  if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
  const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
- const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Use the buttons below to jump to a section.","revision.html":"Choose Hifz (new memorization) or Revision, then pick your juz and enter your class.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
+ const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Use the buttons below to jump to a section.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
  const group=GN[here]||"";
  const ttl=h=>{const c=h.cloneNode(true);c.querySelectorAll("small").forEach(x=>x.remove());const p=c.textContent.split("\u00b7").map(x=>x.trim()).filter(Boolean);return (p.find(x=>/[A-Za-z]/.test(x))||p[0]||"").replace(/[<>&]/g,"")};
  let done=false,tries=0;
@@ -251,7 +251,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  };
  const addSearch=()=>{
   const m=document.querySelector("main.page");if(!m||m.querySelector(".pgs"))return;
-  if(m.querySelector("#chat"))return;
+  if(m.querySelector("#chat")||/^(report-card|parent|wallet|donate|signatures|classroom|quran-classroom)\.html$/.test(here))return;
   if(m.querySelector('input[type=search],input[placeholder*="earch"],input[placeholder*="Find"]'))return;
   if(findItems(m).length<8)return;
   const anchor=m.querySelector(".pgin")||m.querySelector(".crumb");if(!anchor)return;
