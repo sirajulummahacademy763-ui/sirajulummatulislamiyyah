@@ -91,3 +91,19 @@ main.page .ok,main.page .er{display:block;margin:8px 0 0}
 footer{line-height:1.6}
 @media(prefers-reduced-motion:reduce){main.page .tabs a,main.page details>summary::after{transition:none}}
 @media(max-width:520px){main.page{padding-left:14px;padding-right:14px}header.top .logo span span{font-size:1.05em}}
+
+/* ---------- Grouped menu with search (site.js) ---------- */
+header.top nav.grp>a{order:0}
+header.top nav.grp>a.stf{background:rgba(255,255,255,.07);border:0;color:#fff}
+header.top nav.grp>a.stf.on,header.top nav.grp>a.on{background:#f5b94a;color:#12163a;font-weight:700}
+header.top nav.grp>.nvh{display:none!important}
+header.top nav.grp>a[data-logout]{order:9}
+header.top nav.grp>a[hidden],header.top nav.grp>.gh[hidden],header.top nav.grp>.nvn[hidden]{display:none!important}
+header.top nav.grp>.nvs{order:-1;flex:1 1 100%;display:flex;gap:8px;position:sticky;top:-14px;z-index:2;background:#12163a;padding:2px 0 8px;margin-top:-2px}
+header.top nav.grp .nvq{flex:1;min-width:0;box-sizing:border-box;font:inherit;font-size:.95rem;padding:11px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;outline:0}
+header.top nav.grp .nvq::placeholder{color:#c9ccdf}
+header.top nav.grp .nvq:focus{border-color:#f5b94a;background:rgba(255,255,255,.16)}
+header.top nav.grp .nvz{flex:none;font:inherit;font-weight:700;font-size:.85rem;color:#fff;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.28);border-radius:12px;padding:0 12px;cursor:pointer}
+header.top nav.grp .nvz.on{background:#f5b94a;color:#12163a;border-color:#f5b94a}
+header.top nav.grp>.gh{order:0;flex:1 1 100%;margin:10px 2px 0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#f5b94a;font-weight:700}
+header.top nav.grp>.nvn{order:0;flex:1 1 100%;color:#c9ccdf;padding:14px 4px;text-align:center}
