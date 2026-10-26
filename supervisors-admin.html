@@ -26,8 +26,8 @@ import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } 
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology", hifz: "Hifz", revision: "Revision" };
-let TE = [], SU = {}, KEYS = [], sel = "", ticks = new Set();
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology", hifz: "Hifz", revision: "Revision", room: "Quran classes (Hifz and Revision)" };
+let TE = [], SU = {}, KEYS = [], sel = "", ticks = new Set(), RT = {};
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
   let adm = false;
@@ -35,19 +35,21 @@ onAuthStateChanged(auth, async u => {
   if (!adm) { $("app").innerHTML = "<h1>Supervisors</h1><p>This page is only for the admin.</p>"; return; }
   try {
     const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
-    const [te, su, ta, cm, cw] = await Promise.all([g("teachers"), g("supervisors"), g("teacherAssign"), g("classMembers"), g("classWork")]);
+    const [te, su, ta, cm, cw, cr] = await Promise.all([g("teachers"), g("supervisors"), g("teacherAssign"), g("classMembers"), g("classWork"), g("classrooms")]);
     TE = te.sort((a, b) => String(a.name).localeCompare(String(b.name)));
     su.forEach(x => SU[x.id] = x);
     const ks = new Set();
     ta.forEach(x => (x.classKeys || []).forEach(k => ks.add(k))); cm.forEach(x => x.classKey && ks.add(x.classKey)); cw.forEach(x => x.classKey && ks.add(x.classKey));
     KEYS = [...ks].sort();
+    // Hifz and Revision rooms can be supervised too (saved as "room|<room id>")
+    cr.filter(x => x.section === "hifz" || x.section === "revision").sort((a, b) => String(a.title).localeCompare(String(b.title))).forEach(x => { RT[x.id] = x.title || x.id; KEYS.push("room|" + x.id); });
     draw();
   } catch (e) { $("app").innerHTML = '<h1>Supervisors</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
-const lab = k => { const [s, ...l] = k.split("|"); return l.join("|") + " (" + (SN[s] || s) + ")"; };
+const lab = k => { if (k.indexOf("room|") === 0) return RT[k.slice(5)] || k.slice(5); const [s, ...l] = k.split("|"); return l.join("|") + " (" + (SN[s] || s) + ")"; };
 function draw() {
   const cur = Object.keys(SU).length ? `<div class="cd"><h2>Current supervisors</h2>${Object.values(SU).map(x => `<div style="margin:6px 0"><b>${esc(x.name)}</b> <span class="pill">${(x.classKeys || []).length} classes</span> <button class="b" style="padding:5px 12px;margin:0" data-e="${esc(x.id)}">Edit</button></div>`).join("")}</div>` : "";
-  let h = `<h1>Supervisors</h1><p class="hint">A supervisor is a teacher who can see everything in the classes you tick, ask those classes' teachers questions, and approve report cards. Their class lessons stay as they are.</p>${cur}
+  let h = `<h1>Supervisors</h1><p class="hint">A supervisor is a teacher who can see everything in the classes you tick, ask those classes' teachers questions, and approve report cards. For a Hifz or Revision class, the supervisor sees its attendance. Their class lessons stay as they are.</p>${cur}
     <div class="cd"><h2>Make or edit a supervisor</h2><label for="tp"><b>Choose a teacher</b></label>
     <select id="tp"><option value="">Choose...</option>${TE.map(t => `<option value="${esc(t.id)}" ${t.id === sel ? "selected" : ""}>${esc(t.name)}${SU[t.id] ? " (supervisor)" : ""}</option>`).join("")}</select>`;
   if (sel) {
