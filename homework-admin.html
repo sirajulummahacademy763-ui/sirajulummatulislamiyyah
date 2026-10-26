@@ -30,11 +30,32 @@ select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
+import { loadAttendance, loadAttendanceByRoom, loadRoster, attendanceHtml } from "./attendance-load.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let M = [], W = [], S = [], R = [], T = [], termId = "", openKey = "";
+let M = [], W = [], S = [], R = [], T = [], termId = "", openKey = "", QR = [], QC = [], QS = {}, openQ = "";
+const ATT = {}, QROST = {};
+// Students of a Hifz/Revision room: registered for that juz and track, same gender, plus anyone who has entered the room
+function qStuds(r) {
+  const m = new Map();
+  QC.filter(c => c.juz === r.juz && (c.track === r.section || c.track === "both") && (!r.gender || QS[c.id] === r.gender)).forEach(c => m.set(c.id, { uid: c.id, name: c.name || "Student" }));
+  (QROST[r.id] || []).forEach(x => { if (!m.has(x.uid)) m.set(x.uid, x); });
+  return [...m.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+}
+function ensureQ(r) {
+  const key = "room:" + r.id + "|" + termId;
+  if (QROST[r.id] === undefined) { QROST[r.id] = []; loadRoster(db, r.id).then(x => { QROST[r.id] = x; if (openQ === r.id) draw(); }); }
+  if (ATT[key] !== undefined) return;
+  ATT[key] = "loading";
+  loadAttendanceByRoom(db, r.id, T.find(x => x.id === termId)).then(x => { ATT[key] = x; if (openQ === r.id) draw(); });
+}
+function ensureAtt(k) {
+  const key = k + "|" + termId; if (ATT[key] !== undefined) return;
+  ATT[key] = "loading";
+  loadAttendance(db, k, T.find(x => x.id === termId)).then(r => { ATT[key] = r; if (openKey === k) draw(); });
+}
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
   let adm = false;
@@ -43,6 +64,12 @@ onAuthStateChanged(auth, async u => {
   try {
     const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
     [M, W, S, R, T] = await Promise.all([g("classMembers"), g("classWork"), g("classWorkSubs"), g("reportCards"), g("terms")]);
+    // Hifz and Revision rooms, with the students who registered for each juz
+    try {
+      const [cr, ch, st] = await Promise.all([g("classrooms"), g("revisionChoices"), g("students")]);
+      QR = cr.filter(x => x.section === "hifz" || x.section === "revision").sort((a, b) => String(a.title).localeCompare(String(b.title)));
+      QC = ch; st.forEach(x => QS[x.id] = String(x.gender || "").toLowerCase());
+    } catch (e) {}
     T.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = today();
     const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
@@ -67,7 +94,7 @@ function draw() {
   const tot = { st: 0, hw: 0, an: 0, rc: 0 };
   cs.forEach(c => { tot.st += c.studs.length; tot.hw += c.posts.length; tot.an += c.subs.length; tot.rc += c.issued.length; });
   let h = `<h1>Homework and Reports</h1><p class="hint">See every class at a glance. Tap a class to open it.</p>
-    <label for="tm"><b>Term for the report cards</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
+    <label for="tm"><b>Term (report cards and attendance)</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
     <div class="tot"><div><b>${tot.st}</b><span>Students</span></div><div><b>${tot.hw}</b><span>Homework posted</span></div><div><b>${tot.an}</b><span>Answers received</span></div><div><b>${tot.rc}</b><span>Reports issued</span></div></div>`;
   if (!cs.length) h += '<p class="hint">No classes have any students or homework yet.</p>';
   cs.forEach(c => {
@@ -91,11 +118,23 @@ function draw() {
         const rc = [...c.issued, ...c.drafts].find(x => x.uid === s.uid);
         return `<div class="hw"><b>${esc(s.name)}</b> ${rc ? (rc.status === "issued" ? `<span class="pill g">Issued · ${esc(rc.grade || "")} ${rc.percentage != null ? esc(rc.percentage) + "%" : ""}${rc.position ? " · position " + esc(rc.position) : ""}</span>` : '<span class="pill">Draft</span>') : '<span class="pill r">No marks yet</span>'}</div>`;
       }).join("") : '<p class="hint">No students yet. A student appears here after opening the site once.</p>';
+      ensureAtt(c.k); h += attendanceHtml(c.studs, ATT[c.k + "|" + termId]);
       h += "</div>";
     }
     h += "</div>";
   });
+  if (QR.length) {
+    h += '<h2 style="margin:22px 0 6px">Quran classes (Hifz and Revision)</h2><p class="hint">Attendance only. Boys and girls are separate classes.</p>';
+    QR.forEach(r => {
+      const studs = qStuds(r);
+      h += `<div class="cl"><button type="button" data-q="${esc(r.id)}"><h2>${esc(r.title || r.id)}</h2>
+        <div class="sm"><span>👩‍🎓 ${studs.length} students</span><span>🧑‍🏫 ${esc(r.teacherName || "No teacher yet")}</span></div></button>`;
+      if (openQ === r.id) { ensureQ(r); h += `<div class="dt">${attendanceHtml(studs, ATT["room:" + r.id + "|" + termId])}</div>`; }
+      h += "</div>";
+    });
+  }
   $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-q]").forEach(b => b.onclick = () => { openQ = openQ === b.dataset.q ? "" : b.dataset.q; draw(); });
   $("tm").onchange = e => { termId = e.target.value; draw(); };
   $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { openKey = openKey === b.dataset.k ? "" : b.dataset.k; draw(); });
 }
