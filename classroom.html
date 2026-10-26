@@ -113,7 +113,7 @@ onAuthStateChanged(auth, async u => {
 
 async function list() {
   unsubs.forEach(f => f()); unsubs = [];
-  $("app").innerHTML = '<h1>' + (QURAN ? "Quran Classroom" : "Classrooms") + '</h1><div id="cw"></div><div id="nw"></div><div class="cd" id="ls">Loading...</div>';
+  $("app").innerHTML = '<h1>' + (QURAN ? "Quran Classroom" : "Classrooms") + '</h1><div class="cd" id="ls">Loading...</div><div id="cw"></div><div id="nw"></div>';
   if (!QURAN) { if (me.admin) { codeCard(); newForm(); } else if (!me.teacher) redeemCard(); }
   let docs = [];
   try {
