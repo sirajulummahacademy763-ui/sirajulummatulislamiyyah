@@ -1,3 +1,5 @@
+// Security: never let another website show this site inside a frame (clickjacking)
+try{if(window.top!==window.self){window.top.location=window.self.location}}catch(e){document.documentElement.style.display="none"}
 // Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
 const PUBLIC=["about","contact","privacy","terms","donate","parent"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
@@ -153,6 +155,13 @@ if(!isPub){
       try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())role="admin"; }catch(e){}
       if(role==="student"){try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())role="teacher"; }catch(e){}}
       document.documentElement.setAttribute("data-role",role);
+      // Security: staff (admin/teacher) are signed out after 30 minutes without activity
+      if(role!=="student"){try{
+        let last=Date.now();
+        const bump=()=>{last=Date.now()};
+        ["click","keydown","touchstart","scroll","mousemove"].forEach(ev=>addEventListener(ev,bump,{passive:true}));
+        setInterval(async()=>{ if(Date.now()-last>30*60*1000){ try{await a.signOut(c.auth)}catch(e){} location.href="login.html"; } },30000);
+      }catch(e){}}
       // A student's class membership record (lets that class's teachers see who is in the class)
       if(role==="student"){try{
         const k="cm_"+u.uid+"_v1";
