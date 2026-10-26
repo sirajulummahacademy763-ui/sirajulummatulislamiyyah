@@ -122,3 +122,11 @@ header.top nav.grp>.nvn{order:0;flex:1 1 100%;color:#c9ccdf;padding:14px 4px;tex
 .totop[hidden]{display:none}
 @media(max-width:600px){main.page table{display:block;max-width:100%;overflow-x:auto}}
 .jb ~ .pgs{position:static}
+
+/* ---------- Folding sections (Admin page) ---------- */
+main.page .cd.fold>h2{cursor:pointer;position:relative;padding-right:40px;user-select:none}
+main.page .cd.fold>h2::after{content:"+";position:absolute;right:4px;top:50%;transform:translateY(-50%);font-family:Figtree,system-ui,sans-serif;font-size:1.6rem;line-height:1;color:#12163a;transition:transform .2s}
+main.page .cd.fold:not(.shut)>h2::after{transform:translateY(-50%) rotate(45deg)}
+main.page .cd.fold.shut>*:not(h2){display:none!important}
+main.page .cd.fold.shut>h2{border-bottom:0;margin-bottom:0;padding-bottom:0}
+main.page .cd.fold.shut{padding-top:14px;padding-bottom:14px}
