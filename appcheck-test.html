@@ -20,8 +20,9 @@ try{
    const t=await ac.getToken(c,true);say("RESULT "+name+": TOKEN RECEIVED (length "+t.token.length+")  <-- this kind works");}
   catch(e){say("RESULT "+name+": FAILED "+(e&&e.code||"")+" "+(e&&e.message||e))}
  };
- say("Testing Enterprise kind...");await tryIt("enterprise",ac.ReCaptchaEnterpriseProvider);
- say("Testing classic v3 kind...");await tryIt("classicv3",ac.ReCaptchaV3Provider);
+ const k=new URLSearchParams(location.search).get("k");
+ if(k==="v"){say("Testing classic v3 kind (fresh page)...");await tryIt("classicv3",ac.ReCaptchaV3Provider);}
+ else{say("Testing Enterprise kind (fresh page)...");await tryIt("enterprise",ac.ReCaptchaEnterpriseProvider);}
  say("DONE. Send me a screenshot of this page.");
 }catch(e){say("FAILED: "+(e&&e.code||"")+" "+(e&&e.message||e))}
 </script></body></html>
