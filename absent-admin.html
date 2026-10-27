@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Absent students | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ab{max-width:760px;margin:0 auto;padding:16px}
+.ab h1{margin:.2em 0}
+.ab .cd{background:#fff;border:1px solid #d9dcec;border-radius:14px;padding:14px;margin:12px 0}
+.ab .hd{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ab b.t{font-size:1.02rem}
+.ab button,.ab select{font:inherit}
+.ab .bt{font-weight:700;padding:9px 14px;border-radius:10px;border:0;background:#1d3a8a;color:#fff;cursor:pointer}
+.ab .bt.o{background:#fff;color:#1d3a8a;border:1px solid #1d3a8a}
+.ab .bt[disabled]{opacity:.55}
+.ab select{padding:8px;border-radius:8px;border:1px solid #c9cde3}
+.ab .row{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px dashed #cfd3e8;padding:9px 0;flex-wrap:wrap}
+.ab .row small{color:#666;display:block}
+.ab .wa{background:#1c7a4d;color:#fff;text-decoration:none;font-weight:700;padding:7px 12px;border-radius:9px;font-size:.9rem}
+.ab .bad{display:inline-block;background:#fde8e6;color:#b3261e;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.ab .good{display:inline-block;background:#e4f5ec;color:#1c7a4d;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem}
+.ab .hint{color:#555;font-size:.9rem;margin:6px 0}
+</style></head>
+<body>
+<main class="ab" id="app"><h1>Absent students</h1><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const slug = s => String(s).replace(/[^A-Za-z0-9]+/g, "-");
+const fmt = sec => new Date(sec * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+let ADMIN = false, ROOMS = [], STU = {}, CH = {}, N = 3;
+const RES = {};   // room id -> result html / count
+
+// A phone number for WhatsApp: digits only; a Nigerian number written with a leading 0 gets 234
+function waNum(s) {
+  let d = String((s && (s.guardianPhone || s.phone)) || "").replace(/[^0-9]/g, "");
+  if (!d) return "";
+  if (d.startsWith("00")) d = d.slice(2);
+  else if (d.startsWith("0") && /nigeria/i.test(String(s.country || ""))) d = "234" + d.slice(1);
+  return d.length >= 9 ? d : "";
+}
+
+function studentsOf(r) {
+  if (!ADMIN) return r.members || [];
+  if (r.section === "hifz" || r.section === "revision") {
+    return Object.entries(CH).filter(([id, c]) => c.juz === r.juz && (c.track === r.section || c.track === "both")
+      && (!r.gender || String((STU[id] || {}).gender || "").toLowerCase() === r.gender)).map(([id, c]) => ({ uid: id, name: c.name || (STU[id] || {}).name || "Student" }));
+  }
+  return Object.entries(STU).filter(([id, s]) => s.classes && s.classes[r.section] === r.level).map(([id, s]) => ({ uid: id, name: s.name || "Student" }));
+}
+
+async function check(r) {
+  const box = $("r_" + r.id); box.innerHTML = '<p class="hint">Checking...</p>';
+  try {
+    let ss = (await getDocs(collection(db, "classrooms", r.id, "sessions"))).docs.map(d => ({ id: d.id, ...d.data() })).filter(x => x.openedAt && x.openedAt.seconds);
+    ss.sort((a, b) => b.openedAt.seconds - a.openedAt.seconds); ss = ss.slice(0, 5);
+    const roster = {}; (await getDocs(collection(db, "classrooms", r.id, "roster"))).docs.forEach(d => roster[d.id] = d.data());
+    const lists = await Promise.all(ss.map(x => getDocs(collection(db, "classrooms", r.id, "sessions", x.id, "attendance")).then(s => s.docs.map(d => d.id))));
+    r.data = { ss, roster, lists };
+    show(r);
+  } catch (e) { box.innerHTML = '<p class="hint" style="color:#b3261e">Could not check this class (' + esc(e.code || e.message) + ").</p>"; }
+}
+
+function show(r) {
+  const box = $("r_" + r.id), d = r.data; if (!d) return;
+  const studs = studentsOf(r);
+  if (d.ss.length < N) { box.innerHTML = '<p class="hint">Only ' + d.ss.length + " class" + (d.ss.length === 1 ? " has" : "es have") + " been held so far. At least " + N + " are needed before an alert makes sense.</p>"; $("c_" + r.id).innerHTML = ""; return; }
+  const last = new Set(); d.lists.slice(0, N).forEach(l => l.forEach(u => last.add(u)));
+  const out = studs.filter(s => !last.has(s.uid)).map(s => ({ ...s, seen: d.roster[s.uid] && d.roster[s.uid].lastSeen && d.roster[s.uid].lastSeen.seconds || 0 }))
+    .sort((a, b) => a.seen - b.seen);
+  $("c_" + r.id).innerHTML = out.length ? '<span class="bad">' + out.length + " absent</span>" : '<span class="good">All present</span>';
+  if (!out.length) { box.innerHTML = '<p class="hint">Every student attended at least one of the last ' + N + " classes. Well done.</p>"; return; }
+  box.innerHTML = '<p class="hint">These students did not join any of the last ' + N + " classes (" + esc(d.ss.slice(0, N).map(x => (x.title || "Lecture") + ", " + fmt(x.openedAt.seconds)).join("; ")) + ").</p>" +
+    out.map(s => {
+      const w = ADMIN ? waNum(STU[s.uid]) : "";
+      const msg = "Assalamu alaikum " + s.name + ". We noticed you have not joined the last " + N + " classes of " + r.title + ". Please try to join the next class, in sha Allah. Sirajul Ummah Islamic Institute";
+      return '<div class="row"><div><b>' + esc(s.name) + "</b><small>" + (s.seen ? "Last in this class: " + fmt(s.seen) : "Has never entered this class") + "</small></div>" +
+        (w ? '<a class="wa" target="_blank" rel="noopener noreferrer" href="https://wa.me/' + w + "?text=" + encodeURIComponent(msg) + '">Remind on WhatsApp</a>' : (ADMIN ? '<small>No phone number saved</small>' : "")) + "</div>";
+    }).join("");
+}
+
+function draw() {
+  $("app").innerHTML = '<h1>Absent students</h1>' +
+    '<div class="cd"><p class="hint" style="margin-top:0">Shows students who did not join <b>any</b> of the last few classes held. Tap <b>Check</b> on a class, or check them all.' + (ADMIN ? " You can remind a student on WhatsApp using the phone number saved at registration (the guardian's number first)." : "") + '</p>' +
+    '<div class="hd"><label>Missed the last <select id="nn"><option>2</option><option selected>3</option><option>4</option><option>5</option></select> classes</label><button class="bt" id="all" type="button">Check all classes</button></div></div>' +
+    (ROOMS.length ? ROOMS.map(r => '<div class="cd"><div class="hd"><div><b class="t">' + esc(r.title) + '</b> <span id="c_' + esc(r.id) + '"></span><small style="display:block;color:#666">' + studentsOf(r).length + ' students</small></div><button class="bt o" data-c="' + esc(r.id) + '" type="button">Check</button></div><div id="r_' + esc(r.id) + '"></div></div>').join("")
+      : '<div class="cd"><p>No classes found.</p></div>');
+  $("nn").onchange = () => { N = +$("nn").value; ROOMS.forEach(r => { if (r.data) show(r); }); };
+  document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => check(ROOMS.find(r => r.id === b.dataset.c)));
+  $("all").onclick = async () => { $("all").disabled = true; for (const r of ROOMS) { await check(r); } $("all").disabled = false; };
+}
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Absent students</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let adm = false, tch = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { try { tch = (await getDoc(doc(db, "teachers", u.uid))).exists(); } catch (e) {} }
+  if (!adm && !tch) return $("app").innerHTML = '<h1>Absent students</h1><p>You do not have access to this page.</p>';
+  ADMIN = adm;
+  try {
+    if (adm) {
+      const [cr, st, ch] = await Promise.all([getDocs(collection(db, "classrooms")), getDocs(collection(db, "students")), getDocs(collection(db, "revisionChoices"))]);
+      st.docs.forEach(d => STU[d.id] = d.data()); ch.docs.forEach(d => CH[d.id] = d.data());
+      ROOMS = cr.docs.map(d => ({ id: d.id, ...d.data() })).map(r => ({ ...r, title: r.title || (r.section + " " + r.level) }))
+        .sort((a, b) => String(a.title).localeCompare(String(b.title)));
+    } else {
+      const ta = await getDoc(doc(db, "teacherAssign", u.uid));
+      const keys = ta.exists() ? (ta.data().classKeys || []) : [];
+      for (const k of keys) {
+        const p = k.split("|"), rid = p[0] + "__" + slug(p.slice(1).join("|"));
+        try {
+          const rd = await getDoc(doc(db, "classrooms", rid)); if (!rd.exists()) continue;
+          const ms = await getDocs(query(collection(db, "classMembers"), where("classKey", "==", k)));
+          ROOMS.push({ id: rid, ...rd.data(), title: rd.data().title || (p[0] + " " + p.slice(1).join("|")), members: ms.docs.map(d => ({ uid: d.data().uid, name: d.data().name || "Student" })) });
+        } catch (e) {}
+      }
+    }
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Absent students</h1><p style="color:#b3261e">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+</script>
+</body></html>
