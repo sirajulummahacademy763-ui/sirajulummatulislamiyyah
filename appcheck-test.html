@@ -9,7 +9,7 @@
 const o=document.getElementById("o");const say=t=>{o.textContent+="\n"+t};
 window.addEventListener("error",e=>say("PAGE ERROR: "+e.message));
 window.addEventListener("securitypolicyviolation",e=>say("BLOCKED by security policy: "+e.blockedURI+" ("+e.violatedDirective+")"));
-const KEY="6Ld-MQIuAAAAAPfPV7_oLFWRv6XapjnACmh2InzQ";
+const KEY="6LdqDwMuAAAAABL0iGw3qOc5MsQaPrbbYG-Ow7hr";
 try{
  const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
  const ac=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js");
