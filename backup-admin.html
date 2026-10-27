@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backup (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.bk{max-width:720px;margin:0 auto;padding:16px}
+.bk h1{margin:.2em 0}
+.bk .cd{background:#fff;border:1px solid #d9dcec;border-radius:14px;padding:16px;margin:14px 0}
+.bk button{font:inherit;font-weight:700;padding:12px 18px;border-radius:10px;border:0;background:#1d3a8a;color:#fff;cursor:pointer;width:100%}
+.bk button[disabled]{opacity:.55}
+.bk pre{white-space:pre-wrap;word-break:break-word;background:#f3f4fa;border-radius:10px;padding:10px;font-size:.85rem;max-height:340px;overflow:auto}
+.bk .er{color:#b3261e}.bk .ok{color:#0a7a2f}
+</style></head>
+<body>
+<main class="bk" id="app"><h1>Backup</h1><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+// What is saved. Big things (voice notes, recorded lectures, PDFs, books) are left out on purpose: they are huge and are kept safe by the teachers' own files.
+const TOP = ["students", "teachers", "teacherAssign", "supervisors", "supervisorMsgs", "adminMsgs", "payments", "classWork", "classWorkSubs", "classMembers", "reportCards",
+  "terms", "announcements", "library", "libraryUnlocks", "courses", "enrollments", "certificates", "teacherCodes", "classPlans", "revisionJuz", "revisionChoices", "signatures", "classrooms"];
+const COURSE_SUB = ["lessons", "assignments", "exams", "examQuestions", "examResults", "submissions"];
+const ROOM_SUB = ["roster", "sessions", "progress", "quizzes"];
+
+const plain = v => JSON.parse(JSON.stringify(v, (k, x) => (x && typeof x.toDate === "function") ? { __timestamp: x.toDate().toISOString() } : x));
+const log = [];
+const say = t => { log.push(t); const p = $("lg"); if (p) { p.textContent = log.join("\n"); p.scrollTop = p.scrollHeight; } };
+
+async function grab(path) {
+  const snap = await getDocs(collection(db, ...path));
+  return snap.docs.map(d => ({ id: d.id, data: plain(d.data()) }));
+}
+
+async function run() {
+  const out = { app: "Sirajul Ummah Islamic Institute", createdAt: new Date().toISOString(), collections: {}, notes: [] };
+  let docs = 0;
+  for (const c of TOP) {
+    try { const r = await grab([c]); out.collections[c] = r; docs += r.length; say("OK   " + c + ": " + r.length); }
+    catch (e) { out.notes.push(c + " could not be read: " + (e.code || e.message)); say("SKIP " + c + ": " + (e.code || e.message)); }
+  }
+  for (const cr of (out.collections.courses || [])) for (const s of COURSE_SUB) {
+    try { const r = await grab(["courses", cr.id, s]); if (r.length) { out.collections["courses/" + cr.id + "/" + s] = r; docs += r.length; } }
+    catch (e) { out.notes.push("courses/" + cr.id + "/" + s + ": " + (e.code || e.message)); }
+  }
+  say("OK   course lessons, assignments, exams and results");
+  for (const cr of (out.collections.classrooms || [])) {
+    for (const s of ROOM_SUB) {
+      try {
+        const r = await grab(["classrooms", cr.id, s]);
+        if (r.length) { out.collections["classrooms/" + cr.id + "/" + s] = r; docs += r.length; }
+        if (s === "sessions") for (const se of r) {
+          try { const a = await grab(["classrooms", cr.id, "sessions", se.id, "attendance"]); if (a.length) { out.collections["classrooms/" + cr.id + "/sessions/" + se.id + "/attendance"] = a; docs += a.length; } }
+          catch (e) { out.notes.push("attendance " + cr.id + "/" + se.id + ": " + (e.code || e.message)); }
+        }
+      } catch (e) { out.notes.push("classrooms/" + cr.id + "/" + s + ": " + (e.code || e.message)); }
+    }
+    say("OK   classroom " + cr.id);
+  }
+  out.notes.push("Not included on purpose: class chat and voice notes, recorded lecture audio, course PDFs, library book files.");
+  out.totalDocuments = docs;
+  return out;
+}
+
+function download(obj) {
+  const name = "sirajul-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+  const blob = new Blob([JSON.stringify(obj)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  return { name, mb: (blob.size / 1048576).toFixed(2) };
+}
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Backup</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Backup</h1><p>You do not have access to this page.</p>";
+  let last = ""; try { last = localStorage.getItem("lastBackup") || ""; } catch (e) {}
+  $("app").innerHTML = '<h1>Backup</h1>' +
+    '<div class="cd"><p style="margin-top:0">This saves all your important school records (students, teachers, classes, marks, attendance, payments, notices and more) into <b>one file</b> on your phone. Do it <b>once a week</b>.</p>' +
+    '<p>' + (last ? "Your last backup on this phone: <b>" + esc(last) + "</b>." : "You have not made a backup on this phone yet.") + '</p>' +
+    '<button id="go" type="button">Make a backup now</button><p id="st" style="margin-bottom:0"></p></div>' +
+    '<div class="cd"><b>Important</b><ul><li>After it downloads, open the file in your phone\'s <b>Files</b> or <b>Downloads</b> and upload it to your <b>Google Drive</b>.</li><li>The file holds private student information. Keep it private. Never post it or send it to anyone.</li><li>Recorded lectures, voice notes and PDF books are not in this file.</li></ul></div>' +
+    '<pre id="lg">Waiting.</pre>';
+  $("go").onclick = async () => {
+    $("go").disabled = true; log.length = 0; $("st").className = ""; $("st").textContent = "Working... please keep this page open.";
+    try {
+      const data = await run();
+      const f = download(data);
+      try { localStorage.setItem("lastBackup", new Date().toLocaleString("en-GB")); } catch (e) {}
+      $("st").className = "ok";
+      $("st").textContent = "Done. Saved " + data.totalDocuments + " records in " + f.name + " (" + f.mb + " MB)." + (data.notes.length > 1 ? " Some parts were skipped, see the list below." : "");
+      say("");
+      data.notes.forEach(n => say("NOTE " + n));
+    } catch (e) { $("st").className = "er"; $("st").textContent = "The backup failed: " + (e.code || e.message); }
+    $("go").disabled = false;
+  };
+});
+</script>
+</body></html>
