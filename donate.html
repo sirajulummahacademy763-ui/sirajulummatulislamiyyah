@@ -134,7 +134,7 @@ footer{text-align:center;color:var(--muted);padding:6px 16px 40px;font-size:.9re
     <label for="amt">Amount</label>
     <input id="amt" type="number" inputmode="decimal" min="1" step="any" placeholder="Enter the amount you wish to give" aria-label="Amount">
     <p class="small" id="minHint" style="margin:8px 0 0"></p>
-    <p class="small" style="margin:6px 0 0">Giving a very large gift (more than about US$5,000, or the same value in your currency)? One online payment cannot take more than that. Please give it in smaller parts, or <a href="contact.html">contact us</a> and we will arrange another way.</p>
+    <p class="small" id="bigNote" style="margin:6px 0 0"></p>
 
     <div class="row2">
       <div><label for="nm">Your name <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="nm" type="text" autocomplete="name" placeholder="Your name"></div>
@@ -233,11 +233,15 @@ function money(c, n) {
 }
 function say(t, bad) { msg.textContent = t; msg.className = bad ? "err" : ""; }
 
+// About 5,000 US dollars in each currency: the most one online payment can take (rounded down; NGN is paid through Paystack)
+var LIM = { USD: 5000, GBP: 3800, EUR: 4400, CAD: 6900, SAR: 18700, AED: 18300, QAR: 18200, GHS: 55000, KES: 645000, ZAR: 90000, UGX: 18000000, TZS: 13000000, RWF: 7200000, ZMW: 120000, XAF: 2900000, XOF: 2900000, EGP: 245000 };
 function drawAmount() {
   var c = CURRENCIES[cur.value];
   amt.placeholder = "Enter the amount you wish to give";
   var hint = $("minHint");
   hint.textContent = "Smallest gift: " + money(cur.value, c.min).replace(/\.00$/, "");
+  var bn = $("bigNote"), L = LIM[cur.value];
+  bn.innerHTML = L ? "Giving a very large gift? One online payment in " + cur.value + " can take up to about " + money(cur.value, L).replace(/\.00$/, "") + ". For more, please give it in smaller parts, or <a href=\"contact.html\">contact us</a> and we will arrange another way." : "";
 }
 // Start with the currency that suits the visitor's phone settings
 (function () {
@@ -276,7 +280,6 @@ $("give").onclick = function () {
   if (!(a >= conf.min)) { say("Please enter at least " + money(c, conf.min).replace(/\.00$/, "") + ".", true); return; }
   if (a > 100000000) { say("That amount is too large. Please check it.", true); return; }
   // Flutterwave refuses any single payment above about 5,000 US dollars. Warn before opening the payment window.
-  var LIM = { USD: 5000, GBP: 3800, EUR: 4400, CAD: 6900, SAR: 18700, AED: 18300, QAR: 18200 };
   if (LIM[c] && a > LIM[c]) { say("You chose " + c + ", and the most one online payment can take is about " + money(c, LIM[c]).replace(/\.00$/, "") + ". If you meant Naira, change the currency above to NGN. For a larger gift, please give it in smaller parts or use the Contact page and we will arrange another way.", true); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say("Please enter your email so your payment receipt can reach you.", true); return; }
   a = Math.round(a * Math.pow(10, conf.dec)) / Math.pow(10, conf.dec);
