@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Students (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.sa{max-width:760px;margin:0 auto;padding:16px}
+.sa h1{margin:.2em 0}
+.sa .cd{background:#fff;border:1px solid #d9dcec;border-radius:14px;padding:14px;margin:12px 0}
+.sa input,.sa select{font:inherit;padding:10px;border-radius:10px;border:1px solid #c9cde3;width:100%;box-sizing:border-box}
+.sa .row{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px dashed #cfd3e8;padding:10px 0}
+.sa .row small{color:#666;display:block;word-break:break-all}
+.sa .x{font:inherit;font-weight:700;padding:8px 12px;border-radius:9px;border:1px solid #b3261e;background:#fff;color:#b3261e;cursor:pointer;flex:none}
+.sa .x[disabled]{opacity:.5}
+.sa .tag{display:inline-block;background:#fff4dd;color:#8a5a00;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:700;margin-left:6px}
+.sa .hint{color:#555;font-size:.9rem;margin:6px 0}
+.sa .msg{padding:10px;border-radius:10px;margin:10px 0}.sa .msg.ok{background:#e4f5ec;color:#1c7a4d}.sa .msg.er{background:#fde8e6;color:#b3261e}
+</style></head>
+<body>
+<main class="sa" id="app"><h1>Students</h1><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+import { WORKER_URL } from "./notice-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+let ALL = [], USER = null;
+const hasClass = s => s.classes && Object.values(s.classes).some(v => v && v !== "none");
+const fmt = sec => sec ? new Date(sec * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+function list() {
+  const q = ($("q").value || "").toLowerCase().trim(), f = $("f").value;
+  const rows = ALL.filter(s => (!q || (s.name + " " + s.email).toLowerCase().includes(q)) && (f === "all" || (f === "noclass" && !hasClass(s))));
+  $("n").textContent = rows.length + " of " + ALL.length + " students shown";
+  $("L").innerHTML = rows.slice(0, 150).map(s => '<div class="row"><div><b>' + esc(s.name || "No name") + "</b>" + (hasClass(s) ? "" : '<span class="tag">no class chosen</span>') +
+    "<small>" + esc(s.email || "") + (s.createdAt ? " · joined " + fmt(s.createdAt.seconds) : "") + '</small></div><button class="x" data-u="' + esc(s.id) + '" type="button">Delete</button></div>').join("") +
+    (rows.length > 150 ? '<p class="hint">Showing the first 150. Type a name or email to find the rest.</p>' : "") || '<p class="hint">Nobody found.</p>';
+  $("L").querySelectorAll("[data-u]").forEach(b => b.onclick = () => del(b));
+}
+
+async function del(btn) {
+  const s = ALL.find(x => x.id === btn.dataset.u); if (!s) return;
+  if (!confirm("Delete " + (s.name || "this student") + " (" + (s.email || "no email") + ") completely?\n\nTheir login, profile, class choices and wallet records are removed and cannot be brought back. Homework answers, report cards and certificates are kept.")) return;
+  if (!confirm("Last check: really delete " + (s.email || s.name) + "?")) return;
+  btn.disabled = true; btn.textContent = "Deleting...";
+  const m = $("m");
+  try {
+    const tok = await auth.currentUser.getIdToken();
+    const r = await fetch(WORKER_URL + "/deleteUser", { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ uid: s.id }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || ("error " + r.status));
+    ALL = ALL.filter(x => x.id !== s.id); list();
+    m.className = "msg ok"; m.textContent = "Deleted " + (s.email || s.name) + ".";
+  } catch (e) { btn.disabled = false; btn.textContent = "Delete"; m.className = "msg er"; m.textContent = "Could not delete: " + (e.message || e); }
+}
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Students</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = '<h1>Students</h1><p>You do not have access to this page.</p>';
+  USER = u;
+  try {
+    const [st, ts] = await Promise.all([getDocs(collection(db, "students")), getDocs(collection(db, "teachers"))]);
+    const tids = new Set(ts.docs.map(d => d.id));
+    ALL = st.docs.filter(d => !tids.has(d.id) && d.id !== u.uid).map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt ? b.createdAt.seconds : 0) - (a.createdAt ? a.createdAt.seconds : 0));
+  } catch (e) { return $("app").innerHTML = '<h1>Students</h1><p style="color:#b3261e">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+  $("app").innerHTML = '<h1>Students</h1><div class="cd"><p class="hint" style="margin-top:0">Find a student and delete the account completely: the login, the profile, the class choices and the wallet records. Use it for test accounts or emails that were only used to try the site. Teachers and admins cannot be deleted here.</p>' +
+    '<input id="q" placeholder="Search by name or email" autocomplete="off"><div style="height:8px"></div>' +
+    '<select id="f"><option value="all">All students</option><option value="noclass">Only students with no class chosen (often test or unfinished accounts)</option></select>' +
+    '<p class="hint" id="n"></p><div id="m"></div></div><div class="cd" id="L"></div>';
+  $("q").oninput = list; $("f").onchange = list; list();
+});
+</script>
+</body></html>
