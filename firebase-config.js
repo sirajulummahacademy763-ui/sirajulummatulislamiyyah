@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 try {
   const ac = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js");
   ac.initializeAppCheck(app, {
-    provider: new ac.ReCaptchaEnterpriseProvider("6Ld-MQIuAAAAAPfPV7_oLFWRv6XapjnACmh2InzQ"),
+    provider: new ac.ReCaptchaEnterpriseProvider("6LdqDwMuAAAAABL0iGw3qOc5MsQaPrbbYG-Ow7hr"),
     isTokenAutoRefreshEnabled: true
   });
 } catch (e) { console.warn("App Check could not start", e); }
