@@ -12,5 +12,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// Security: App Check proves to Firebase that a request comes from our real website (Google reCAPTCHA / Fraud Defense).
+// If it cannot start for any reason, the site keeps working (it only matters once "Enforce" is switched on in Firebase).
+try {
+  const ac = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js");
+  ac.initializeAppCheck(app, {
+    provider: new ac.ReCaptchaEnterpriseProvider("6Ld-MQluAAAAAPfPV7_oLFWRv6XapjnACmh2Inzo"),
+    isTokenAutoRefreshEnabled: true
+  });
+} catch (e) { console.warn("App Check could not start", e); }
+
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, { experimentalForceLongPolling: true }, "default");
