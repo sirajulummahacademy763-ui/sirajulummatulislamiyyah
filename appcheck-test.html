@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="robots" content="noindex,nofollow">
+<title>App Check test</title>
+<style>body{font-family:system-ui,sans-serif;margin:16px;line-height:1.5;background:#fff;color:#111}pre{white-space:pre-wrap;word-break:break-word;background:#f3f3f3;padding:10px;border-radius:8px}.ok{color:#0a7a2f}.bad{color:#b3261e}</style></head>
+<body><h2>App Check test</h2><p>Wait about 10 seconds. Send me a screenshot of this page.</p><pre id="o">Starting...</pre>
+<script type="module">
+const o=document.getElementById("o");const say=t=>{o.textContent+="\n"+t};
+window.addEventListener("error",e=>say("PAGE ERROR: "+e.message));
+window.addEventListener("securitypolicyviolation",e=>say("BLOCKED by security policy: "+e.blockedURI+" ("+e.violatedDirective+")"));
+try{
+ const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+ say("1. firebase-app loaded");
+ const ac=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js");
+ say("2. app-check loaded");
+ const app=initializeApp({apiKey:"AIzaSyAk15eZoNwGaX1YsXeXq33kALfm-sgBx8A",authDomain:"sirajul-ummah-academy.firebaseapp.com",projectId:"sirajul-ummah-academy",appId:"1:767042103810:web:881e896d8b7bf78a9b951b"},"actest");
+ const c=ac.initializeAppCheck(app,{provider:new ac.ReCaptchaEnterpriseProvider("6Ld-MQluAAAAAPfPV7_oLFWRv6XapjnACmh2Inzo"),isTokenAutoRefreshEnabled:false});
+ say("3. App Check started on "+location.hostname+", asking Google for a token...");
+ const t=await ac.getToken(c,true);
+ say("4. TOKEN RECEIVED (length "+t.token.length+"). Result: GOOD");
+}catch(e){say("FAILED: "+(e&&e.code||"")+" "+(e&&e.message||e))}
+</script></body></html>
