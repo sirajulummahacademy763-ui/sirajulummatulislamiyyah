@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Principal | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:900px}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.tot div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
+.tot b{display:block;font-size:1.5rem;color:#12163a}.tot span{font-size:.78rem;color:#4b5072}
+.cl{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cl>button{width:100%;text-align:left;font:inherit;background:#fff;border:0;padding:12px 14px;cursor:pointer}
+.cl h2{margin:0;font-size:1.05rem;color:#12163a}
+.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#2b2f55}
+.cl .bar{height:7px;background:#e6e8f3;border-radius:99px;margin-top:8px;overflow:hidden}
+.cl .bar i{display:block;height:100%;background:#1c7a4d}
+.dt{padding:4px 14px 14px;border-top:1px solid #e6e8f3}
+.dt h3{font-size:.95rem;margin:12px 0 4px}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin:2px 4px 2px 0}
+.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e8ebf8;color:#12163a}
+.hw{border-top:1px dashed #cfd3e8;padding:8px 0;font-size:.92rem}
+.b{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:6px 6px 0 0}
+.b.s{padding:4px 10px;font-size:.8rem}
+.msg{padding:8px 10px;border-radius:12px;margin:6px 0;font-size:.92rem;max-width:90%}
+.msg.sup{background:#12163a;color:#fff;margin-left:auto}.msg.tch{background:#eef0fa}.msg.me{background:#1d3a8a;color:#fff;margin-left:auto}
+.blk{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:12px 14px;margin-bottom:10px}.blk h2{margin:0 0 4px;font-size:1.05rem;color:#12163a}
+.msg small{display:block;opacity:.7;font-size:.74rem}
+.er{color:#b3261e}.ok{color:#1c7a4d}
+@media(max-width:560px){.tot{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+import { loadAttendance, loadAttendanceByRoom, loadRoster, attendanceHtml } from "./attendance-load.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const ts = d => (d.createdAt && d.createdAt.seconds) || 9e9;
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let ME = "", MYNAME = "", KEYS = [], D = {}, SUP = [], DM = [], T = [], termId = "", openKey = "";
+const ATT = {};
+function ensureAtt(k) {
+  const key = k + "|" + termId; if (ATT[key] !== undefined) return;
+  ATT[key] = "loading";
+  (D[k] && D[k].room ? loadAttendanceByRoom(db, D[k].rid, T.find(x => x.id === termId)) : loadAttendance(db, k, T.find(x => x.id === termId))).then(r => { ATT[key] = r; if (openKey === k) draw(); });
+}
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  ME = u.uid;
+  let pr = null;
+  try { const s = await getDoc(doc(db, "principals", u.uid)); if (s.exists()) pr = s.data(); } catch (e) {}
+  if (!pr) { $("app").innerHTML = "<h1>Principal</h1><p>You are not a principal. The director can make you one.</p>"; return; }
+  try { localStorage.setItem("msgSeen_" + u.uid, String(Date.now())); sessionStorage.removeItem("msgCnt_" + u.uid); } catch (e) {}
+  MYNAME = pr.name || u.email || "Principal"; KEYS = (pr.classKeys || []).slice().sort();
+  await load(); draw();
+});
+async function load() {
+  try {
+    const mem = k => getDocs(query(collection(db, "classMembers"), where("classKey", "==", k))).then(s => s.docs.map(d => ({ uid: d.data().uid, name: d.data().name || "Student" })));
+    for (const k of KEYS) {
+      if (k.indexOf("room|") === 0) { // a Hifz or Revision room: attendance only
+        const rid = k.slice(5);
+        let rm = {}; try { const x = await getDoc(doc(db, "classrooms", rid)); if (x.exists()) rm = x.data(); } catch (e) {}
+        D[k] = { room: true, rid, rm, m: await loadRoster(db, rid), ms: [] };
+        continue;
+      }
+      const [m, ms] = await Promise.all([mem(k).catch(() => []),
+        getDocs(query(collection(db, "orgMsgs"), where("kind", "==", "prinClass"), where("prUid", "==", ME), where("classKey", "==", k))).then(x => x.docs.map(d => d.data())).catch(() => [])]);
+      D[k] = { m, ms: ms.sort((a, b) => ts(a) - ts(b)) };
+    }
+    try { SUP = (await getDocs(query(collection(db, "orgMsgs"), where("kind", "==", "supPrin"), where("prUid", "==", ME)))).docs.map(d => d.data()).sort((a, b) => ts(a) - ts(b)); } catch (e) { SUP = []; }
+    try { DM = (await getDocs(query(collection(db, "adminMsgs"), where("threadUid", "==", ME)))).docs.map(d => d.data()).sort((a, b) => ts(a) - ts(b)); } catch (e) { DM = []; }
+    T = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    const t = today(); const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
+    if (!termId) termId = cur ? cur.id : "";
+  } catch (e) { $("app").innerHTML = '<h1>Principal</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; throw e; }
+}
+const bub = (x, mine) => `<div class="msg ${mine ? "me" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`;
+function draw() {
+  const students = new Set(); KEYS.forEach(k => D[k].m.forEach(s => students.add(s.uid)));
+  const sups = {}; SUP.forEach(x => { (sups[x.supUid] = sups[x.supUid] || { name: "", ms: [] }).ms.push(x); if (x.from === "supervisor") sups[x.supUid].name = x.fromName || sups[x.supUid].name; });
+  let h = `<h1>Principal</h1><p class="hint">Welcome, ${esc(MYNAME)}. You oversee the classes below. The supervisors may ask you questions, you may ask the teachers of your classes, and the director can write to you.</p>
+    <div class="tot" style="grid-template-columns:repeat(3,1fr)"><div><b>${KEYS.length}</b><span>Classes</span></div><div><b>${students.size}</b><span>Students</span></div><div><b>${SUP.filter(x => x.from === "supervisor").length}</b><span>Supervisor questions</span></div></div>
+    <h2 style="font-size:1.1rem;margin:14px 0 6px">Messages</h2>`;
+  h += `<div class="blk"><h2>The Director</h2>${DM.map(x => bub(x, x.from === "user")).join("") || '<p class="hint">No messages yet.</p>'}
+    <textarea id="dm" rows="2" maxlength="1000" placeholder="Write to the director..."></textarea><button class="b" id="dms">Send</button></div>`;
+  const sk = Object.keys(sups);
+  h += `<div class="blk"><h2>Supervisor questions</h2>${sk.length ? sk.map(id => `<div style="border-top:1px dashed #cfd3e8;padding-top:6px;margin-top:6px"><b>${esc(sups[id].name || "Supervisor")}</b>${sups[id].ms.map(x => bub(x, x.from === "principal")).join("")}
+      <textarea id="s_${esc(id)}" rows="2" maxlength="1000" placeholder="Write your reply..."></textarea><button class="b" data-sr="${esc(id)}">Reply</button></div>`).join("") : '<p class="hint">No questions from the supervisors yet.</p>'}</div>`;
+  h += `<h2 style="font-size:1.1rem;margin:14px 0 6px">My classes</h2><label for="tm"><b>Term (attendance)</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>`;
+  if (!KEYS.length) h += '<p class="hint">The director has not given you any class yet.</p>';
+  KEYS.forEach(k => {
+    const d = D[k], [sec, ...lv] = k.split("|");
+    if (d.room) {
+      h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(d.rm.title || d.rid)} <small style="font-weight:400;color:#4b5072">Quran class</small></h2><div class="sm"><span>👩‍🎓 ${d.m.length} entered the class</span><span>🧑‍🏫 ${esc(d.rm.teacherName || "")}</span></div></button>`;
+      if (openKey === k) { ensureAtt(k); h += `<div class="dt">${attendanceHtml(d.m, ATT[k + "|" + termId])}<p class="hint">Only students who have entered this class at least once are listed. Questions to Hifz and Revision teachers are not available here yet.</p></div>`; }
+      h += "</div>"; return;
+    }
+    h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(lv.join("|"))} <small style="font-weight:400;color:#4b5072">${SN[sec] || esc(sec)}</small></h2><div class="sm"><span>👩‍🎓 ${d.m.length} students</span><span>💬 ${d.ms.length} messages</span></div></button>`;
+    if (openKey === k) {
+      ensureAtt(k); h += `<div class="dt">${attendanceHtml(d.m, ATT[k + "|" + termId])}<p style="margin:10px 0 0"><a class="b" style="display:inline-block;text-decoration:none" href="absent-admin.html">See absent students</a></p>
+        <h3>Ask the teachers of this class</h3><div>${d.ms.map(x => bub(x, x.from === "principal")).join("") || '<p class="hint">No messages yet.</p>'}</div>
+        <textarea id="mt" rows="2" maxlength="1000" placeholder="Write your question for the teachers of this class..."></textarea><button class="b" id="ms">Send question</button> <span id="mr"></span></div>`;
+    }
+    h += "</div>";
+  });
+  $("app").innerHTML = h;
+  $("tm").onchange = e => { termId = e.target.value; draw(); };
+  $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { openKey = openKey === b.dataset.k ? "" : b.dataset.k; draw(); });
+  $("dms").onclick = async () => {
+    const t = $("dm").value.trim(); if (!t) return; $("dms").disabled = true;
+    try { const rec = { threadUid: ME, from: "user", fromName: MYNAME, text: t, createdAt: serverTimestamp() }; await addDoc(collection(db, "adminMsgs"), rec); DM.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { $("dms").disabled = false; alert("Could not send: " + (e.code || e.message)); }
+  };
+  $("app").querySelectorAll("[data-sr]").forEach(b => b.onclick = async () => {
+    const id = b.dataset.sr, t = $("s_" + id).value.trim(); if (!t) return; b.disabled = true;
+    try { const rec = { kind: "supPrin", supUid: id, prUid: ME, from: "principal", fromUid: ME, fromName: MYNAME, text: t, createdAt: serverTimestamp() }; await addDoc(collection(db, "orgMsgs"), rec); SUP.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { b.disabled = false; alert("Could not send: " + (e.code || e.message)); }
+  });
+  if ($("ms")) $("ms").onclick = async () => {
+    const t = $("mt").value.trim(); if (!t) return; $("ms").disabled = true;
+    try { const rec = { kind: "prinClass", prUid: ME, classKey: openKey, from: "principal", fromUid: ME, fromName: MYNAME, text: t, createdAt: serverTimestamp() }; await addDoc(collection(db, "orgMsgs"), rec); D[openKey].ms.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { $("ms").disabled = false; $("mr").innerHTML = '<span class="er">Could not send: ' + esc(e.code || e.message) + "</span>"; }
+  };
+}
+</script></body></html>
