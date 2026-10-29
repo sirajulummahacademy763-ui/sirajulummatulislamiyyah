@@ -104,6 +104,8 @@ onAuthStateChanged(auth, async u => {
   let adm = false, tch = false;
   try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
   if (!adm) { try { tch = (await getDoc(doc(db, "teachers", u.uid))).exists(); } catch (e) {} }
+  let pkeys = [];
+  try { const p = await getDoc(doc(db, "principals", u.uid)); if (p.exists()) { tch = true; pkeys = p.data().classKeys || []; } } catch (e) {}
   if (!adm && !tch) return $("app").innerHTML = '<h1>Absent students</h1><p>You do not have access to this page.</p>';
   ADMIN = adm;
   try {
@@ -114,8 +116,16 @@ onAuthStateChanged(auth, async u => {
         .sort((a, b) => String(a.title).localeCompare(String(b.title)));
     } else {
       const ta = await getDoc(doc(db, "teacherAssign", u.uid));
-      const keys = ta.exists() ? (ta.data().classKeys || []) : [];
+      const keys = [...new Set((ta.exists() ? (ta.data().classKeys || []) : []).concat(pkeys))];
       for (const k of keys) {
+        if (k.indexOf("room|") === 0) { // a Hifz or Revision room ticked for a principal: students who have entered it
+          try {
+            const rid = k.slice(5), rd = await getDoc(doc(db, "classrooms", rid)); if (!rd.exists()) continue;
+            const ro = await getDocs(collection(db, "classrooms", rid, "roster"));
+            ROOMS.push({ id: rid, ...rd.data(), title: rd.data().title || rid, members: ro.docs.map(d => ({ uid: d.id, name: d.data().name || "Student" })) });
+          } catch (e) {}
+          continue;
+        }
         const p = k.split("|"), rid = p[0] + "__" + slug(p.slice(1).join("|"));
         try {
           const rd = await getDoc(doc(db, "classrooms", rid)); if (!rd.exists()) continue;
