@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Messages | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
@@ -21,7 +26,7 @@ import { collection, getDocs, doc, getDoc, addDoc, query, where, serverTimestamp
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-let ME = "", NAME = "", KEYS = [], MS = {}, DM = [];
+let ME = "", NAME = "", KEYS = [], MS = {}, DM = [], PQ = {};
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
   ME = u.uid;
@@ -38,6 +43,8 @@ async function load() {
   for (const k of KEYS) {
     try { const s = await getDocs(query(collection(db, "supervisorMsgs"), where("classKey", "==", k)));
       MS[k] = s.docs.map(d => d.data()).sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)); } catch (e) { MS[k] = []; }
+    try { const s = await getDocs(query(collection(db, "orgMsgs"), where("kind", "==", "prinClass"), where("classKey", "==", k)));
+      PQ[k] = s.docs.map(d => d.data()).sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)); } catch (e) { PQ[k] = []; }
   }
 }
 function draw() {
@@ -53,7 +60,21 @@ function draw() {
     h += `<div class="cd"><h2>${esc(k.split("|").slice(1).join("|"))}</h2>${ms.map(x => `<div class="msg ${x.from === "supervisor" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("")}
       ${last ? `<textarea rows="2" maxlength="1000" id="t_${esc(k)}" placeholder="Write your reply..."></textarea><button class="b" data-k="${esc(k)}" data-s="${esc(last.supUid)}">Reply</button>` : ""}</div>`;
   });
+  h += "<h2 style='font-size:1.05rem'>Principal questions</h2><p class='hint'>Questions from the principal of your class. Reply here.</p>";
+  const pact = KEYS.filter(k => (PQ[k] || []).length);
+  if (!pact.length) h += "<p class='hint'>No questions from a principal yet.</p>";
+  pact.forEach(k => {
+    const ms = PQ[k], last = ms.filter(x => x.from === "principal").pop();
+    h += `<div class="cd"><h2>${esc(k.split("|").slice(1).join("|"))}</h2>${ms.map(x => `<div class="msg ${x.from === "principal" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}${x.from === "principal" ? " (principal)" : ""}</small>${esc(x.text)}</div>`).join("")}
+      ${last ? `<textarea rows="2" maxlength="1000" id="p_${esc(k)}" placeholder="Write your reply to the principal..."></textarea><button class="b" data-pk="${esc(k)}" data-pu="${esc(last.prUid)}">Reply</button>` : ""}</div>`;
+  });
   $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-pk]").forEach(b => b.onclick = async () => {
+    const k = b.dataset.pk, el = document.getElementById("p_" + k), t = el.value.trim(); if (!t) return; b.disabled = true;
+    try { const rec = { kind: "prinClass", prUid: b.dataset.pu, classKey: k, from: "teacher", fromUid: ME, fromName: NAME, text: t, createdAt: serverTimestamp() };
+      await addDoc(collection(db, "orgMsgs"), rec); PQ[k].push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { b.disabled = false; alert("Could not send: " + (e.code || e.message)); }
+  });
   $("dms").onclick = async () => {
     const t = $("dm").value.trim(); if (!t) return; $("dms").disabled = true;
     try { const rec = { threadUid: ME, from: "user", fromName: NAME, text: t, createdAt: serverTimestamp() };
