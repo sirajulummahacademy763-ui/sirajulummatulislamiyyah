@@ -30,7 +30,7 @@ import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const ts = d => (d.createdAt && d.createdAt.seconds ? d.createdAt.seconds * 1000 : Date.now());
-let ME = "", P = [], MS = [], sel = "", seen = 0, SUPS = new Set();
+let ME = "", P = [], MS = [], sel = "", seen = 0, SUPS = new Set(), PRS = new Set();
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
   ME = u.uid;
@@ -40,21 +40,21 @@ onAuthStateChanged(auth, async u => {
   try { seen = +localStorage.getItem("msgSeen_" + u.uid) || 0; } catch (e) {}
   try {
     const g = async n => (await getDocs(collection(db, n))).docs.map(d => ({ id: d.id, ...d.data() }));
-    const [te, su, ms] = await Promise.all([g("teachers"), g("supervisors"), g("adminMsgs")]);
-    su.forEach(x => SUPS.add(x.id)); MS = ms;
-    P = te.map(t => ({ id: t.id, name: t.name || t.email || "Teacher", sup: SUPS.has(t.id) }))
-      .sort((a, b) => (b.sup - a.sup) || a.name.localeCompare(b.name));
+    const [te, su, ms, pr] = await Promise.all([g("teachers"), g("supervisors"), g("adminMsgs"), g("principals")]);
+    su.forEach(x => SUPS.add(x.id)); pr.forEach(x => PRS.add(x.id)); MS = ms;
+    P = te.map(t => ({ id: t.id, name: t.name || t.email || "Teacher", sup: SUPS.has(t.id), pri: PRS.has(t.id) }))
+      .sort((a, b) => (b.sup - a.sup) || (b.pri - a.pri) || a.name.localeCompare(b.name));
     draw();
     try { localStorage.setItem("msgSeen_" + u.uid, String(Date.now())); sessionStorage.removeItem("msgCnt_" + u.uid); } catch (e) {}
   } catch (e) { $("app").innerHTML = '<h1>Messages</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
 });
 function draw() {
   if (!sel) {
-    let h = "<h1>Messages</h1><p class='hint'>Write to any supervisor or teacher. Their replies show here, and a strip at the top of every page tells you when something new arrives.</p>";
+    let h = "<h1>Messages</h1><p class='hint'>Write to any supervisor, principal or teacher. Their replies show here, and a strip at the top of every page tells you when something new arrives.</p>";
     h += P.map(p => {
       const th = MS.filter(x => x.threadUid === p.id).sort((a, b) => ts(a) - ts(b)), last = th[th.length - 1];
       const nw = th.filter(x => x.from === "user" && ts(x) > seen).length;
-      return `<button class="p" data-p="${esc(p.id)}"><span style="flex:1"><b>${esc(p.name)}${p.sup ? '<span class="pill">Supervisor</span>' : ""}</b><small>${last ? esc(String(last.text).slice(0, 60)) : "No messages yet"}</small></span>${nw ? `<span class="dot">${nw}</span>` : ""}</button>`;
+      return `<button class="p" data-p="${esc(p.id)}"><span style="flex:1"><b>${esc(p.name)}${p.sup ? '<span class="pill">Supervisor</span>' : ""}${p.pri ? '<span class="pill">Principal</span>' : ""}</b><small>${last ? esc(String(last.text).slice(0, 60)) : "No messages yet"}</small></span>${nw ? `<span class="dot">${nw}</span>` : ""}</button>`;
     }).join("") || "<p class='hint'>No teachers yet.</p>";
     $("app").innerHTML = h;
     $("app").querySelectorAll("[data-p]").forEach(b => b.onclick = () => { sel = b.dataset.p; draw(); });
