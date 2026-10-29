@@ -25,10 +25,10 @@ while(n=w.nextNode()){n.nodeValue=n.nodeValue.replace(/\bthe academy\b/g,"the in
 // Menu by role: admin sees admin pages, a teacher sees teacher pages only, a student sees student pages only
 
 // New-message strip at the top of every page for the director, supervisors and teachers
-async function notify(role,u,isSup,f,c){
+async function notify(role,u,isSup,f,c,isPrin){
   try{
     const here=location.pathname.split("/").pop();
-    if(here==="supervisor-inbox.html"||here==="messages-admin.html")return;
+    if(here==="supervisor-inbox.html"||here==="messages-admin.html"||here==="principal.html")return;
     const db=c.db;let seen=0;try{seen=+localStorage.getItem("msgSeen_"+u.uid)||0}catch(e){}
     const ck="msgCnt_"+u.uid;let n=-1;
     try{const x=JSON.parse(sessionStorage.getItem(ck)||"null");if(x&&Date.now()-x.t<60000&&x.seen===seen)n=x.n}catch(e){}
@@ -42,11 +42,18 @@ async function notify(role,u,isSup,f,c){
         let ks=[];try{const a=await f.getDoc(f.doc(db,"teacherAssign",u.uid));ks=a.exists()?(a.data().classKeys||[]):[]}catch(e){}
         for(const k of ks.slice(0,20))await cnt(Q(col("supervisorMsgs"),W("classKey","==",k)),"supervisor",true);
         if(isSup)await cnt(Q(col("supervisorMsgs"),W("supUid","==",u.uid)),"teacher");
+        // staff chain: principal questions to a teacher's class, supervisor questions to a principal, and replies back up
+        for(const k of ks.slice(0,20))await cnt(Q(col("orgMsgs"),W("kind","==","prinClass"),W("classKey","==",k)),"principal");
+        if(isPrin){
+          await cnt(Q(col("orgMsgs"),W("kind","==","supPrin"),W("prUid","==",u.uid)),"supervisor");
+          await cnt(Q(col("orgMsgs"),W("kind","==","prinClass"),W("prUid","==",u.uid)),"teacher");
+        }
+        if(isSup)await cnt(Q(col("orgMsgs"),W("kind","==","supPrin"),W("supUid","==",u.uid)),"principal");
       }
       try{sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),seen,n}))}catch(e){}
     }
     if(n>0&&!document.getElementById("msgbar")){
-      const b=document.createElement("a");b.id="msgbar";b.href=role==="admin"?"messages-admin.html":"supervisor-inbox.html";
+      const b=document.createElement("a");b.id="msgbar";b.href=role==="admin"?"messages-admin.html":(isPrin?"principal.html":"supervisor-inbox.html");
       b.textContent="💬 You have "+n+" new message"+(n>1?"s":"")+" · tap to read";
       b.style.cssText="position:sticky;top:0;z-index:9990;display:block;background:#f5b94a;color:#12163a;font:700 14px Figtree,system-ui,sans-serif;text-align:center;padding:10px 12px;text-decoration:none";
       document.body.insertBefore(b,document.body.firstChild);
@@ -93,7 +100,7 @@ async function notifyLec(role,u,f,c){
 if(!isPub){
   const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["absent-admin.html","Absent students"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["students-admin.html","Students (admin)"],["absent-admin.html","Absent students"],["backup-admin.html","Backup (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["principals-admin.html","Principals (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["students-admin.html","Students (admin)"],["absent-admin.html","Absent students"],["backup-admin.html","Backup (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   // ---- Menu: grouped by purpose, with a search box and an A-Z switch ----
   const GROUPS=["Start","Classes & learning","Teaching","Results & reports","People & messages","Admin settings","Wallet & giving","The institute"];
   const ICON={"Start":"🏠","Classes & learning":"📚","Teaching":"🧑‍🏫","Results & reports":"📝","People & messages":"👥","Admin settings":"⚙️","Wallet & giving":"💰","The institute":"ℹ️"};
@@ -105,7 +112,7 @@ if(!isPub){
    "report-card.html":["Results & reports","result grade term marks"],"certificate.html":["Results & reports","certificates award"],"issue-reports.html":["Results & reports","report cards issue term"],
    "homework-admin.html":["Results & reports","homework reports overview marks"],"overview-admin.html":["Results & reports","overview classes students"],"signatures.html":["Results & reports","signature stamp sign"],
    "messages-admin.html":["People & messages","messages inbox chat supervisors teachers"],"supervisor-inbox.html":["People & messages","messages inbox director questions"],"supervisor.html":["People & messages","supervisor approve reports"],
-   "supervisors-admin.html":["People & messages","supervisors"],"teacher-assign-admin.html":["People & messages","assign teachers classes subjects"],"countries-admin.html":["People & messages","students teachers country list"],
+   "supervisors-admin.html":["People & messages","supervisors"],"principals-admin.html":["People & messages","principals head teacher"],"principal.html":["People & messages","principal head teacher classes questions attendance"],"teacher-assign-admin.html":["People & messages","assign teachers classes subjects"],"countries-admin.html":["People & messages","students teachers country list"],
    "students-admin.html":["People & messages","students delete remove account search"],"absent-admin.html":["Results & reports","absent attendance missed classes remind whatsapp"],"backup-admin.html":["Admin settings","backup save download data export"],"admin.html":["Admin settings","students teachers codes terms notices library coins"],"classes-admin.html":["Admin settings","classes timetable time zone"],"revision-admin.html":["Admin settings","hifz revision juz teachers"],"revision-choices-admin.html":["Admin settings","hifz revision choices students"],
    "wallet.html":["Wallet & giving","coins buy money balance"],"donate.html":["Wallet & giving","sadaqah charity give donation"],
    "about.html":["The institute","about us"],"contact.html":["The institute","contact phone whatsapp email"]};
@@ -174,8 +181,11 @@ if(!isPub){
         }
       }catch(e){}}
       if(role==="admin"){const p=location.pathname.split("/").pop();if((p===""||p==="index.html")&&!/[?&]home=1/.test(location.search)){location.replace("dashboard.html");return;}}
-      let tl=TCH,isSup=false;
-      if(role==="teacher"){try{ if((await f.getDoc(f.doc(c.db,"supervisors",u.uid))).exists()){isSup=true;tl=TCH.slice(0,3).concat([["supervisor.html","Supervisor"]],TCH.slice(3));} }catch(e){}}
+      let tl=TCH,isSup=false,isPrin=false;
+      if(role==="teacher"){
+        try{ if((await f.getDoc(f.doc(c.db,"supervisors",u.uid))).exists()){isSup=true;tl=tl.slice(0,3).concat([["supervisor.html","Supervisor"]],tl.slice(3));} }catch(e){}
+        try{ if((await f.getDoc(f.doc(c.db,"principals",u.uid))).exists()){isPrin=true;tl=tl.slice(0,3).concat([["principal.html","Principal"]],tl.slice(3));} }catch(e){}
+      }
       // The Quran Classroom (Hifz and Revision) appears only for those students, their teachers and the admin
       let qc=false;const qk="qc_"+u.uid;
       try{const x=JSON.parse(sessionStorage.getItem(qk)||"null");if(x&&Date.now()-x.t<600000)qc=x.v;else{
@@ -185,7 +195,7 @@ if(!isPub){
         sessionStorage.setItem(qk,JSON.stringify({t:Date.now(),v:qc}));}}catch(e){}
       const withQ=l=>qc?l.reduce((a,x)=>{a.push(x);if(x[0]==="classroom.html")a.push(["quran-classroom.html","Quran Classroom"]);return a},[]):l;
       show(withQ(role==="admin"?ADM:role==="teacher"?tl:STU));
-      if(role!=="student")notify(role,u,isSup,f,c);
+      if(role!=="student")notify(role,u,isSup,f,c,isPrin);
       if(role!=="admin")setTimeout(()=>notifyLec(role,u,f,c),400);
     });
   }).catch(()=>{ show(STU); });
@@ -243,7 +253,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  if(typeof isPub!=="undefined"&&isPub)return;
  const here=(location.pathname.split("/").pop()||"index.html");
  if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
- const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","backup-admin.html":"Admin settings","students-admin.html":"People & messages","absent-admin.html":"Results & reports","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
+ const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","principals-admin.html":"People & messages","principal.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","backup-admin.html":"Admin settings","students-admin.html":"People & messages","absent-admin.html":"Results & reports","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
  const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Tap a section to open it, or use the round buttons to jump straight to one.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
  const group=GN[here]||"";
  const ttl=h=>{const c=h.cloneNode(true);c.querySelectorAll("small").forEach(x=>x.remove());const p=c.textContent.split("\u00b7").map(x=>x.trim()).filter(Boolean);return (p.find(x=>/[A-Za-z]/.test(x))||p[0]||"").replace(/[<>&]/g,"")};
