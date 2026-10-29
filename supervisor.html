@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Supervisor | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
@@ -40,7 +45,7 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let ME = null, MYNAME = "", KEYS = [], D = {}, T = [], termId = "", openKey = "";
+let ME = null, MYNAME = "", KEYS = [], D = {}, T = [], termId = "", openKey = "", PR = [], PM = [], openPr = "";
 const ATT = {};
 function ensureAtt(k) {
   const key = k + "|" + termId; if (ATT[key] !== undefined) return;
@@ -71,6 +76,8 @@ async function load() {
         getDocs(query(collection(db, "supervisorMsgs"), where("classKey", "==", k), where("supUid", "==", ME))).then(x => x.docs.map(d => ({ id: d.id, ...d.data() })))]);
       D[k] = { m, w: w.filter(x => x.kind === "homework"), s, r, ms: ms.sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)) };
     }
+    try { PR = (await getDocs(collection(db, "principals"))).docs.map(d => ({ id: d.id, ...d.data() })).filter(p => (p.classKeys || []).some(k => KEYS.includes(k))); } catch (e) { PR = []; }
+    try { PM = (await getDocs(query(collection(db, "orgMsgs"), where("kind", "==", "supPrin"), where("supUid", "==", ME)))).docs.map(d => d.data()).sort((a, b) => ((a.createdAt && a.createdAt.seconds) || 9e9) - ((b.createdAt && b.createdAt.seconds) || 9e9)); } catch (e) { PM = []; }
     T = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
     const t = today(); const cur = T.find(x => t >= x.startDate && t <= x.endDate) || T.filter(x => t > x.endDate).pop() || T[0];
     if (!termId) termId = cur ? cur.id : "";
@@ -82,6 +89,16 @@ function draw() {
   let h = `<h1>Supervisor</h1><p class="hint">Welcome, ${esc(MYNAME)}. These are the classes you oversee. Tap a class to open it.</p>
     <label for="tm"><b>Term (report cards and attendance)</b></label><select id="tm"><option value="">All terms</option>${T.map(x => `<option value="${esc(x.id)}" ${x.id === termId ? "selected" : ""}>${esc(x.name)} ${esc(x.session || "")}</option>`).join("")}</select>
     <div class="tot"><div><b>${tot.st}</b><span>Students</span></div><div><b>${tot.hw}</b><span>Homework posted</span></div><div><b>${tot.an}</b><span>Answers received</span></div><div><b>${tot.rc}</b><span>Reports issued</span></div></div>`;
+  if (PR.length) {
+    h += `<div class="cl"><div class="dt" style="border-top:0"><h3 style="margin-top:6px">Ask a principal</h3><p class="hint" style="margin:0 0 6px">Principals look after the classes you oversee. Tap a name to write to him or her.</p>
+      ${PR.map(p => `<button class="b${openPr === p.id ? "" : " s"}" data-pr="${esc(p.id)}" type="button">${esc(p.name || "Principal")}</button>`).join("")}`;
+    if (openPr) {
+      const th = PM.filter(x => x.prUid === openPr);
+      h += `<div style="margin-top:8px">${th.map(x => `<div class="msg ${x.from === "supervisor" ? "sup" : "tch"}"><small>${esc(x.fromName || "")}</small>${esc(x.text)}</div>`).join("") || '<p class="hint">No messages yet.</p>'}</div>
+        <textarea id="pt" rows="2" maxlength="1000" placeholder="Write your question for the principal..."></textarea><button class="b" id="ps">Send question</button> <span id="pr"></span>`;
+    }
+    h += "</div></div>";
+  }
   KEYS.forEach(k => {
     const d = D[k], [sec, ...lv] = k.split("|");
     if (d.room) {
@@ -114,6 +131,13 @@ function draw() {
   $("app").innerHTML = h;
   $("tm").onchange = e => { termId = e.target.value; draw(); };
   $("app").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { openKey = openKey === b.dataset.k ? "" : b.dataset.k; draw(); });
+  $("app").querySelectorAll("[data-pr]").forEach(b => b.onclick = () => { openPr = openPr === b.dataset.pr ? "" : b.dataset.pr; draw(); });
+  if ($("ps")) $("ps").onclick = async () => {
+    const t = $("pt").value.trim(); if (!t) return; $("ps").disabled = true;
+    try { const rec = { kind: "supPrin", supUid: ME, prUid: openPr, from: "supervisor", fromUid: ME, fromName: MYNAME, text: t, createdAt: serverTimestamp() };
+      await addDoc(collection(db, "orgMsgs"), rec); PM.push({ ...rec, createdAt: null }); draw(); }
+    catch (e) { $("ps").disabled = false; $("pr").innerHTML = '<span class="er">Could not send: ' + esc(e.code || e.message) + "</span>"; }
+  };
   $("app").querySelectorAll("[data-ap]").forEach(b => b.onclick = async () => {
     try { await updateDoc(doc(db, "reportCards", b.dataset.ap), { approvedBy: ME, approvedByName: MYNAME, approvedAt: serverTimestamp() });
       const c = D[b.dataset.kk].r.find(x => x.id === b.dataset.ap); c.approvedBy = ME; c.approvedByName = MYNAME; draw(); }
