@@ -50,7 +50,7 @@ const lvl = k => String(k || "").split("|").slice(1).join("|") || k;
 const SHORT = [
   ["👩‍🎓", "Students & Teachers", "countries-admin.html"], ["🧑‍🏫", "Assign Teachers", "teacher-assign-admin.html"], ["🏫", "Classes & Timetable", "classes-admin.html"],
   ["📝", "Homework & Reports", "homework-admin.html"], ["📊", "Overview", "overview-admin.html"], ["📖", "Hifz & Revision", "revision-admin.html"],
-  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["💬", "Messages", "messages-admin.html"], ["🕌", "Quran Classroom", "quran-classroom.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
+  ["✍️", "Signature & Stamp", "signatures.html"], ["👁️", "Supervisors", "supervisors-admin.html"], ["🎓", "Principals", "principals-admin.html"], ["🧑‍🎓", "Students (delete)", "students-admin.html"], ["🔔", "Absent students", "absent-admin.html"], ["💾", "Backup", "backup-admin.html"], ["💬", "Messages", "messages-admin.html"], ["🕌", "Quran Classroom", "quran-classroom.html"], ["⚙️", "Terms, notices, library", "admin.html"], ["🕌", "Home page", "index.html?home=1"]
 ];
 onAuthStateChanged(auth, async u => {
   if (!u) { location.replace("login.html"); return; }
@@ -112,7 +112,7 @@ onAuthStateChanged(auth, async u => {
       <h2 class="sec">Needs your attention</h2>`;
     h += tasks.length ? tasks.map(k => `<a class="tk ${k.c}" href="${k.h}"><span class="n">${esc(k.n)}</span><span><b>${k.t}</b><small>${k.s}</small></span></a>`).join("") : '<a class="tk g" href="homework-admin.html"><span class="n">✓</span><span><b>All clear today</b><small>Nothing is waiting for you.</small></span></a>';
     h += money + pays;
-    const SG = [["People and messages", ["countries-admin.html", "teacher-assign-admin.html", "supervisors-admin.html", "messages-admin.html"]], ["Classes", ["classes-admin.html", "quran-classroom.html", "revision-admin.html"]], ["Results and reports", ["homework-admin.html", "overview-admin.html", "signatures.html"]], ["Settings", ["admin.html", "index.html?home=1"]]];
+    const SG = [["People and messages", ["countries-admin.html", "teacher-assign-admin.html", "supervisors-admin.html", "principals-admin.html", "students-admin.html", "messages-admin.html"]], ["Classes", ["classes-admin.html", "quran-classroom.html", "revision-admin.html"]], ["Results and reports", ["homework-admin.html", "overview-admin.html", "absent-admin.html", "signatures.html"]], ["Settings", ["admin.html", "backup-admin.html", "index.html?home=1"]]];
     h += `<h2 class="sec">Go to</h2>` + SG.map(g => `<h3 class="gsub">${g[0]}</h3><div class="gr">${g[1].map(u => { const x = SHORT.find(s => s[2] === u); return x ? `<a href="${x[2]}"><i>${x[0]}</i>${x[1]}</a>` : ""; }).join("")}</div>`).join("");
     $("app").innerHTML = h;
     $("app").onclick = async e => {
