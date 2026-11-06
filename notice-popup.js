@@ -1,7 +1,7 @@
 // Shows new notices the moment they arrive, on any page of the portal (read only).
 // Also offers (once) to turn on phone notifications so notices arrive even when the site is closed.
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, orderBy, limit, onSnapshot, setDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, orderBy, limit, onSnapshot, setDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 import { VAPID_PUBLIC } from "./notice-config.js";
 
@@ -199,7 +199,17 @@ onAuthStateChanged(auth, async u => {
   // The admin also gets pop-ups (so you can test), except on the Admin page where the notice was just sent
   dlog("is admin", admin); dlog("push support", canPush() + ", permission: " + (window.Notification ? Notification.permission : "none"));
   if (admin && /admin/i.test(location.pathname)) { dlog("note", "admin page: pop-ups off here"); return; }
-  onSnapshot(query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(10)), onNotices, e => { console.warn("notices:", e.code); dlog("listener error", e.code + " " + (e.message || "")); });
+  // Each notice is for one group only (students, teachers, principals or supervisors). Listen only to the groups this person belongs to.
+  const has = async c => { try { return (await getDoc(doc(db, c, uid))).exists(); } catch (e) { return false; } };
+  const [isStu, isTea, isPri, isSup] = await Promise.all([has("students"), has("teachers"), has("principals"), has("supervisors")]);
+  const groups = admin ? ["students", "teachers", "principals", "supervisors"] : [isStu && "students", isTea && "teachers", isPri && "principals", isSup && "supervisors"].filter(Boolean);
+  dlog("groups", groups.join(", ") || "none");
+  const bucket = {};
+  const merge = () => {
+    const docs = [].concat(...Object.values(bucket)).sort((a, b) => ((b.data().createdAt || {}).seconds || 0) - ((a.data().createdAt || {}).seconds || 0)).slice(0, 10);
+    onNotices({ docs, size: docs.length });
+  };
+  groups.forEach(g => onSnapshot(query(collection(db, "announcements"), where("audience", "==", g)), s => { bucket[g] = s.docs; merge(); }, e => { console.warn("notices:", g, e.code); dlog("listener error " + g, e.code + " " + (e.message || "")); }));
   dlog("listener", "started");
   setTimeout(pushSetup, 2500);
 });
