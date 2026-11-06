@@ -206,7 +206,7 @@ if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
 // Help bot
 if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
 if(!isPub)import("./classes-check.js");
-if(!isPub)import("./notice-popup.js?v=7").catch(()=>{});
+if(!isPub)import("./notice-popup.js?v=8").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
