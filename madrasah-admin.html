@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Madrasah (admin) | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ca{max-width:820px}
+.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
+input,select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.cd{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;padding:14px;margin-bottom:12px}
+.cd h2{margin:0 0 6px;font-size:1.05rem}
+.b{font:inherit;font-weight:700;padding:9px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:8px 8px 0 0}
+.b.o{background:#fff;color:#b3261e;border:1.5px solid #b3261e}.b.g{background:#fff;color:#12163a;border:1.5px solid #12163a}
+.tabs{display:flex;gap:8px;margin:10px 0}.tabs .b{margin:0;flex:1}.tabs .b.off{background:#fff;color:#12163a;border:1.5px solid #12163a}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}.row>*{flex:1}.row>.s{flex:0 0 auto}
+.kid{border-top:1px dashed #cfd3e8;margin-top:10px;padding-top:8px}
+.fee{background:#f6f7fc;border-radius:10px;padding:8px;margin:8px 0;font-size:.93rem}
+.gr{color:#1c7a4d;font-weight:700}.rd{color:#b3261e;font-weight:700}
+.bar{height:10px;border-radius:6px;background:#f3b8b4;overflow:hidden;margin:5px 0}.bar i{display:block;height:100%;background:#1c7a4d}
+.m{margin-top:8px;font-size:.92rem}.er{color:#b3261e}.ok{color:#1c7a4d}
+.at{display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px dashed #e1e4f3}.at span{flex:1}
+.at button{font:inherit;font-weight:700;border:1.5px solid #cfd3e8;background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+.at button.P{background:#1c7a4d;color:#fff;border-color:#1c7a4d}.at button.A{background:#b3261e;color:#fff;border-color:#b3261e}.at button.L{background:#e8a317;color:#fff;border-color:#e8a317}
+</style></head><body>
+<main class="page ca" id="app"><p>Loading...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"], ["uniform", "Uniform fees"]];
+const N = x => "₦" + Number(x || 0).toLocaleString();
+const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+let FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
+const getFam = id => FAM.find(f => f.id === id);
+const paid = fe => (fe.pays || []).reduce((s, p) => s + Number(p.amt || 0), 0);
+
+onAuthStateChanged(auth, async u => {
+  if (!u) { location.replace("login.html"); return; }
+  let adm = false;
+  try { adm = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!adm) { $("app").innerHTML = "<h1>Madrasah</h1><p>This page is only for the admin.</p>"; return; }
+  try {
+    FAM = (await getDocs(collection(db, "madFamilies"))).docs.map(d => ({ id: d.id, ...d.data() }));
+    FAM.sort((a, b) => String(a.father).localeCompare(String(b.father)));
+    draw();
+  } catch (e) { $("app").innerHTML = '<h1>Madrasah</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+async function saveFam(f) {
+  await setDoc(doc(db, "madFamilies", f.id), { father: f.father, phone: f.phone, children: f.children || [], updatedAt: serverTimestamp() });
+}
+const classes = () => [...new Set(FAM.flatMap(f => (f.children || []).map(c => c.cls || "").filter(Boolean)))].sort();
+
+function feeHtml(f, c, k, label) {
+  const fe = (c.fees && c.fees[k]) || { due: 0, pays: [] };
+  const pd = paid(fe), due = Number(fe.due || 0), bal = Math.max(0, due - pd), pct = due ? Math.min(100, pd / due * 100) : 0;
+  const key = f.id + "|" + c.id + "|" + k;
+  return `<div class="fee"><b>${label}</b>
+    <div class="row"><input type="number" inputmode="numeric" min="0" placeholder="Total amount to pay" value="${due || ""}" id="due_${key}"><button class="b s g" data-a="due" data-k="${key}">Set</button></div>
+    ${due ? `<div class="bar"><i style="width:${pct}%"></i></div><span class="gr">Paid ${N(pd)}</span> &middot; <span class="rd">Remaining ${N(bal)}</span>${bal === 0 ? ' &middot; <b class="gr">COMPLETED ✓</b>' : ""}` : '<span class="hint">Set the total first.</span>'}
+    ${(fe.pays || []).map((p, i) => `<div class="row" style="margin:3px 0"><span class="s">${esc(p.date)}</span><span>${N(p.amt)} ${esc(p.note || "")}</span><button class="b s o" style="margin:0;padding:3px 10px" data-a="delpay" data-k="${key}" data-i="${i}">x</button></div>`).join("")}
+    ${due ? `<div class="row"><input type="number" inputmode="numeric" min="1" placeholder="Amount paid now" id="pay_${key}"><input placeholder="Note (optional)" id="pn_${key}"><button class="b s" data-a="pay" data-k="${key}">Add</button></div>` : ""}</div>`;
+}
+function famHtml(f) {
+  const isO = open === f.id;
+  let h = `<div class="cd"><h2 data-a="open" data-k="${f.id}" style="cursor:pointer">${esc(f.father)} <small style="font-weight:400">${esc(f.phone)} &middot; ${(f.children || []).length} child(ren) ${isO ? "&#9650;" : "&#9660;"}</small></h2>`;
+  if (isO) {
+    h += `<div class="row"><input id="ef" value="${esc(f.father)}" placeholder="Father's name"><input id="ep" value="${esc(f.phone)}" placeholder="Phone" inputmode="tel"><button class="b s g" data-a="editfam" data-k="${f.id}">Save</button></div>`;
+    (f.children || []).forEach(c => {
+      h += `<div class="kid"><div class="row"><input id="cn_${c.id}" value="${esc(c.name)}"><input id="cc_${c.id}" value="${esc(c.cls || "")}" placeholder="Class"><button class="b s g" data-a="editkid" data-k="${f.id}|${c.id}">Save</button><button class="b s o" data-a="delkid" data-k="${f.id}|${c.id}">Delete</button></div>${FEES.map(x => feeHtml(f, c, x[0], x[1])).join("")}</div>`;
+    });
+    h += `<div class="kid"><b>Add a child</b><div class="row"><input id="nkn" placeholder="Child's name"><input id="nkc" placeholder="Class (e.g. Primary 2)"><button class="b s" data-a="addkid" data-k="${f.id}">Add</button></div></div>
+      <button class="b o" data-a="delfam" data-k="${f.id}">Delete this family</button>`;
+  }
+  return h + "</div>";
+}
+function draw() {
+  let h = `<h1>Madrasah</h1><p class="hint">Parents open <b>madrasah.html</b>, type the father's name, then the last 4 digits of the phone number you save here.</p>
+  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button></div>`;
+  if (msg) h += `<p class="m ${msg[0] === "!" ? "er" : "ok"}">${esc(msg.replace(/^!/, ""))}</p>`;
+  if (tab === "fam") {
+    h += `<div class="cd"><h2>Add a father</h2><div class="row"><input id="nf" placeholder="Father's full name"><input id="np" placeholder="Phone number" inputmode="tel"><button class="b s" data-a="addfam">Add</button></div></div>
+    <input id="fq" placeholder="Search father..." value="${esc(q)}" style="margin-bottom:12px">`;
+    const ql = q.toLowerCase();
+    const list = FAM.filter(f => !ql || String(f.father).toLowerCase().includes(ql));
+    h += list.length ? list.map(famHtml).join("") : '<p class="hint">No family yet.</p>';
+  } else {
+    const cl = classes();
+    h += `<div class="cd"><h2>Take attendance</h2><div class="row"><input type="date" id="ad" value="${adate}"><select id="ac"><option value="">All classes</option>${cl.map(c => `<option ${c === acls ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`;
+    const kids = FAM.flatMap(f => (f.children || []).map(c => ({ ...c, father: f.father }))).filter(c => !acls || c.cls === acls).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    h += kids.length ? kids.map(c => `<div class="at"><span><b>${esc(c.name)}</b><br><small>${esc(c.cls || "")} &middot; ${esc(c.father)}</small></span>${["P", "A", "L"].map(m => `<button class="${marks[c.id] === m ? m : ""}" data-a="mark" data-k="${c.id}" data-m="${m}">${m === "P" ? "Present" : m === "A" ? "Absent" : "Late"}</button>`).join("")}</div>`).join("") + `<button class="b" data-a="saveatt">Save attendance</button><button class="b g" data-a="allp">Mark all Present</button>` : '<p class="hint">Add children first.</p>';
+    h += "</div>";
+  }
+  $("app").innerHTML = h;
+  const fq = $("fq"); if (fq) { fq.oninput = () => { q = fq.value; const p = fq.selectionStart; draw(); const n = $("fq"); n.focus(); n.setSelectionRange(p, p); }; }
+  const ad = $("ad"); if (ad) ad.onchange = () => { adate = ad.value || today(); loadDay(); };
+  const ac = $("ac"); if (ac) ac.onchange = () => { acls = ac.value; draw(); };
+}
+async function loadDay() {
+  marks = {};
+  try { const s = await getDoc(doc(db, "madAttendance", adate)); if (s.exists()) marks = { ...(s.data().marks || {}) }; } catch (e) {}
+  loadedDay = adate; draw();
+}
+$("app").onclick = async e => {
+  const t = e.target.closest("[data-a]"); if (!t) return;
+  const a = t.dataset.a, k = t.dataset.k || ""; msg = "";
+  try {
+    if (a === "tab") { tab = k; if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
+    else if (a === "open") { open = open === k ? "" : k; }
+    else if (a === "addfam") {
+      const father = $("nf").value.trim(), phone = $("np").value.trim();
+      if (father.length < 3 || phone.replace(/\D/g, "").length < 7) { msg = "!Type the father's name and a full phone number."; }
+      else { const f = { id: rid(), father, phone, children: [] }; await saveFam(f); FAM.push(f); FAM.sort((a, b) => String(a.father).localeCompare(String(b.father))); open = f.id; msg = "Father added. Now add his children."; }
+    }
+    else if (a === "editfam") { const f = getFam(k); f.father = $("ef").value.trim() || f.father; f.phone = $("ep").value.trim() || f.phone; await saveFam(f); msg = "Saved."; }
+    else if (a === "delfam") { if (!confirm("Delete this family, all their children and payments?")) return; await deleteDoc(doc(db, "madFamilies", k)); FAM = FAM.filter(f => f.id !== k); open = ""; msg = "Deleted."; }
+    else if (a === "addkid") {
+      const f = getFam(k), name = $("nkn").value.trim(); if (!name) { msg = "!Type the child's name."; }
+      else { f.children = f.children || []; f.children.push({ id: rid(), name, cls: $("nkc").value.trim(), fees: {} }); await saveFam(f); msg = "Child added."; }
+    }
+    else if (a === "editkid") { const [fi, ci] = k.split("|"), f = getFam(fi), c = f.children.find(x => x.id === ci); c.name = $("cn_" + ci).value.trim() || c.name; c.cls = $("cc_" + ci).value.trim(); await saveFam(f); msg = "Saved."; }
+    else if (a === "delkid") { if (!confirm("Delete this child and his payments?")) return; const [fi, ci] = k.split("|"), f = getFam(fi); f.children = f.children.filter(x => x.id !== ci); await saveFam(f); msg = "Deleted."; }
+    else if (a === "due" || a === "pay" || a === "delpay") {
+      const [fi, ci, fk] = k.split("|"), f = getFam(fi), c = f.children.find(x => x.id === ci);
+      c.fees = c.fees || {}; const fe = c.fees[fk] = c.fees[fk] || { due: 0, pays: [] }; fe.pays = fe.pays || [];
+      if (a === "due") { fe.due = Math.max(0, Number($("due_" + k).value) || 0); }
+      else if (a === "pay") { const amt = Number($("pay_" + k).value); if (!(amt > 0)) { msg = "!Type the amount paid."; draw(); return; } fe.pays.push({ amt, date: today(), note: $("pn_" + k).value.trim().slice(0, 60) }); }
+      else { if (!confirm("Remove this payment?")) return; fe.pays.splice(Number(t.dataset.i), 1); }
+      await saveFam(f); msg = "Saved.";
+    }
+    else if (a === "mark") { marks[k] = marks[k] === t.dataset.m ? undefined : t.dataset.m; if (!marks[k]) delete marks[k]; }
+    else if (a === "allp") { FAM.forEach(f => (f.children || []).forEach(c => { if ((!acls || c.cls === acls) && !marks[c.id]) marks[c.id] = "P"; })); }
+    else if (a === "saveatt") { await setDoc(doc(db, "madAttendance", adate), { marks, updatedAt: serverTimestamp() }); msg = "Attendance saved for " + adate + "."; }
+  } catch (er) { msg = "!Could not save: " + (er.code || er.message); }
+  draw();
+};
+</script></body></html>

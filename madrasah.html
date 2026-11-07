@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parents | Sirajul Ummah Madrasah</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Figtree,system-ui,sans-serif;background:#f1f3fa;color:#12163a}
+header{background:#12163a;color:#fff;text-align:center;padding:22px 16px 26px}
+header .ar{font-family:Amiri,serif;font-size:1.7rem;color:#e6c55a}
+header h1{margin:2px 0 0;font-size:1.15rem}header p{margin:6px 0 0;opacity:.85;font-size:.92rem}
+main{max-width:640px;margin:-14px auto 40px;padding:0 14px}
+.cd{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(18,22,58,.08)}
+label{font-weight:700;display:block;margin-bottom:6px}
+input{width:100%;padding:13px;border:1.5px solid #cfd3e8;border-radius:10px;font:inherit;font-size:1.05rem}
+.b{width:100%;margin-top:10px;font:inherit;font-weight:800;font-size:1.05rem;padding:13px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer}
+.b.g{background:#fff;color:#12163a;border:1.5px solid #12163a}
+.fa{display:block;width:100%;text-align:left;font:inherit;padding:13px;margin-top:8px;border:1.5px solid #cfd3e8;border-radius:10px;background:#fff;cursor:pointer}
+.fa small{display:block;color:#4b5072}
+.er{color:#b3261e;font-weight:700;margin:10px 0 0}.hint{color:#4b5072;font-size:.92rem}
+.kid h2{margin:0;font-size:1.25rem}.kid .cl{color:#4b5072;margin-bottom:8px}
+.sec{font-weight:800;margin:14px 0 6px;font-size:.98rem}
+.att{display:flex;gap:8px;text-align:center}.att div{flex:1;border-radius:10px;padding:8px 2px;font-size:.8rem}.att b{display:block;font-size:1.25rem}
+.p{background:#e3f4ea;color:#1c7a4d}.a{background:#fbe4e2;color:#b3261e}.l{background:#fdf0d2;color:#9a6a00}
+.days{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.days span{font-size:.72rem;font-weight:700;padding:3px 7px;border-radius:7px}
+.fee{border:1.5px solid #e1e4f3;border-radius:12px;padding:11px;margin-top:8px}
+.fee.done{border-color:#1c7a4d;background:#f3fbf6}
+.fh{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.tag{background:#1c7a4d;color:#fff;border-radius:999px;font-size:.75rem;padding:2px 10px}
+.bar{height:14px;border-radius:8px;background:#e5534b;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:#1c9a5d}
+.nm{display:flex;justify-content:space-between;font-weight:800}.gr{color:#1c7a4d}.rd{color:#d03a32}
+.pays{font-size:.8rem;color:#4b5072;margin-top:4px}
+</style></head><body>
+<header><div class="ar">بسم الله الرحمن الرحيم</div><h1>Sirajul Ummah Madrasah</h1><p>Parents' page &mdash; see your children's attendance and fees</p></header>
+<main id="app"></main>
+<script type="module">
+import { WORKER_URL } from "./notice-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const N = x => "₦" + Number(x || 0).toLocaleString();
+const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"], ["uniform", "Uniform fees"]];
+let step = "search", results = [], pick = null, err = "", busy = false;
+async function call(path, body) {
+  const r = await fetch(WORKER_URL + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+  return j;
+}
+function draw(data) {
+  let h = "";
+  if (step === "search") {
+    h = `<div class="cd"><label for="fn">Father's name</label><input id="fn" placeholder="Type your name, e.g. Abdullah" autocomplete="off"><button class="b" id="go">Search</button>${err ? `<p class="er">${esc(err)}</p>` : ""}${results.length ? '<p class="hint">Tap your name:</p>' + results.map((r, i) => `<button class="fa" data-i="${i}"><b>${esc(r.father)}</b>${r.hint ? `<small>Phone starts with ${esc(r.hint)}…</small>` : ""}</button>`).join("") : ""}</div>`;
+  } else if (step === "code") {
+    h = `<div class="cd"><b>${esc(pick.father)}</b><p class="hint">To keep your children's information private, type the <b>last 4 digits</b> of the phone number you gave the madrasah.</p><input id="cd" inputmode="numeric" maxlength="4" placeholder="Last 4 digits" autocomplete="off"><button class="b" id="ok">Show my children</button><button class="b g" id="back">Back</button>${err ? `<p class="er">${esc(err)}</p>` : ""}</div>`;
+  } else {
+    h = `<div class="cd"><b>Assalamu alaikum, ${esc(data.father)}</b><p class="hint" style="margin:4px 0 0">${data.children.length ? "Here are your children." : "No child has been added yet. Please contact the madrasah."}</p></div>`;
+    h += data.children.map(c => {
+      const a = c.att, tot = a.P + a.A + a.L, pct = tot ? Math.round((a.P + a.L) / tot * 100) : null;
+      let k = `<div class="cd kid"><h2>${esc(c.name)}</h2><div class="cl">${esc(c.cls)}</div><div class="sec">Attendance${pct == null ? "" : " &middot; " + pct + "%"}</div>
+      ${tot ? `<div class="att"><div class="p"><b>${a.P}</b>Present</div><div class="a"><b>${a.A}</b>Absent</div><div class="l"><b>${a.L}</b>Late</div></div><div class="days">${a.recent.map(r => `<span class="${r[1].toLowerCase()}">${esc(r[0].slice(5))} ${r[1] === "P" ? "Present" : r[1] === "A" ? "Absent" : "Late"}</span>`).join("")}</div>` : '<p class="hint">No attendance recorded yet.</p>'}
+      <div class="sec">Fees</div>`;
+      k += FEES.map(f => {
+        const fe = (c.fees && c.fees[f[0]]) || {}, due = Number(fe.due || 0);
+        if (!due) return `<div class="fee"><div class="fh">${f[1]}<span class="hint">not set</span></div></div>`;
+        const pd = (fe.pays || []).reduce((s, p) => s + Number(p.amt || 0), 0), bal = Math.max(0, due - pd), done = bal === 0;
+        return `<div class="fee ${done ? "done" : ""}"><div class="fh">${f[1]}${done ? '<span class="tag">COMPLETED ✓</span>' : ""}</div><div class="bar"><i style="width:${Math.min(100, pd / due * 100)}%"></i></div>
+          <div class="nm"><span class="gr">Paid ${N(pd)}</span><span class="rd">${done ? "Remaining ₦0" : "Remaining " + N(bal)}</span></div><div class="hint">Total ${N(due)}</div>
+          ${(fe.pays || []).length ? `<div class="pays">${fe.pays.map(p => esc(p.date) + ": " + N(p.amt)).join(" &middot; ")}</div>` : ""}</div>`;
+      }).join("");
+      return k + "</div>";
+    }).join("") + '<button class="b g" id="done">Close</button>';
+  }
+  $("app").innerHTML = h;
+  const on = (id, f) => { const n = $(id); if (n) n.onclick = f; };
+  const fn = $("fn"); if (fn) fn.onkeydown = e => { if (e.key === "Enter") $("go").click(); };
+  const cd = $("cd"); if (cd) { cd.focus(); cd.onkeydown = e => { if (e.key === "Enter") $("ok").click(); }; }
+  on("go", async () => {
+    err = ""; results = []; const v = fn.value.trim();
+    if (v.length < 3) { err = "Type at least 3 letters of your name."; draw(); return; }
+    $("go").textContent = "Searching..."; $("go").disabled = true;
+    try { results = (await call("/mad/search", { name: v })).results; if (!results.length) err = "No one found with that name. Check the spelling or ask the madrasah."; } catch (e) { err = e.message; }
+    draw(); const n = $("fn"); if (n) n.value = v;
+  });
+  document.querySelectorAll(".fa").forEach(b => b.onclick = () => { pick = results[Number(b.dataset.i)]; step = "code"; err = ""; draw(); });
+  on("back", () => { step = "search"; err = ""; draw(); });
+  on("ok", async () => {
+    const c = $("cd").value.replace(/\D/g, "");
+    if (c.length !== 4) { err = "Type the last 4 digits."; draw(); return; }
+    $("ok").textContent = "Please wait..."; $("ok").disabled = true;
+    try { const d = await call("/mad/view", { id: pick.id, code: c }); step = "view"; err = ""; draw(d); window.scrollTo(0, 0); }
+    catch (e) { err = e.message; draw(); }
+  });
+  on("done", () => { step = "search"; results = []; pick = null; err = ""; draw(); });
+}
+draw();
+</script></body></html>
