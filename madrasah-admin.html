@@ -30,7 +30,7 @@ input,select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #c
 <main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -38,7 +38,7 @@ const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"],
 const N = x => "₦" + Number(x || 0).toLocaleString();
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
+let VIS = [], FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
 const getFam = id => FAM.find(f => f.id === id);
 const paid = fe => (fe.pays || []).reduce((s, p) => s + Number(p.amt || 0), 0);
 
@@ -84,7 +84,7 @@ function famHtml(f) {
 }
 function draw() {
   let h = `<h1>Madrasah</h1><p class="hint">Parents open <b>madrasah.html</b>, type the father's name, then the last 4 digits of the phone number you save here.</p>
-  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button></div>`;
+  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button><button class="b ${tab === "vis" ? "" : "off"}" data-a="tab" data-k="vis">Visits</button></div>`;
   if (msg) h += `<p class="m ${msg[0] === "!" ? "er" : "ok"}">${esc(msg.replace(/^!/, ""))}</p>`;
   if (tab === "fam") {
     h += `<div class="cd"><h2>Add a father</h2><div class="row"><input id="nf" placeholder="Father's full name"><input id="np" placeholder="Phone number" inputmode="tel"><button class="b s" data-a="addfam">Add</button></div></div>
@@ -92,6 +92,12 @@ function draw() {
     const ql = q.toLowerCase();
     const list = FAM.filter(f => !ql || String(f.father).toLowerCase().includes(ql));
     h += list.length ? list.map(famHtml).join("") : '<p class="hint">No family yet.</p>';
+  } else if (tab === "vis") {
+    const okv = VIS.filter(v => v.ok), seen = new Set(okv.map(v => v.familyId));
+    const never = FAM.filter(f => !seen.has(f.id));
+    const fmt = v => v.at && v.at.toDate ? v.at.toDate().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+    h += `<div class="cd"><h2>Parent visits (last 200)</h2>${VIS.length ? VIS.map(v => `<div class="at"><span><b>${esc(v.father)}</b><br><small>${fmt(v)}</small></span><b class="${v.ok ? "gr" : "rd"}">${v.ok ? "Opened" : "Wrong digits"}</b></div>`).join("") : '<p class="hint">No visit yet.</p>'}</div>
+    <div class="cd"><h2>Not opened yet (${never.length})</h2>${never.length ? never.map(f => `<div class="at"><span><b>${esc(f.father)}</b><br><small>${esc(f.phone)}</small></span></div>`).join("") : '<p class="hint">Every family has opened the page.</p>'}</div>`;
   } else {
     const cl = classes();
     h += `<div class="cd"><h2>Take attendance</h2><div class="row"><input type="date" id="ad" value="${adate}"><select id="ac"><option value="">All classes</option>${cl.map(c => `<option ${c === acls ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`;
@@ -113,7 +119,7 @@ $("app").onclick = async e => {
   const t = e.target.closest("[data-a]"); if (!t) return;
   const a = t.dataset.a, k = t.dataset.k || ""; msg = "";
   try {
-    if (a === "tab") { tab = k; if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
+    if (a === "tab") { tab = k; if (k === "vis") { VIS = (await getDocs(query(collection(db, "madVisits"), orderBy("at", "desc"), limit(200)))).docs.map(d => d.data()); } if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
     else if (a === "open") { open = open === k ? "" : k; }
     else if (a === "addfam") {
       const father = $("nf").value.trim(), phone = $("np").value.trim();
