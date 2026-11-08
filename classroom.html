@@ -535,7 +535,7 @@ function room(id) {
   function renderQuiz() {
     const box = $("quiz");
     if (!R || !quiz || R.status !== "open" || quiz.sessionId !== R.sessionId) { box.innerHTML = ""; return; }
-    const st = staff(), cols = ["#1c7a4d", "#c47f00", "#12805f", "#b3261e"], qref = doc(db, "classrooms", id, "quizzes", quiz.id), kd = kids();
+    const st = staff(), cols = ["#1c7a4d", "#c47f00", "var(--brand)", "#b3261e"], qref = doc(db, "classrooms", id, "quizzes", quiz.id), kd = kids();
     let h = `<div class="cd"><b style="font-size:${kd ? "1.4rem" : "1.05rem"}">❓ ${esc(quiz.question)}</b>`;
     if (st) {
       h += quiz.options.map((o, i) => `<p style="margin:8px 0">${i + 1}. ${esc(o)} - <b>${qAns.filter(a => a.choice === i).length}</b>${quiz.revealed && quiz.correct === i ? " ✅" : ""}</p>`).join("") +

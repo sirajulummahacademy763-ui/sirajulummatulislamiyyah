@@ -3,11 +3,11 @@
 body{background:var(--mist)}
 .lead{color:#4b6358}
 header.top{border-bottom:3px solid #f0be4d;box-shadow:0 8px 22px -14px rgba(240,190,77,.7)}
-.btn,header.top nav>a.btn{background:linear-gradient(#ffe08a,#f0be4d)!important;color:#0a3f31!important;box-shadow:0 0 16px rgba(255,224,138,.45)}
+.btn,header.top nav>a.btn{background:linear-gradient(#ffe08a,#f0be4d)!important;color:var(--night)!important;box-shadow:0 0 16px rgba(255,224,138,.45)}
 footer{border-top:3px solid #f0be4d}
 main.page>h1:first-child,main.page>#app>h1:first-child{position:relative}
 main.page>h1:first-child::before,main.page>#app>h1:first-child::before{content:"\2726  \2727";position:absolute;right:4px;top:16px;color:#ffe9a6;opacity:.85;text-shadow:0 0 12px #ffe08a;letter-spacing:10px;font-size:1.1rem}
-::selection{background:#f0be4d;color:#0a3f31}
+::selection{background:#f0be4d;color:var(--night)}
 /* Shared look for every page that uses site.js: header menu, headings, cards, forms, buttons.
    Loaded after site.css, so it only tidies things up. */
 :root{--r:16px;--sh:0 8px 24px -14px rgba(10,63,49,.35)}
@@ -15,24 +15,24 @@ html{-webkit-text-size-adjust:100%}
 body{line-height:1.55}
 
 /* ---------- Header and menu ---------- */
-header.top{background:#0a3f31;color:#fff;flex-direction:row;align-items:center}
+header.top{background:var(--night);color:#fff;flex-direction:row;align-items:center}
 header.top .logo{color:#fff;text-decoration:none;font-weight:700}
 header.top nav{flex-direction:row}
 header.top{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap;padding:12px clamp(16px,5vw,64px)}
 header.top .logo{min-width:0;font-size:.95rem}
 header.top .logo img{flex:none}
 header.top .mb{flex:none;font:inherit;font-weight:700;font-size:.95rem;color:#fff;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.28);border-radius:12px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-header.top .mb:hover,header.top.open .mb{background:#f0be4d;color:#0a3f31;border-color:#f0be4d}
-header.top nav{display:none;position:absolute;top:100%;left:0;right:0;gap:8px;max-height:calc(100vh - 70px);overflow:auto;background:#0a3f31;border-top:1px solid rgba(255,255,255,.14);box-shadow:0 22px 40px -18px rgba(0,0,0,.6);padding:14px clamp(16px,5vw,64px) 18px;flex-wrap:wrap;align-items:stretch}
+header.top .mb:hover,header.top.open .mb{background:#f0be4d;color:var(--night);border-color:#f0be4d}
+header.top nav{display:none;position:absolute;top:100%;left:0;right:0;gap:8px;max-height:calc(100vh - 70px);overflow:auto;background:var(--night);border-top:1px solid rgba(255,255,255,.14);box-shadow:0 22px 40px -18px rgba(0,0,0,.6);padding:14px clamp(16px,5vw,64px) 18px;flex-wrap:wrap;align-items:stretch}
 header.top.open nav{display:flex}
 header.top nav>a{box-sizing:border-box;order:1;flex:1 1 calc(50% - 8px);min-width:140px;color:#fff;text-decoration:none;font-weight:500;font-size:.95rem;padding:11px 14px;border-radius:12px;background:rgba(255,255,255,.07);text-align:left;margin:0}
 header.top nav>a:hover{background:rgba(255,255,255,.16)}
-header.top nav>a.on{background:#f0be4d;color:#0a3f31;font-weight:700}
+header.top nav>a.on{background:#f0be4d;color:var(--night);font-weight:700}
 header.top nav>a.stf{order:6;background:rgba(240,190,77,.12);border:1px solid rgba(240,190,77,.35);color:#ffe3a8}
-header.top nav>a.stf.on{background:#f0be4d;color:#0a3f31}
+header.top nav>a.stf.on{background:#f0be4d;color:var(--night)}
 header.top nav>.nvh{order:5;flex:1 1 100%;margin:10px 2px 0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#f0be4d;font-weight:700;display:none}
 header.top nav>.nvh.show{display:block}
-header.top nav>a[data-logout],header.top nav>a.btn{order:9;flex:1 1 100%;margin-top:8px;background:#f0be4d;color:#0a3f31!important;font-weight:700;text-align:center;border-radius:12px}
+header.top nav>a[data-logout],header.top nav>a.btn{order:9;flex:1 1 100%;margin-top:8px;background:#f0be4d;color:var(--night)!important;font-weight:700;text-align:center;border-radius:12px}
 @media(min-width:760px){
   header.top nav{left:auto;right:clamp(16px,5vw,64px);width:440px;padding:14px;border-radius:0 0 18px 18px;border:1px solid rgba(255,255,255,.14);border-top:0}
 }
@@ -41,16 +41,16 @@ header.top nav>a[data-logout],header.top nav>a.btn{order:9;flex:1 1 100%;margin-
 main.page{padding:0 16px 56px}
 main.page>h1:first-child,main.page>#app>h1:first-child{
   /* a full-width navy title band, like the home page hero */
-  background:#0a3f31;color:#fff;font-family:Amiri,serif;font-weight:700;
+  background:var(--night);color:#fff;font-family:Amiri,serif;font-weight:700;
   font-size:clamp(1.9rem,6.5vw,3rem);line-height:1.15;margin:0 0 24px;padding:30px 0 26px;
-  box-shadow:0 0 0 100vmax #0a3f31;clip-path:inset(0 -100vmax)}
+  box-shadow:0 0 0 100vmax var(--night);clip-path:inset(0 -100vmax)}
 main.page>h1:first-child::after,main.page>#app>h1:first-child::after{content:"";display:block;width:56px;height:4px;border-radius:2px;background:#f0be4d;margin-top:14px}
 main.page>h1:first-child small,main.page>#app>h1:first-child small{display:block;font-family:Figtree,system-ui,sans-serif;font-size:.42em;font-weight:500;color:#cfe0d6;margin-top:6px;line-height:1.4}
 main.page>#app{padding:0}
 main.page h1{line-height:1.2}
 main.page .lead{font-size:1.08rem;color:#4b6358;max-width:60ch}
-main.page h2{font-family:Amiri,serif;font-size:clamp(1.4rem,4.8vw,1.8rem);line-height:1.25;color:#0a3f31;margin:28px 0 8px}
-main.page h3{line-height:1.3;color:#0a3f31}
+main.page h2{font-family:Amiri,serif;font-size:clamp(1.4rem,4.8vw,1.8rem);line-height:1.25;color:var(--night);margin:28px 0 8px}
+main.page h3{line-height:1.3;color:var(--night)}
 main.page a{text-underline-offset:3px}
 
 /* ---------- Cards: white, hairline border, gold top edge ---------- */
@@ -68,7 +68,7 @@ main.page details{border-top:1.5px solid var(--line,#cfe0d6);padding:0}
 main.page details:last-of-type{border-bottom:1.5px solid var(--line,#cfe0d6)}
 main.page details>summary{list-style:none;cursor:pointer;font-weight:700;padding:15px 34px 15px 0;position:relative}
 main.page details>summary::-webkit-details-marker{display:none}
-main.page details>summary::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:1.5rem;line-height:1;color:#0a3f31;transition:transform .2s}
+main.page details>summary::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:1.5rem;line-height:1;color:var(--night);transition:transform .2s}
 main.page details[open]>summary::after{transform:translateY(-50%) rotate(45deg)}
 main.page details>*:not(summary){padding-bottom:14px}
 
@@ -82,7 +82,7 @@ main.page button:not(:disabled):hover,main.page .b:hover{filter:brightness(1.08)
 main.page button:active{transform:translateY(1px)}
 main.page button:disabled{opacity:.55;cursor:not-allowed}
 main.page .cd button.sm{min-height:36px}
-main.page input[type=checkbox],main.page input[type=radio]{width:20px;height:20px;accent-color:#0a3f31}
+main.page input[type=checkbox],main.page input[type=radio]{width:20px;height:20px;accent-color:var(--night)}
 
 /* ---------- Lists, rows, tables ---------- */
 main.page .it{gap:12px;padding:12px 0}
@@ -94,7 +94,7 @@ main.page .ok,main.page .er{display:block;margin:8px 0 0}
 /* ---------- "Jump to" bar on long admin pages ---------- */
 .jb{position:sticky;top:64px;z-index:40;background:rgba(238,241,250,.94);backdrop-filter:blur(6px);margin:0 -16px 16px;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;border-bottom:1px solid var(--line,#dbeae1);scrollbar-width:none}
 .jb::-webkit-scrollbar{display:none}
-.jb a{flex:none;font-size:.85rem;font-weight:600;color:#0a3f31;background:#fff;border:1.5px solid var(--line,#dbeae1);border-radius:999px;padding:7px 13px;text-decoration:none}
+.jb a{flex:none;font-size:.85rem;font-weight:600;color:var(--night);background:#fff;border:1.5px solid var(--line,#dbeae1);border-radius:999px;padding:7px 13px;text-decoration:none}
 .jb a:hover{background:#f0be4d;border-color:#f0be4d}
 .cd[id]{scroll-margin-top:130px}
 
@@ -105,22 +105,22 @@ footer{line-height:1.6}
 /* ---------- Grouped menu with search (site.js) ---------- */
 header.top nav.grp>a{order:0}
 header.top nav.grp>a.stf{background:rgba(255,255,255,.07);border:0;color:#fff}
-header.top nav.grp>a.stf.on,header.top nav.grp>a.on{background:#f0be4d;color:#0a3f31;font-weight:700}
+header.top nav.grp>a.stf.on,header.top nav.grp>a.on{background:#f0be4d;color:var(--night);font-weight:700}
 header.top nav.grp>.nvh{display:none!important}
 header.top nav.grp>a[data-logout]{order:9}
 header.top nav.grp>a[hidden],header.top nav.grp>.gh[hidden],header.top nav.grp>.nvn[hidden]{display:none!important}
-header.top nav.grp>.nvs{order:-1;flex:1 1 100%;display:flex;gap:8px;position:sticky;top:-14px;z-index:2;background:#0a3f31;padding:2px 0 8px;margin-top:-2px}
+header.top nav.grp>.nvs{order:-1;flex:1 1 100%;display:flex;gap:8px;position:sticky;top:-14px;z-index:2;background:var(--night);padding:2px 0 8px;margin-top:-2px}
 header.top nav.grp .nvq{flex:1;min-width:0;box-sizing:border-box;font:inherit;font-size:.95rem;padding:11px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;outline:0}
 header.top nav.grp .nvq::placeholder{color:#bfd6ca}
 header.top nav.grp .nvq:focus{border-color:#f0be4d;background:rgba(255,255,255,.16)}
 header.top nav.grp .nvz{flex:none;font:inherit;font-weight:700;font-size:.85rem;color:#fff;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.28);border-radius:12px;padding:0 12px;cursor:pointer}
-header.top nav.grp .nvz.on{background:#f0be4d;color:#0a3f31;border-color:#f0be4d}
+header.top nav.grp .nvz.on{background:#f0be4d;color:var(--night);border-color:#f0be4d}
 header.top nav.grp>.gh{order:0;flex:1 1 100%;margin:10px 2px 0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:#f0be4d;font-weight:700}
 header.top nav.grp>.nvn{order:0;flex:1 1 100%;color:#bfd6ca;padding:14px 4px;text-align:center}
 
 /* ---------- Page structure layer (site.js): breadcrumb, intro, find box, back to top ---------- */
 .crumb{font-size:.82rem;color:#6b8277;margin:-8px 0 14px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
-.crumb a{color:#0a3f31;font-weight:600;text-decoration:none}.crumb a:hover{text-decoration:underline}
+.crumb a{color:var(--night);font-weight:600;text-decoration:none}.crumb a:hover{text-decoration:underline}
 .crumb b{font-weight:600;color:#4b6358}.crumb span{opacity:.6}
 .pgin{font-size:1.02rem;color:#4b6358;max-width:62ch;margin:0 0 16px;line-height:1.55}
 .pgs{position:sticky;top:64px;z-index:35;margin:0 -16px 16px;padding:10px 16px;background:rgba(238,241,250,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line,#d3e8dc);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -128,23 +128,16 @@ header.top nav.grp>.nvn{order:0;flex:1 1 100%;color:#bfd6ca;padding:14px 4px;tex
 .pgs .pgq:focus{outline:3px solid rgba(240,190,77,.55);border-color:#f0be4d}
 .pgs .pgc{font-size:.85rem;color:#6b8277;font-weight:600}
 .pgx{display:none!important}
-.totop{position:fixed;left:14px;bottom:18px;z-index:80;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:#0a3f31;color:#f0be4d;font-size:1.4rem;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -6px rgba(0,0,0,.5)}
+.totop{position:fixed;left:14px;bottom:18px;z-index:80;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:var(--night);color:#f0be4d;font-size:1.4rem;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -6px rgba(0,0,0,.5)}
 .totop[hidden]{display:none}
 @media(max-width:600px){main.page table{display:block;max-width:100%;overflow-x:auto}}
 .jb ~ .pgs{position:static}
 
 /* ---------- Folding sections (Admin page) ---------- */
 main.page .cd.fold>h2{cursor:pointer;position:relative;padding-right:40px;user-select:none}
-main.page .cd.fold>h2::after{content:"+";position:absolute;right:4px;top:50%;transform:translateY(-50%);font-family:Figtree,system-ui,sans-serif;font-size:1.6rem;line-height:1;color:#0a3f31;transition:transform .2s}
+main.page .cd.fold>h2::after{content:"+";position:absolute;right:4px;top:50%;transform:translateY(-50%);font-family:Figtree,system-ui,sans-serif;font-size:1.6rem;line-height:1;color:var(--night);transition:transform .2s}
 main.page .cd.fold:not(.shut)>h2::after{transform:translateY(-50%) rotate(45deg)}
 main.page .cd.fold.shut>*:not(h2){display:none!important}
 main.page .cd.fold.shut>h2{border-bottom:0;margin-bottom:0;padding-bottom:0}
 main.page .cd.fold.shut{padding-top:14px;padding-bottom:14px}
 
-/* ===== Auto look: dark by day (6am-6pm), light at night. Set by site.js on <html data-mode> ===== */
-html[data-mode="dark"]{filter:invert(1) hue-rotate(180deg);background:#fff}
-html[data-mode="dark"] img,html[data-mode="dark"] video,html[data-mode="dark"] canvas,html[data-mode="dark"] iframe,html[data-mode="dark"] svg,
-html[data-mode="dark"] header.top,html[data-mode="dark"] footer,html[data-mode="dark"] .btn,html[data-mode="dark"] #sb-root,
-html[data-mode="dark"] #nt-toast,html[data-mode="dark"] #nt-modal,html[data-mode="dark"] #nt-push,html[data-mode="dark"] #mode-btn,
-html[data-mode="dark"] [class*="hero"],html[data-mode="dark"] main.page>h1:first-child{filter:invert(1) hue-rotate(180deg)}
-#mode-btn{position:fixed;left:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9997;width:44px;height:44px;border-radius:50%;border:1.5px solid #f0be4d;background:#0a3f31;color:#ffe9a6;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);display:grid;place-items:center}

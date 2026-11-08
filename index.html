@@ -32,9 +32,8 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;font-family:Figtree,system-ui,sans-serif;color:#fff;background:var(--night);line-height:1.6}
-html body{background:radial-gradient(circle at 92% 6%,rgba(255,224,138,.16),transparent 38%),radial-gradient(circle at 6% 45%,rgba(255,233,166,.07),transparent 40%),linear-gradient(180deg,#0f5a44 0%,#0a3f31 40%,#08342a 100%)!important;background-color:#0a3f31!important}
-html[data-mode="dark"]{filter:none!important;background:#0a3f31!important}
-#mode-btn{display:none!important}
+html body{background:radial-gradient(circle at 92% 6%,rgba(255,224,138,.16),transparent 38%),radial-gradient(circle at 6% 45%,rgba(255,233,166,.07),transparent 40%),linear-gradient(180deg,var(--deep) 0%,var(--night) 40%,var(--night2) 100%)!important;background-color:var(--night)!important}
+
 a{color:inherit}
 .btn{display:inline-block;padding:12px 24px;border-radius:10px;background:var(--lamp);color:var(--night)!important;font-weight:700;text-decoration:none}
 a:focus-visible,summary:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
@@ -184,7 +183,7 @@ html:not(.ok){visibility:hidden}
   <div style="max-width:560px"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.2rem;color:#f0be4d">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>
   <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
 </footer>
-  <div style="background:#0a3f31;color:#cfe0d6;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
+  <div style="background:var(--night);color:#cfe0d6;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -215,7 +214,7 @@ onAuthStateChanged(auth, async u => {
     if(nav)new MutationObserver(ensure).observe(nav,{childList:true});
   })();
   </script>
-  <script src="bot.js?v=5" defer></script>
+  <script src="bot.js?v=6" defer></script>
 <script type="module">import "./classes-check.js";</script>
 </body>
 </html>

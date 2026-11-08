@@ -35,35 +35,35 @@ dlog("script", "loaded");
 
 const css = document.createElement("style");
 css.textContent = `
-#nt-toast{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(520px,calc(100% - 24px));z-index:100000;background:#12163a;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);border:1.5px solid #f5b94a;transition:transform .45s cubic-bezier(.2,.9,.3,1.2);font-family:Figtree,system-ui,sans-serif}
+#nt-toast{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(520px,calc(100% - 24px));z-index:100000;background:var(--night);color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);border:1.5px solid #f0be4d;transition:transform .45s cubic-bezier(.2,.9,.3,1.2);font-family:Figtree,system-ui,sans-serif}
 #nt-toast.show{transform:translate(-50%,0)}
-#nt-toast .k{display:flex;align-items:center;gap:8px;font-size:.78rem;color:#f5b94a;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-#nt-toast .k i{width:9px;height:9px;border-radius:50%;background:#f5b94a;animation:ntp 1.2s infinite}
-@keyframes ntp{0%{box-shadow:0 0 0 0 rgba(245,185,74,.7)}100%{box-shadow:0 0 0 10px rgba(245,185,74,0)}}
+#nt-toast .k{display:flex;align-items:center;gap:8px;font-size:.78rem;color:#f0be4d;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+#nt-toast .k i{width:9px;height:9px;border-radius:50%;background:#f0be4d;animation:ntp 1.2s infinite}
+@keyframes ntp{0%{box-shadow:0 0 0 0 rgba(240,190,77,.7)}100%{box-shadow:0 0 0 10px rgba(240,190,77,0)}}
 #nt-toast b{display:block;font-size:1.05rem;margin:6px 0 2px}
-#nt-toast p{margin:0;color:#d8dbef;font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#nt-toast p{margin:0;color:#d6e9df;font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #nt-toast .ar,#nt-modal .ar{direction:rtl;text-align:right;font-family:Amiri,serif}
-#nt-toast .arx{border-top:1px solid rgba(245,185,74,.45);margin-top:8px;padding-top:6px}
-#nt-toast b.ar{font-size:1.25rem;color:#f5b94a;margin:2px 0 2px}
+#nt-toast .arx{border-top:1px solid rgba(240,190,77,.45);margin-top:8px;padding-top:6px}
+#nt-toast b.ar{font-size:1.25rem;color:#f0be4d;margin:2px 0 2px}
 #nt-toast p.ar{font-size:1.05rem}
-#nt-modal .arb{border-top:2px solid #f5b94a;margin-top:14px;padding-top:12px}
+#nt-modal .arb{border-top:2px solid #f0be4d;margin-top:14px;padding-top:12px}
 #nt-modal .arb h3{font-size:1.5rem}
 #nt-modal .arb .m{font-size:1.2rem;line-height:1.9}
-#nt-toast small{display:block;margin-top:4px;color:#aab0d6}
+#nt-toast small{display:block;margin-top:4px;color:#9bbfae}
 #nt-toast .r{display:flex;gap:8px;margin-top:10px}
-.nt-b{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;cursor:pointer;background:#f5b94a;color:#12163a}
+.nt-b{font:inherit;font-weight:700;padding:9px 16px;border:0;border-radius:10px;cursor:pointer;background:#f0be4d;color:var(--night)}
 .nt-b.g{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.35)}
 #nt-modal{position:fixed;inset:0;z-index:100001;background:rgba(10,12,35,.65);display:flex;align-items:center;justify-content:center;padding:14px;font-family:Figtree,system-ui,sans-serif}
-#nt-modal .c{background:#fff;color:#12163a;border-radius:18px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:20px}
+#nt-modal .c{background:#fff;color:var(--night);border-radius:18px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:20px}
 #nt-modal h3{margin:0 0 4px;font-size:1.3rem}
-#nt-modal .t{color:#4b5072;font-size:.85rem;margin-bottom:10px}
+#nt-modal .t{color:#4b6358;font-size:.85rem;margin-bottom:10px}
 #nt-modal .m{white-space:pre-wrap;line-height:1.55;margin-bottom:14px}
-#nt-modal textarea{width:100%;box-sizing:border-box;min-height:90px;padding:10px;border:1.5px solid #cfd3e8;border-radius:10px;font:inherit;resize:vertical}
+#nt-modal textarea{width:100%;box-sizing:border-box;min-height:90px;padding:10px;border:1.5px solid #cfe0d6;border-radius:10px;font:inherit;resize:vertical}
 #nt-modal .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
-#nt-modal .b2{background:#12163a;color:#fff}
-#nt-modal .b3{background:#fff;color:#12163a;border:1.5px solid #cfd3e8}
+#nt-modal .b2{background:var(--night);color:#fff}
+#nt-modal .b3{background:#fff;color:var(--night);border:1.5px solid #cfe0d6}
 #nt-modal .ms{font-size:.9rem}
-#nt-push{position:fixed;left:10px;right:10px;bottom:10px;z-index:100002;margin:0 auto;max-width:520px;background:#fff;color:#12163a;border:2px solid #f5b94a;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);font-family:Figtree,system-ui,sans-serif;font-size:.95rem;line-height:1.45}
+#nt-push{position:fixed;left:10px;right:10px;bottom:10px;z-index:100002;margin:0 auto;max-width:520px;background:#fff;color:var(--night);border:2px solid #f0be4d;border-radius:16px;padding:14px 16px;box-shadow:0 14px 40px -10px rgba(0,0,0,.55);font-family:Figtree,system-ui,sans-serif;font-size:.95rem;line-height:1.45}
 #nt-push .r{display:flex;gap:8px;margin-top:8px}
 `;
 document.head.appendChild(css);
@@ -162,17 +162,17 @@ function pushSetup() {
 
   if (!canPush()) {
     if (snoozed("nt_help_no")) return;
-    if (inApp) return pushCard(`<b>Open this site in Chrome</b><br>To get notices on your phone, open sirajul-ummah.com.ng in the Chrome browser (tap the menu, then "Open in browser").<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
-    if (ios && !standalone) return pushCard(`<b>Get notices on your iPhone</b><br>Tap the Share button, choose <b>Add to Home Screen</b>, then open the site from the new icon and tap Turn on.<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+    if (inApp) return pushCard(`<b>Open this site in Chrome</b><br>To get notices on your phone, open sirajul-ummah.com.ng in the Chrome browser (tap the menu, then "Open in browser").<div class="r"><button class="nt-b" type="button" data-n style="background:var(--night);color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+    if (ios && !standalone) return pushCard(`<b>Get notices on your iPhone</b><br>Tap the Share button, choose <b>Add to Home Screen</b>, then open the site from the new icon and tap Turn on.<div class="r"><button class="nt-b" type="button" data-n style="background:var(--night);color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
     return;
   }
   if (Notification.permission === "granted") { savePush().catch(e => console.warn("push:", e)); return; }
   if (Notification.permission === "denied") {
     if (snoozed("nt_help_no")) return;
-    return pushCard(`<b>Notifications are blocked</b><br>To get notices on this phone: tap the lock icon next to the website address, tap <b>Permissions</b>, then set <b>Notifications</b> to Allow. Then refresh this page.<div class="r"><button class="nt-b" type="button" data-n style="background:#12163a;color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
+    return pushCard(`<b>Notifications are blocked</b><br>To get notices on this phone: tap the lock icon next to the website address, tap <b>Permissions</b>, then set <b>Notifications</b> to Allow. Then refresh this page.<div class="r"><button class="nt-b" type="button" data-n style="background:var(--night);color:#fff">OK</button></div>`, b => b.querySelector("[data-n]").onclick = () => { snooze("nt_help_no"); b.remove(); });
   }
   if (snoozed("nt_push_no")) return;
-  pushCard(`<b>Get notices on your phone</b><br>Tap <b>Turn on</b>, then choose <b>Allow</b> when your phone asks. You will then get new notices even when the site is closed.<div class="r"><button class="nt-b" type="button" data-y style="background:#12163a;color:#fff">Turn on</button><button class="nt-b" type="button" data-n style="background:#fff;color:#12163a;border:1.5px solid #cfd3e8">Not now</button></div><div id="nt-pm" style="margin-top:6px"></div>`, box => {
+  pushCard(`<b>Get notices on your phone</b><br>Tap <b>Turn on</b>, then choose <b>Allow</b> when your phone asks. You will then get new notices even when the site is closed.<div class="r"><button class="nt-b" type="button" data-y style="background:var(--night);color:#fff">Turn on</button><button class="nt-b" type="button" data-n style="background:#fff;color:var(--night);border:1.5px solid #cfe0d6">Not now</button></div><div id="nt-pm" style="margin-top:6px"></div>`, box => {
     box.querySelector("[data-n]").onclick = () => { snooze("nt_push_no"); box.remove(); };
     box.querySelector("[data-y]").onclick = async () => {
       const pm = box.querySelector("#nt-pm");

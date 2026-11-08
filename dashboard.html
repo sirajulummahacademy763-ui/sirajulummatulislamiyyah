@@ -11,19 +11,19 @@
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
 .ca{max-width:900px}
-.hi{background:linear-gradient(135deg,#0a3f31,#1e4a3b);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px}
+.hi{background:linear-gradient(135deg,var(--night),#1e4a3b);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px}
 .hi h1{margin:0;font-size:1.3rem;color:#fff}.hi p{margin:4px 0 0;color:#dcebe2;font-size:.92rem}
 .st{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .st div{background:#fff;border:1.5px solid #cfe0d6;border-radius:12px;padding:10px;text-align:center}
-.st b{display:block;font-size:1.5rem;color:#0a3f31}.st span{font-size:.78rem;color:#4b6358}
-h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#0a3f31}
-.tk{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #cfe0d6;border-left:6px solid #f0be4d;border-radius:12px;padding:12px;margin-bottom:8px;text-decoration:none;color:#0a3f31}
+.st b{display:block;font-size:1.5rem;color:var(--night)}.st span{font-size:.78rem;color:#4b6358}
+h2.sec{font-size:1.05rem;margin:18px 0 8px;color:var(--night)}
+.tk{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #cfe0d6;border-left:6px solid #f0be4d;border-radius:12px;padding:12px;margin-bottom:8px;text-decoration:none;color:var(--night)}
 .tk.g{border-left-color:#1c7a4d}.tk.r{border-left-color:#b3261e}
 .tk .n{min-width:44px;text-align:center;font-size:1.4rem;font-weight:700}
 .tk small{display:block;color:#4b6358;font-weight:400}
 .tk b{font-size:.98rem}
 .gr{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.gr a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;background:#fff;border:1.5px solid #cfe0d6;border-radius:14px;padding:14px 6px;text-decoration:none;color:#0a3f31;font-weight:700;font-size:.9rem;min-height:84px}
+.gr a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;background:#fff;border:1.5px solid #cfe0d6;border-radius:14px;padding:14px 6px;text-decoration:none;color:var(--night);font-weight:700;font-size:.9rem;min-height:84px}
 .gr a i{font-style:normal;font-size:1.7rem}
 .er{color:#b3261e}
 .mn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -32,7 +32,7 @@ h2.sec{font-size:1.05rem;margin:18px 0 8px;color:#0a3f31}
 .pl{background:#fff;border:1.5px solid #cfe0d6;border-radius:12px;padding:4px 12px}
 .pr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #dfece4}
 .pr:last-child{border-bottom:0}.pr small{display:block;color:#4b6358}
-.tb{font:inherit;font-size:.75rem;font-weight:700;border:1.5px solid #cfe0d6;background:#fff;color:#0a3f31;border-radius:999px;padding:3px 10px;cursor:pointer;margin-left:8px}
+.tb{font:inherit;font-size:.75rem;font-weight:700;border:1.5px solid #cfe0d6;background:#fff;color:var(--night);border-radius:999px;padding:3px 10px;cursor:pointer;margin-left:8px}
 .pr .am{font-weight:700;color:#1c7a4d;white-space:nowrap}
 .mr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #dfece4;font-size:.95rem}
 @media(max-width:560px){.mn{grid-template-columns:1fr}.st{grid-template-columns:1fr 1fr}.gr{grid-template-columns:1fr 1fr}}
@@ -105,7 +105,7 @@ onAuthStateChanged(auth, async u => {
     const tms = x => (x.createdAt && x.createdAt.seconds ? x.createdAt.seconds * 1000 : 0);
     const plist = ALLP.slice().sort((a, b) => tms(b) - tms(a));
     const prow = x => `<div class="pr" style="${x.ignored === true ? "opacity:.5" : ""}"><div><b>${esc(nm[x.uid] || "Student")}</b><small>${x.mode === "test" ? "<b style=\"color:#b3261e\">TEST MODE</b> · " : x.mode === "live" ? "<b style=\"color:#1c7a4d\">LIVE</b> · " : "Old record · "}${x.email ? esc(x.email) + " · " : ""}${tms(x) ? new Date(tms(x)).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · " : ""}${Number(x.coins) || 0} coins</small></div>${x.currency && Number(x.amount) ? `<div class="am">${esc(x.currency)} ${Number(x.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}</div>` : `<div class="am" style="color:#7f9a8e;font-weight:400;font-size:.8rem;text-align:right">Amount not<br>recorded${x.provider ? " · " + esc(x.provider) : ""}</div>`}<button type="button" class="tb" data-t="${esc(x.id)}" data-v="${x.ignored === true ? "0" : "1"}">${x.ignored === true ? "Count it" : "Test"}</button></div>`;
-    const pays = `<h2 class="sec">Payments (currency and amount paid)</h2><div class="pl" id="pl">${plist.slice(0, 10).map(prow).join("") || '<p class="hint" style="margin:6px">No payments yet.</p>'}</div>${plist.length > 10 ? '<button class="b" id="pall" type="button" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#0a3f31;color:#fff;margin-top:8px">Show all ' + plist.length + "</button>" : ""}`;
+    const pays = `<h2 class="sec">Payments (currency and amount paid)</h2><div class="pl" id="pl">${plist.slice(0, 10).map(prow).join("") || '<p class="hint" style="margin:6px">No payments yet.</p>'}</div>${plist.length > 10 ? '<button class="b" id="pall" type="button" style="font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:var(--night);color:#fff;margin-top:8px">Show all ' + plist.length + "</button>" : ""}`;
     const names = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
     let h = `<div class="hi"><h1>${names}, Director</h1><p>${cur ? esc(cur.name || "") + " " + esc(cur.session || "") + " · " : ""}${new Date().toDateString()}</p></div>
       <div class="st"><div><b>${ST.length}</b><span>Students</span></div><div><b>${TC.length}</b><span>Teachers</span></div><div><b>${W.filter(x => x.kind === "homework").length}</b><span>Homework posted</span></div><div><b>${R.filter(x => x.status === "issued" && (!cur || x.termId === cur.id)).length}</b><span>Reports issued</span></div></div>

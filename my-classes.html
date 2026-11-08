@@ -24,12 +24,12 @@
 .hw label{display:block;font-size:.85rem;font-weight:700;margin:8px 0 3px}
 .hw input,.hw select,.hw textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfe0d6;border-radius:8px;font:inherit;background:#fff}
 .hw .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.hw .pb{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#0a3f31;color:#fff;cursor:pointer;margin-top:10px}
+.hw .pb{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer;margin-top:10px}
 .hw .po{border:1px solid #cfe0d6;border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
 .hw .po b{display:block}.hw .po small{color:#4b6358}
 .hw .po button{font:inherit;font-size:.85rem;padding:6px 10px;border:1.5px solid #e8c4c1;border-radius:8px;background:#fff;color:#b3261e;cursor:pointer}
-.hw .po button.ab{border-color:#cfe0d6;color:#0a3f31;margin-top:6px}
-.hw .po button.pb{background:#0a3f31;color:#fff;border:0;padding:8px 14px;margin-top:8px}
+.hw .po button.ab{border-color:#cfe0d6;color:var(--night);margin-top:6px}
+.hw .po button.pb{background:var(--night);color:#fff;border:0;padding:8px 14px;margin-top:8px}
 .hw .sa{border-top:1px dashed #cfe0d6;margin-top:8px;padding-top:8px}.hw .sa small{margin-left:6px}
 @media(max-width:560px){.hw .g2{grid-template-columns:1fr}}
 </style></head><body>
@@ -63,7 +63,7 @@ onAuthStateChanged(auth, async u => {
       const names = mine || subs.map(s => s.name);
       h += `<div class="cd"><h2>${esc(SN[i.section] || i.section)} · ${esc(i.level)}</h2>`;
       if (d.term && d.term.name) h += `<p class="hint">${esc(d.term.name)}${d.term.start ? " · " + esc(d.term.start) + " to " + esc(d.term.end || "") : ""}</p>`;
-      h += `<p><a class="b" style="text-decoration:none;display:inline-block;background:#0a3f31;color:#fff;padding:9px 16px;border-radius:10px;font-weight:700" href="classroom.html?id=${encodeURIComponent(i.section + "__" + i.level.replace(/[^A-Za-z0-9]+/g, "-"))}">Open classroom</a></p>`;
+      h += `<p><a class="b" style="text-decoration:none;display:inline-block;background:var(--night);color:#fff;padding:9px 16px;border-radius:10px;font-weight:700" href="classroom.html?id=${encodeURIComponent(i.section + "__" + i.level.replace(/[^A-Za-z0-9]+/g, "-"))}">Open classroom</a></p>`;
       if (!names.length) h += `<p class="hint">No subjects have been set for this class yet.</p>`;
       names.forEach(n => {
         const s = (d.subjects || []).find(x => x.name === n) || { name: n };
