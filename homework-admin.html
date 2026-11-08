@@ -11,22 +11,22 @@
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
 .ca{max-width:900px}
-.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
-select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.hint{color:#4b6358;font-size:.9rem;margin:2px 0 10px}
+select{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfe0d6;border-radius:8px;font:inherit;background:#fff}
 .tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.tot div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
-.tot b{display:block;font-size:1.5rem;color:#12163a}.tot span{font-size:.78rem;color:#4b5072}
-.cl{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.tot div{background:#fff;border:1.5px solid #cfe0d6;border-radius:12px;padding:10px;text-align:center}
+.tot b{display:block;font-size:1.5rem;color:#0a3f31}.tot span{font-size:.78rem;color:#4b6358}
+.cl{background:#fff;border:1.5px solid #cfe0d6;border-radius:14px;margin-bottom:10px;overflow:hidden}
 .cl>button{width:100%;text-align:left;font:inherit;background:#fff;border:0;padding:12px 14px;cursor:pointer}
-.cl h2{margin:0;font-size:1.05rem;color:#12163a}
-.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#2b2f55}
-.cl .bar{height:7px;background:#e6e8f3;border-radius:99px;margin-top:8px;overflow:hidden}
+.cl h2{margin:0;font-size:1.05rem;color:#0a3f31}
+.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#1e4a3b}
+.cl .bar{height:7px;background:#e2eee7;border-radius:99px;margin-top:8px;overflow:hidden}
 .cl .bar i{display:block;height:100%;background:#1c7a4d}
-.dt{padding:4px 14px 14px;border-top:1px solid #e6e8f3}
+.dt{padding:4px 14px 14px;border-top:1px solid #e2eee7}
 .dt h3{font-size:.95rem;margin:12px 0 4px}
 .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin:2px 4px 2px 0}
-.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e8ebf8;color:#12163a}
-.hw{border-top:1px dashed #cfd3e8;padding:8px 0;font-size:.92rem}
+.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e4f0e9;color:#0a3f31}
+.hw{border-top:1px dashed #cfe0d6;padding:8px 0;font-size:.92rem}
 .er{color:#b3261e}
 @media(max-width:560px){.tot{grid-template-columns:1fr 1fr}}
 </style></head><body>
@@ -105,7 +105,7 @@ function draw() {
   cs.forEach(c => {
     const exp = c.posts.length * c.studs.length, pct = exp ? Math.min(100, Math.round(100 * c.subs.length / exp)) : 0;
     const marked = c.subs.filter(x => x.status === "graded").length;
-    h += `<div class="cl"><button type="button" data-k="${esc(c.k)}"><h2>${esc(c.level)} <small style="font-weight:400;color:#4b5072">${SN[c.sec] || esc(c.sec)}</small></h2>
+    h += `<div class="cl"><button type="button" data-k="${esc(c.k)}"><h2>${esc(c.level)} <small style="font-weight:400;color:#4b6358">${SN[c.sec] || esc(c.sec)}</small></h2>
       <div class="sm"><span>👩‍🎓 ${c.studs.length} students</span><span>📝 ${c.posts.length} homework</span><span>✅ ${c.subs.length} answers (${marked} marked)</span><span>📄 ${c.issued.length}/${c.studs.length} reports issued${c.drafts.length ? `, ${c.drafts.length} draft` : ""}</span></div>
       <div class="bar"><i style="width:${pct}%"></i></div></button>`;
     if (openKey === c.k) {

@@ -22,7 +22,7 @@
 .it{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 #chat{height:52vh;overflow-y:auto;padding:10px;background:#f7f5ee;border-radius:12px;border:1.5px solid var(--line);margin-bottom:12px}
 .m{max-width:88%;margin:8px 0;padding:8px 12px;border-radius:12px;background:#fff;border:1px solid var(--line);white-space:pre-wrap;word-break:break-word}
-.m.t{background:#e8efff;border-color:#c5d3ff}
+.m.t{background:#e6f4ec;border-color:#d4eadf}
 .m small{display:block;color:#666;font-size:.74rem;white-space:normal}
 .m audio{width:100%;min-width:220px;margin-top:4px}
 .m button{font:inherit;font-size:.95rem;border:0;background:none;color:#b3261e;cursor:pointer;padding:0 0 0 8px}
@@ -438,7 +438,7 @@ function room(id) {
       <div id="lst" class="small" style="margin-top:6px"></div><p class="small" style="margin:6px 0 0">Recording uses your microphone only (the teacher's voice). Students can play it any time, or save it to listen without internet.</p></div>`;
     if (err) h += `<p class="er">Could not load: ${esc(err)}</p>`;
     else h += items.length ? items.map(x => { const em = x.url ? embed(x.url) : "";
-      return `<div class="it" style="display:block;border-top:1px dashed #cfd3e8;padding:10px 0"><b>${esc(x.title || "Lecture")}</b><br><small>${x.createdAt && x.createdAt.seconds ? esc(new Date(x.createdAt.seconds * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })) : ""}${x.secs ? " · " + mmss(x.secs) : ""} · ${esc(x.byName || "")}${x.status === "recording" ? " · recording now" : x.status === "incomplete" ? " · incomplete" : ""}${!x.url && x.parts ? " · about " + (Math.max(0.1, x.parts * 0.34)).toFixed(1) + " MB" : ""}</small>${x.notes ? `<div style="white-space:pre-wrap;margin:6px 0">${esc(x.notes)}</div>` : ""}<div data-h="${esc(x.id)}" style="margin-top:6px">${x.parts > 0 ? `<button class="b o" data-p="${esc(x.id)}" data-n="${x.parts}" data-m="${esc(x.mime || "")}" data-t="${esc(x.title || "lecture")}" type="button">▶ Play</button>` : ""}${em ? ` <button class="b" data-w="${esc(x.id)}" type="button">${openVid === x.id ? "Close player" : "▶ Watch / listen here"}</button>` : ""}${x.url ? ` <a class="b o" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Open link</a>` : ""}${st ? ` <button class="b o" data-x="${esc(x.id)}" data-n="${x.parts || 0}" type="button" style="color:#b3261e">Delete</button>` : ""}</div>${openVid === x.id && em ? `<div class="vw"><iframe src="${esc(em)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ""}</div>`; }).join("") : '<p class="hint">No recorded lectures yet.</p>';
+      return `<div class="it" style="display:block;border-top:1px dashed #cfe0d6;padding:10px 0"><b>${esc(x.title || "Lecture")}</b><br><small>${x.createdAt && x.createdAt.seconds ? esc(new Date(x.createdAt.seconds * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })) : ""}${x.secs ? " · " + mmss(x.secs) : ""} · ${esc(x.byName || "")}${x.status === "recording" ? " · recording now" : x.status === "incomplete" ? " · incomplete" : ""}${!x.url && x.parts ? " · about " + (Math.max(0.1, x.parts * 0.34)).toFixed(1) + " MB" : ""}</small>${x.notes ? `<div style="white-space:pre-wrap;margin:6px 0">${esc(x.notes)}</div>` : ""}<div data-h="${esc(x.id)}" style="margin-top:6px">${x.parts > 0 ? `<button class="b o" data-p="${esc(x.id)}" data-n="${x.parts}" data-m="${esc(x.mime || "")}" data-t="${esc(x.title || "lecture")}" type="button">▶ Play</button>` : ""}${em ? ` <button class="b" data-w="${esc(x.id)}" type="button">${openVid === x.id ? "Close player" : "▶ Watch / listen here"}</button>` : ""}${x.url ? ` <a class="b o" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Open link</a>` : ""}${st ? ` <button class="b o" data-x="${esc(x.id)}" data-n="${x.parts || 0}" type="button" style="color:#b3261e">Delete</button>` : ""}</div>${openVid === x.id && em ? `<div class="vw"><iframe src="${esc(em)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : ""}</div>`; }).join("") : '<p class="hint">No recorded lectures yet.</p>';
     h += ` <button class="b o" id="pc" type="button">Close</button></div>`;
     $("panel").innerHTML = h; closeBtn();
     if ($("lrec")) $("lrec").onclick = lecStart;
@@ -548,7 +548,7 @@ function room(id) {
   function renderQuiz() {
     const box = $("quiz");
     if (!R || !quiz || R.status !== "open" || quiz.sessionId !== R.sessionId) { box.innerHTML = ""; return; }
-    const st = staff(), cols = ["#1c7a4d", "#c47f00", "#2457c5", "#b3261e"], qref = doc(db, "classrooms", id, "quizzes", quiz.id), kd = kids();
+    const st = staff(), cols = ["#1c7a4d", "#c47f00", "#12805f", "#b3261e"], qref = doc(db, "classrooms", id, "quizzes", quiz.id), kd = kids();
     let h = `<div class="cd"><b style="font-size:${kd ? "1.4rem" : "1.05rem"}">❓ ${esc(quiz.question)}</b>`;
     if (st) {
       h += quiz.options.map((o, i) => `<p style="margin:8px 0">${i + 1}. ${esc(o)} - <b>${qAns.filter(a => a.choice === i).length}</b>${quiz.revealed && quiz.correct === i ? " ✅" : ""}</p>`).join("") +

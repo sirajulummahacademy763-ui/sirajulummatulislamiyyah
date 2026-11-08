@@ -16,21 +16,21 @@
 .hint{color:#555;font-size:.9rem;margin:2px 0 8px}
 .sb{border-top:1px solid var(--line);padding:10px 0}
 .sb b{font-size:1.02rem}.sb .ar{font-family:Amiri,serif;color:#b87d0c;margin-left:8px;font-size:1.15rem}
-.ls{list-style:none;margin:6px 0 0;padding:0;color:#4b5072;font-size:.92rem}
+.ls{list-style:none;margin:6px 0 0;padding:0;color:#4b6358;font-size:.92rem}
 .ls li{padding:2px 0}
 .er{color:#b3261e}.ok{color:#1c7a4d}
-.hw{margin-top:14px;border-top:2px solid #f5b94a;padding-top:12px}
+.hw{margin-top:14px;border-top:2px solid #f0be4d;padding-top:12px}
 .hw h3{margin:0 0 6px;font-size:1.05rem}
 .hw label{display:block;font-size:.85rem;font-weight:700;margin:8px 0 3px}
-.hw input,.hw select,.hw textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.hw input,.hw select,.hw textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfe0d6;border-radius:8px;font:inherit;background:#fff}
 .hw .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.hw .pb{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin-top:10px}
-.hw .po{border:1px solid #cfd3e8;border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
-.hw .po b{display:block}.hw .po small{color:#4b5072}
+.hw .pb{font:inherit;font-weight:700;padding:10px 16px;border:0;border-radius:10px;background:#0a3f31;color:#fff;cursor:pointer;margin-top:10px}
+.hw .po{border:1px solid #cfe0d6;border-radius:10px;padding:10px 12px;margin-top:8px;display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.hw .po b{display:block}.hw .po small{color:#4b6358}
 .hw .po button{font:inherit;font-size:.85rem;padding:6px 10px;border:1.5px solid #e8c4c1;border-radius:8px;background:#fff;color:#b3261e;cursor:pointer}
-.hw .po button.ab{border-color:#cfd3e8;color:#12163a;margin-top:6px}
-.hw .po button.pb{background:#12163a;color:#fff;border:0;padding:8px 14px;margin-top:8px}
-.hw .sa{border-top:1px dashed #cfd3e8;margin-top:8px;padding-top:8px}.hw .sa small{margin-left:6px}
+.hw .po button.ab{border-color:#cfe0d6;color:#0a3f31;margin-top:6px}
+.hw .po button.pb{background:#0a3f31;color:#fff;border:0;padding:8px 14px;margin-top:8px}
+.hw .sa{border-top:1px dashed #cfe0d6;margin-top:8px;padding-top:8px}.hw .sa small{margin-left:6px}
 @media(max-width:560px){.hw .g2{grid-template-columns:1fr}}
 </style></head><body>
 <main class="page ca" id="app"><p>Loading...</p></main>
@@ -63,7 +63,7 @@ onAuthStateChanged(auth, async u => {
       const names = mine || subs.map(s => s.name);
       h += `<div class="cd"><h2>${esc(SN[i.section] || i.section)} · ${esc(i.level)}</h2>`;
       if (d.term && d.term.name) h += `<p class="hint">${esc(d.term.name)}${d.term.start ? " · " + esc(d.term.start) + " to " + esc(d.term.end || "") : ""}</p>`;
-      h += `<p><a class="b" style="text-decoration:none;display:inline-block;background:#12163a;color:#fff;padding:9px 16px;border-radius:10px;font-weight:700" href="classroom.html?id=${encodeURIComponent(i.section + "__" + i.level.replace(/[^A-Za-z0-9]+/g, "-"))}">Open classroom</a></p>`;
+      h += `<p><a class="b" style="text-decoration:none;display:inline-block;background:#0a3f31;color:#fff;padding:9px 16px;border-radius:10px;font-weight:700" href="classroom.html?id=${encodeURIComponent(i.section + "__" + i.level.replace(/[^A-Za-z0-9]+/g, "-"))}">Open classroom</a></p>`;
       if (!names.length) h += `<p class="hint">No subjects have been set for this class yet.</p>`;
       names.forEach(n => {
         const s = (d.subjects || []).find(x => x.name === n) || { name: n };
@@ -95,7 +95,7 @@ async function homework(n, i, names, uid, tname) {
     let ps = [], subsAll = [];
     try { subsAll = (await getDocs(query(collection(db, "classWorkSubs"), where("classKey", "==", key)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) {}
     try { ps = (await getDocs(query(collection(db, "classWork"), where("classKey", "==", key)))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 9e9) - ((a.createdAt && a.createdAt.seconds) || 9e9)).slice(0, 15); } catch (e) { return '<p class="er">Could not load posts.</p>'; }
-    return ps.length ? ps.map(p => `<div class="po"><span><b>${esc(p.title)}</b><small>${p.kind === "homework" ? "Homework" : "Note"} · ${esc(p.subject || "General")}${p.due ? " · due " + esc(p.due) : ""} · ${fmt(p.createdAt)}${p.teacherName ? " · " + esc(p.teacherName) : ""}</small><span style="white-space:pre-wrap;display:block;margin-top:4px">${esc(p.body)}</span>${p.kind === "homework" ? answers(p, subsAll) : ""}</span><button data-del="${p.id}" type="button">Delete</button></div>`).join("") : '<p class="hint" style="color:#4b5072">Nothing posted yet.</p>';
+    return ps.length ? ps.map(p => `<div class="po"><span><b>${esc(p.title)}</b><small>${p.kind === "homework" ? "Homework" : "Note"} · ${esc(p.subject || "General")}${p.due ? " · due " + esc(p.due) : ""} · ${fmt(p.createdAt)}${p.teacherName ? " · " + esc(p.teacherName) : ""}</small><span style="white-space:pre-wrap;display:block;margin-top:4px">${esc(p.body)}</span>${p.kind === "homework" ? answers(p, subsAll) : ""}</span><button data-del="${p.id}" type="button">Delete</button></div>`).join("") : '<p class="hint" style="color:#4b6358">Nothing posted yet.</p>';
   };
   const draw = async (msg, good) => {
     box.innerHTML = `<h3>Homework and notes for students</h3>

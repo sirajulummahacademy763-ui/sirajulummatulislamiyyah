@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Site check</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:0;padding:16px;background:#eef6f1;color:#0a3f31;line-height:1.5}
+h1{font-size:1.3rem;margin:0 0 10px}
+.r{background:#fff;border:1.5px solid #cfe0d6;border-radius:12px;padding:12px;margin:0 0 10px;word-break:break-word}
+.ok{border-left:6px solid #1c7a4d}.no{border-left:6px solid #b3261e}.in{border-left:6px solid #f0be4d}
+b{display:block;margin-bottom:2px}code{font-size:.85rem;background:#f3f4fb;padding:1px 4px;border-radius:4px}
+button{font:inherit;font-weight:700;padding:11px 18px;border:0;border-radius:10px;background:#0a3f31;color:#fff}
+</style></head><body>
+<h1>Site check (for the admin)</h1>
+<p>This page tests which files your phone really receives. Wait about 10 seconds, then send a screenshot of the whole page.</p>
+<div id="out"></div>
+<p><button id="again" type="button">Run again</button></p>
+<script>
+const out = document.getElementById("out");
+const add = (cls, title, text) => { const d = document.createElement("div"); d.className = "r " + cls; d.innerHTML = "<b>" + title + "</b>" + text; out.appendChild(d); };
+const get = async (u, nocache) => { const r = await fetch(u, nocache ? { cache: "no-store" } : {}); return { status: r.status, text: await r.text() }; };
+async function run() {
+  out.innerHTML = "";
+  const rnd = "x=" + Date.now();
+  const pages = ["admin.html", "classroom.html", "dashboard.html"];
+  for (const p of pages) {
+    try {
+      const f = await get("/" + p + "?" + rnd, true);
+      const sc = (f.text.match(/<script[^>]*src="[^"]*site\.js[^"]*"[^>]*>/i) || ["(no site.js tag found)"])[0];
+      const th = (f.text.match(/<link[^>]*theme\.css[^>]*>/i) || ["(none in the page; site.js adds it)"])[0];
+      const src = (sc.match(/src="([^"]*)"/) || [])[1];
+      let line = "";
+      if (src) {
+        const g = await get("/" + src.replace(/^\//, ""));
+        const has = g.text.indexOf("site v18") > -1;
+        line = "<br>The copy your phone gets for exactly that address has <code>site v18</code>: <b style='display:inline'>" + (has ? "YES" : "NO (old file)") + "</b>";
+        add(has ? "ok" : "no", p, "Script tag: <code>" + sc.replace(/</g, "&lt;") + "</code>" + line + "<br>Theme link: <code>" + th.replace(/</g, "&lt;") + "</code>");
+      } else add("no", p, "Script tag: <code>" + sc.replace(/</g, "&lt;") + "</code>");
+    } catch (e) { add("no", p, "Could not load: " + e.message); }
+  }
+  try {
+    const a = await get("/site.js?" + rnd, true), b = await get("/theme.css?" + rnd, true);
+    add(a.text.indexOf("site v18") > -1 ? "ok" : "no", "site.js on the server", "Has <code>site v18</code>: <b style='display:inline'>" + (a.text.indexOf("site v18") > -1 ? "YES" : "NO") + "</b>");
+    add(b.text.indexOf("Folding sections") > -1 ? "ok" : "no", "theme.css on the server", "Has <code>Folding sections</code>: <b style='display:inline'>" + (b.text.indexOf("Folding sections") > -1 ? "YES" : "NO") + "</b>");
+  } catch (e) { add("no", "Server files", "Could not load: " + e.message); }
+  try {
+    const regs = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+    const keys = window.caches ? await caches.keys() : [];
+    add("in", "Phone storage", "Service workers: <b style='display:inline'>" + regs.length + "</b> · Cache storage names: <b style='display:inline'>" + (keys.length ? keys.join(", ") : "none") + "</b>");
+  } catch (e) { add("in", "Phone storage", "Could not read: " + e.message); }
+  add("in", "Your browser", "<code>" + navigator.userAgent.replace(/</g, "&lt;") + "</code>");
+}
+document.getElementById("again").onclick = run;
+run();
+</script>
+</body></html>

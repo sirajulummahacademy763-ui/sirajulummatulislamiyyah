@@ -11,26 +11,26 @@
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
 .ca{max-width:900px}
-.hint{color:#4b5072;font-size:.9rem;margin:2px 0 10px}
-select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit;background:#fff}
+.hint{color:#4b6358;font-size:.9rem;margin:2px 0 10px}
+select,textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfe0d6;border-radius:8px;font:inherit;background:#fff}
 .tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.tot div{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:10px;text-align:center}
-.tot b{display:block;font-size:1.5rem;color:#12163a}.tot span{font-size:.78rem;color:#4b5072}
-.cl{background:#fff;border:1.5px solid #cfd3e8;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.tot div{background:#fff;border:1.5px solid #cfe0d6;border-radius:12px;padding:10px;text-align:center}
+.tot b{display:block;font-size:1.5rem;color:#0a3f31}.tot span{font-size:.78rem;color:#4b6358}
+.cl{background:#fff;border:1.5px solid #cfe0d6;border-radius:14px;margin-bottom:10px;overflow:hidden}
 .cl>button{width:100%;text-align:left;font:inherit;background:#fff;border:0;padding:12px 14px;cursor:pointer}
-.cl h2{margin:0;font-size:1.05rem;color:#12163a}
-.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#2b2f55}
-.cl .bar{height:7px;background:#e6e8f3;border-radius:99px;margin-top:8px;overflow:hidden}
+.cl h2{margin:0;font-size:1.05rem;color:#0a3f31}
+.cl .sm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.88rem;color:#1e4a3b}
+.cl .bar{height:7px;background:#e2eee7;border-radius:99px;margin-top:8px;overflow:hidden}
 .cl .bar i{display:block;height:100%;background:#1c7a4d}
-.dt{padding:4px 14px 14px;border-top:1px solid #e6e8f3}
+.dt{padding:4px 14px 14px;border-top:1px solid #e2eee7}
 .dt h3{font-size:.95rem;margin:12px 0 4px}
 .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;background:#fdf1d4;color:#8a5a00;margin:2px 4px 2px 0}
-.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e8ebf8;color:#12163a}
-.hw{border-top:1px dashed #cfd3e8;padding:8px 0;font-size:.92rem}
-.b{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#12163a;color:#fff;cursor:pointer;margin:6px 6px 0 0}
+.pill.g{background:#dff3e7;color:#1c7a4d}.pill.r{background:#fde4e1;color:#b3261e}.pill.n{background:#e4f0e9;color:#0a3f31}
+.hw{border-top:1px dashed #cfe0d6;padding:8px 0;font-size:.92rem}
+.b{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#0a3f31;color:#fff;cursor:pointer;margin:6px 6px 0 0}
 .b.s{padding:4px 10px;font-size:.8rem}
 .msg{padding:8px 10px;border-radius:12px;margin:6px 0;font-size:.92rem;max-width:90%}
-.msg.sup{background:#12163a;color:#fff;margin-left:auto}.msg.tch{background:#eef0fa}
+.msg.sup{background:#0a3f31;color:#fff;margin-left:auto}.msg.tch{background:#eef6f1}
 .msg small{display:block;opacity:.7;font-size:.74rem}
 .er{color:#b3261e}.ok{color:#1c7a4d}
 @media(max-width:560px){.tot{grid-template-columns:1fr 1fr}}
@@ -102,14 +102,14 @@ function draw() {
   KEYS.forEach(k => {
     const d = D[k], [sec, ...lv] = k.split("|");
     if (d.room) {
-      h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(d.rm.title || d.rid)} <small style="font-weight:400;color:#4b5072">Quran class</small></h2>
+      h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(d.rm.title || d.rid)} <small style="font-weight:400;color:#4b6358">Quran class</small></h2>
         <div class="sm"><span>👩‍🎓 ${d.m.length} entered the class</span><span>🧑‍🏫 ${esc(d.rm.teacherName || "")}</span></div></button>`;
       if (openKey === k) { ensureAtt(k); h += `<div class="dt">${attendanceHtml(d.m, ATT[k + "|" + termId])}<p class="hint">Only students who have entered this class at least once are listed.</p></div>`; }
       h += "</div>"; return;
     }
     const exp = d.w.length * d.m.length, pct = exp ? Math.min(100, Math.round(100 * d.s.length / exp)) : 0;
     const cards = d.r.filter(x => !termId || x.termId === termId);
-    h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(lv.join("|"))} <small style="font-weight:400;color:#4b5072">${SN[sec] || esc(sec)}</small></h2>
+    h += `<div class="cl"><button type="button" data-k="${esc(k)}"><h2>${esc(lv.join("|"))} <small style="font-weight:400;color:#4b6358">${SN[sec] || esc(sec)}</small></h2>
       <div class="sm"><span>👩‍🎓 ${d.m.length}</span><span>📝 ${d.w.length} homework</span><span>✅ ${d.s.length} answers</span><span>📄 ${cards.filter(x => x.status === "issued").length}/${d.m.length} reports</span><span>💬 ${d.ms.length}</span></div><div class="bar"><i style="width:${pct}%"></i></div></button>`;
     if (openKey === k) {
       h += `<div class="dt"><h3>Homework</h3>`;
