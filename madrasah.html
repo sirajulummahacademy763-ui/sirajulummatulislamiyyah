@@ -43,6 +43,7 @@ input{width:100%;padding:13px;border:1.5px solid #cfd3e8;border-radius:10px;font
 @keyframes fall{to{transform:translateY(240px) rotate(300deg);opacity:0}}
 .late{border-radius:18px;padding:16px;margin-bottom:14px;background:#fbe4e2;border:2px solid #d03a32;color:#8c1d17}
 .late h2{margin:0 0 4px;font-size:1.1rem}.late p{margin:0;font-weight:600}
+.lq{border-left:4px solid #cfd3e8;background:#f6f7fc;border-radius:8px;padding:7px 10px;margin-top:6px;font-size:.93rem}.lq.E{border-color:#1c9a5d}.lq.G{border-color:#e8a317}.lq.P{border-color:#d03a32}.lq .mk{float:right;font-weight:800;font-size:.8rem}.lq.E .mk{color:#1c7a4d}.lq.G .mk{color:#9a6a00}.lq.P .mk{color:#b3261e}
 .sj{background:linear-gradient(135deg,#12163a,#2a3170);color:#fff;text-align:center;text-decoration:none;display:block;border-radius:16px;padding:18px;margin-bottom:14px}
 .sj .ar{font-family:Amiri,serif;font-size:1.6rem;color:#e6c55a}.sj b{display:block;font-size:1.05rem}.sj small{opacity:.85}
 </style></head><body>
@@ -53,6 +54,7 @@ import { WORKER_URL } from "./notice-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const N = x => "₦" + Number(x || 0).toLocaleString();
+const SUR = ["Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadila", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takathur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
 const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"], ["uniform", "Uniform fees"]];
 const TODAY = (() => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
 const pretty = d => { const t = new Date(d + "T00:00:00"); return isNaN(t) ? d : t.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" }); };
@@ -80,6 +82,15 @@ function attMsg(c) {
   let s = 0; for (const x of r) { if (x[1] === "P") s++; else break; }
   return `<div class="note good">&#127775; Masha Allah! <b>${n}</b> was <b>present</b> on ${esc(pretty(d))}${s >= 3 ? " &mdash; " + s + " days in a row" : ""}. Keep it up!</div>`;
 }
+function lesHtml(c) {
+  const L = c.les || [];
+  if (!L.length) return '<p class="hint">No Qur\'an lesson recorded yet.</p>';
+  const T = { H: "Hifz (new)", R: "Revision" }, M = { E: "Excellent", G: "Good", P: "Needs practice" };
+  const line = e => `<div class="lq ${e.m}"><b>${T[e.t] || ""}:</b> ${esc(SUR[e.s - 1] || "")} ${e.a}${e.b !== e.a ? "&ndash;" + e.b : ""} <span class="mk">${M[e.m] || ""}</span>${e.n ? `<div class="hint">${esc(e.n)}</div>` : ""}</div>`;
+  const last = L[0], ms = last.items.map(e => e.m);
+  const msg = ms.includes("P") ? `<div class="note warn">&#128214; Please help ${esc(c.name)} revise this at home tonight, in shaa Allah.</div>` : `<div class="note good">&#127775; Masha Allah! ${esc(c.name)} is doing well. Keep encouraging him/her.</div>`;
+  return `<div class="hint" style="margin-bottom:4px">Latest: ${esc(pretty(last.date))}</div>${last.items.map(line).join("")}${msg}` + (L.length > 1 ? `<div class="sec" style="font-size:.88rem">Earlier this week</div>` + L.slice(1).map(d => `<div class="hint" style="margin-top:6px"><b>${esc(pretty(d.date))}</b></div>${d.items.map(line).join("")}`).join("") : "");
+}
 function confetti() { const e = ["&#127881;", "&#11088;", "&#10024;", "&#127882;"]; let h = ""; for (let i = 0; i < 14; i++) h += `<i style="left:${(i * 7.3 + 3) % 96}%;animation-delay:${(i % 7) * .5}s;font-size:${14 + (i % 4) * 5}px">${e[i % 4]}</i>`; return h; }
 function draw(data) {
   let h = "";
@@ -102,7 +113,7 @@ function draw(data) {
       const a = c.att, tot = a.P + a.A + a.L, pct = tot ? Math.round((a.P + a.L) / tot * 100) : null;
       let k = `<div class="cd kid"><h2>${esc(c.name)}</h2><div class="cl">${esc(c.cls)}</div><div class="sec">Attendance${pct == null ? "" : " &middot; " + pct + "%"}</div>
       ${tot ? `<div class="att"><div class="p"><b>${a.P}</b>Present</div><div class="a"><b>${a.A}</b>Absent</div><div class="l"><b>${a.L}</b>Late</div></div>${attMsg(c)}<div class="days">${a.recent.map(r => `<span class="${r[1].toLowerCase()}">${esc(r[0].slice(5))} ${r[1] === "P" ? "Present" : r[1] === "A" ? "Absent" : "Late"}</span>`).join("")}</div>` : '<p class="hint">No attendance recorded yet.</p>'}
-      <div class="sec">Fees</div>`;
+      <div class="sec">Qur'an lessons (Hifz and Revision)</div>${lesHtml(c)}<div class="sec">Fees</div>`;
       k += FEES.map(f => {
         const fe = (c.fees && c.fees[f[0]]) || {}, i = feeInfo(fe);
         if (!i) return `<div class="fee"><div class="fh">${f[1]}<span class="hint">not set</span></div></div>`;
