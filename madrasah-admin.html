@@ -38,7 +38,7 @@ const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"],
 const N = x => "₦" + Number(x || 0).toLocaleString();
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let VIS = [], FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
+let SAD = {}, VIS = [], FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
 const getFam = id => FAM.find(f => f.id === id);
 const paid = fe => (fe.pays || []).reduce((s, p) => s + Number(p.amt || 0), 0);
 
@@ -64,7 +64,7 @@ function feeHtml(f, c, k, label) {
   const pd = paid(fe), due = Number(fe.due || 0), bal = Math.max(0, due - pd), pct = due ? Math.min(100, pd / due * 100) : 0;
   const key = f.id + "|" + c.id + "|" + k;
   return `<div class="fee"><b>${label}</b>
-    <div class="row"><input type="number" inputmode="numeric" min="0" placeholder="Total amount to pay" value="${due || ""}" id="due_${key}"><button class="b s g" data-a="due" data-k="${key}">Set</button></div>
+    <div class="row"><input type="number" inputmode="numeric" min="0" placeholder="Total amount to pay" value="${due || ""}" id="due_${key}"></div><div class="row"><span class="s hint">Pay by (optional)</span><input type="date" id="by_${key}" value="${esc(fe.by || "")}"><button class="b s g" data-a="due" data-k="${key}">Set</button></div>
     ${due ? `<div class="bar"><i style="width:${pct}%"></i></div><span class="gr">Paid ${N(pd)}</span> &middot; <span class="rd">Remaining ${N(bal)}</span>${bal === 0 ? ' &middot; <b class="gr">COMPLETED ✓</b>' : ""}` : '<span class="hint">Set the total first.</span>'}
     ${(fe.pays || []).map((p, i) => `<div class="row" style="margin:3px 0"><span class="s">${esc(p.date)}</span><span>${N(p.amt)} ${esc(p.note || "")}</span><button class="b s o" style="margin:0;padding:3px 10px" data-a="delpay" data-k="${key}" data-i="${i}">x</button></div>`).join("")}
     ${due ? `<div class="row"><input type="number" inputmode="numeric" min="1" placeholder="Amount paid now" id="pay_${key}"><input placeholder="Note (optional)" id="pn_${key}"><button class="b s" data-a="pay" data-k="${key}">Add</button></div>` : ""}</div>`;
@@ -84,7 +84,7 @@ function famHtml(f) {
 }
 function draw() {
   let h = `<h1>Madrasah</h1><p class="hint">Parents open <b>madrasah.html</b>, type the father's name, then the last 4 digits of the phone number you save here.</p>
-  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button><button class="b ${tab === "vis" ? "" : "off"}" data-a="tab" data-k="vis">Visits</button></div>`;
+  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button><button class="b ${tab === "vis" ? "" : "off"}" data-a="tab" data-k="vis">Visits</button><button class="b ${tab === "sad" ? "" : "off"}" data-a="tab" data-k="sad">Sadaqah</button></div>`;
   if (msg) h += `<p class="m ${msg[0] === "!" ? "er" : "ok"}">${esc(msg.replace(/^!/, ""))}</p>`;
   if (tab === "fam") {
     h += `<div class="cd"><h2>Add a father</h2><div class="row"><input id="nf" placeholder="Father's full name"><input id="np" placeholder="Phone number" inputmode="tel"><button class="b s" data-a="addfam">Add</button></div></div>
@@ -92,6 +92,15 @@ function draw() {
     const ql = q.toLowerCase();
     const list = FAM.filter(f => !ql || String(f.father).toLowerCase().includes(ql));
     h += list.length ? list.map(famHtml).join("") : '<p class="hint">No family yet.</p>';
+  } else if (tab === "sad") {
+    const S = SAD;
+    h += `<div class="cd"><h2>Sadaqah Jariyah page</h2><p class="hint">Parents see this on <b>madrasah-sadaqah.html</b>.</p>
+    <textarea id="s_intro" rows="4" placeholder="A short message to the parents" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit">${esc(S.intro || "")}</textarea>
+    <div class="row"><input id="s_bank" placeholder="Bank name" value="${esc(S.bankName || "")}"><input id="s_accn" placeholder="Account name" value="${esc(S.accName || "")}"></div>
+    <div class="row"><input id="s_acc" inputmode="numeric" placeholder="Account number" value="${esc(S.accNo || "")}"><input id="s_ct" inputmode="tel" placeholder="WhatsApp number" value="${esc(S.contact || "")}"></div>
+    <h2 style="margin-top:12px">Projects</h2>
+    ${(S.projects || []).map((p, i) => `<div class="fee"><input id="p_t${i}" placeholder="Project title (e.g. Madrasah borehole)" value="${esc(p.title || "")}"><textarea id="p_d${i}" rows="2" placeholder="About the project" style="width:100%;box-sizing:border-box;padding:10px;margin-top:6px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit">${esc(p.desc || "")}</textarea><div class="row"><input id="p_g${i}" type="number" inputmode="numeric" placeholder="Target amount" value="${p.target || ""}"><input id="p_r${i}" type="number" inputmode="numeric" placeholder="Raised so far" value="${p.raised || ""}"><button class="b s o" style="margin:0" data-a="delproj" data-k="${i}">x</button></div></div>`).join("")}
+    <button class="b g" data-a="addproj">+ Add a project</button><button class="b" data-a="savesad">Save page</button></div>`;
   } else if (tab === "vis") {
     const okv = VIS.filter(v => v.ok), seen = new Set(okv.map(v => v.familyId));
     const never = FAM.filter(f => !seen.has(f.id));
@@ -110,6 +119,11 @@ function draw() {
   const ad = $("ad"); if (ad) ad.onchange = () => { adate = ad.value || today(); loadDay(); };
   const ac = $("ac"); if (ac) ac.onchange = () => { acls = ac.value; draw(); };
 }
+function grabSad() {
+  const v = id => ($(id) ? $(id).value.trim() : "");
+  SAD.intro = v("s_intro"); SAD.bankName = v("s_bank"); SAD.accName = v("s_accn"); SAD.accNo = v("s_acc"); SAD.contact = v("s_ct");
+  SAD.projects = (SAD.projects || []).map((p, i) => ({ title: v("p_t" + i), desc: v("p_d" + i), target: Number(v("p_g" + i)) || 0, raised: Number(v("p_r" + i)) || 0 }));
+}
 async function loadDay() {
   marks = {};
   try { const s = await getDoc(doc(db, "madAttendance", adate)); if (s.exists()) marks = { ...(s.data().marks || {}) }; } catch (e) {}
@@ -119,7 +133,7 @@ $("app").onclick = async e => {
   const t = e.target.closest("[data-a]"); if (!t) return;
   const a = t.dataset.a, k = t.dataset.k || ""; msg = "";
   try {
-    if (a === "tab") { tab = k; if (k === "vis") { VIS = (await getDocs(query(collection(db, "madVisits"), orderBy("at", "desc"), limit(200)))).docs.map(d => d.data()); } if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
+    if (a === "tab") { tab = k; if (k === "sad") { try { const x = await getDoc(doc(db, "madSettings", "sadaqah")); SAD = x.exists() ? x.data() : {}; } catch (e) {} } if (k === "vis") { VIS = (await getDocs(query(collection(db, "madVisits"), orderBy("at", "desc"), limit(200)))).docs.map(d => d.data()); } if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
     else if (a === "open") { open = open === k ? "" : k; }
     else if (a === "addfam") {
       const father = $("nf").value.trim(), phone = $("np").value.trim();
@@ -137,11 +151,14 @@ $("app").onclick = async e => {
     else if (a === "due" || a === "pay" || a === "delpay") {
       const [fi, ci, fk] = k.split("|"), f = getFam(fi), c = f.children.find(x => x.id === ci);
       c.fees = c.fees || {}; const fe = c.fees[fk] = c.fees[fk] || { due: 0, pays: [] }; fe.pays = fe.pays || [];
-      if (a === "due") { fe.due = Math.max(0, Number($("due_" + k).value) || 0); }
+      if (a === "due") { fe.due = Math.max(0, Number($("due_" + k).value) || 0); fe.by = $("by_" + k).value || ""; }
       else if (a === "pay") { const amt = Number($("pay_" + k).value); if (!(amt > 0)) { msg = "!Type the amount paid."; draw(); return; } fe.pays.push({ amt, date: today(), note: $("pn_" + k).value.trim().slice(0, 60) }); }
       else { if (!confirm("Remove this payment?")) return; fe.pays.splice(Number(t.dataset.i), 1); }
       await saveFam(f); msg = "Saved.";
     }
+    else if (a === "addproj") { grabSad(); SAD.projects = SAD.projects || []; SAD.projects.push({ title: "", desc: "", target: 0, raised: 0 }); }
+    else if (a === "delproj") { grabSad(); SAD.projects.splice(Number(k), 1); }
+    else if (a === "savesad") { grabSad(); await setDoc(doc(db, "madSettings", "sadaqah"), { ...SAD, updatedAt: serverTimestamp() }); msg = "Sadaqah page saved."; }
     else if (a === "mark") { marks[k] = marks[k] === t.dataset.m ? undefined : t.dataset.m; if (!marks[k]) delete marks[k]; }
     else if (a === "allp") { FAM.forEach(f => (f.children || []).forEach(c => { if ((!acls || c.cls === acls) && !marks[c.id]) marks[c.id] = "P"; })); }
     else if (a === "saveatt") { await setDoc(doc(db, "madAttendance", adate), { marks, updatedAt: serverTimestamp() }); msg = "Attendance saved for " + adate + "."; }
