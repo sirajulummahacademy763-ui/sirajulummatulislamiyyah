@@ -1,3 +1,4 @@
+(function(){try{var h=new Date().getHours(),ph=(h>=6&&h<18)?"dark":"light",m=ph,o=null;try{o=JSON.parse(localStorage.getItem("sm_mode")||"null")}catch(e){}if(o&&o.ph===ph)m=o.m;document.documentElement.setAttribute("data-mode",m);window.__smPh=ph;window.addEventListener("DOMContentLoaded",function(){if(document.getElementById("mode-btn"))return;var b=document.createElement("button");b.id="mode-btn";b.type="button";b.setAttribute("aria-label","Switch light or dark");var u=function(){b.textContent=document.documentElement.getAttribute("data-mode")==="dark"?"\u2600\uFE0F":"\uD83C\uDF19"};u();b.onclick=function(){var n=document.documentElement.getAttribute("data-mode")==="dark"?"light":"dark";document.documentElement.setAttribute("data-mode",n);try{localStorage.setItem("sm_mode",JSON.stringify({m:n,ph:ph}))}catch(e){}u()};document.body.appendChild(b)})}catch(e){}})();
 // Security: never let another website show this site inside a frame (clickjacking)
 try{if(window.top!==window.self){window.top.location=window.self.location}}catch(e){document.documentElement.style.display="none"}
 // Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
@@ -211,7 +212,7 @@ if(!isPub)import("./notice-popup.js?v=8").catch(()=>{});
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
-if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=5">');
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=6">');
 if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#0a3f31">');
 (function(){
  const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
