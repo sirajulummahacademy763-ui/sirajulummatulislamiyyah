@@ -13,7 +13,7 @@ document.body.insertAdjacentHTML("afterbegin",
  nav.map(n=>'<a href="'+n[0]+'">'+n[1]+'</a>').join("")+
  cta+'</nav></header>');
 if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
- '<footer><div style="max-width:560px"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.2rem;color:#f5b94a">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur\u2019an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>'+
+ '<footer><div style="max-width:560px"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.2rem;color:#f0be4d">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur\u2019an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>'+
  '<div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a></div></footer>');
 const cat=new URLSearchParams(location.search).get("category");
 document.querySelectorAll("[data-cat]").forEach(el=>{if(cat&&el.dataset.cat!==cat)el.hidden=true});
@@ -55,7 +55,7 @@ async function notify(role,u,isSup,f,c,isPrin){
     if(n>0&&!document.getElementById("msgbar")){
       const b=document.createElement("a");b.id="msgbar";b.href=role==="admin"?"messages-admin.html":(isPrin?"principal.html":"supervisor-inbox.html");
       b.textContent="💬 You have "+n+" new message"+(n>1?"s":"")+" · tap to read";
-      b.style.cssText="position:sticky;top:0;z-index:9990;display:block;background:#f5b94a;color:#12163a;font:700 14px Figtree,system-ui,sans-serif;text-align:center;padding:10px 12px;text-decoration:none";
+      b.style.cssText="position:sticky;top:0;z-index:9990;display:block;background:#f0be4d;color:#0a3f31;font:700 14px Figtree,system-ui,sans-serif;text-align:center;padding:10px 12px;text-decoration:none";
       document.body.insertBefore(b,document.body.firstChild);
     }
   }catch(e){}
@@ -202,17 +202,17 @@ if(!isPub){
 }
 // Copyright line on every page
 if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
- '<div style="background:var(--night,#12163b);color:#c9ccdf;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.<br>Website developed with Alpha Tech Hub</div>');
+ '<div style="background:var(--night,#0a3f31);color:#bfd6ca;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.<br>Website developed with Alpha Tech Hub</div>');
 // Help bot
-if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js";document.body.appendChild(bs);}
+if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js?v=5";document.body.appendChild(bs);}
 if(!isPub)import("./classes-check.js");
 if(!isPub)import("./notice-popup.js?v=8").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
 if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
-if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=4">');
-if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#12163a">');
+if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=5">');
+if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#0a3f31">');
 (function(){
  const hd=document.querySelector("header.top"),nv=hd&&hd.querySelector("nav"),mb=hd&&hd.querySelector(".mb");if(!nv||!mb)return;
  const here=(location.pathname.split("/").pop()||"index.html");
@@ -298,7 +298,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
 // Admin-only line at the bottom of each page: which site.js is running (helps find caching problems)
 setTimeout(()=>{try{
  if(document.documentElement.getAttribute("data-role")!=="admin")return;
- const d=document.createElement("div");d.style.cssText="text-align:center;font:11px Figtree,system-ui,sans-serif;color:#9aa0c8;background:#12163a;padding:0 8px 10px";
+ const d=document.createElement("div");d.style.cssText="text-align:center;font:11px Figtree,system-ui,sans-serif;color:#8fb0a0;background:#0a3f31;padding:0 8px 10px";
  const jb=document.querySelector(".jb"),fold=document.querySelectorAll(".cd.fold").length,crumb=!!document.querySelector(".crumb");
  d.textContent="site v18 · layer: "+(window.__layer||"not run")+" · crumb: "+(crumb?"yes":"no")+" · folding: "+fold+" · page: "+(location.pathname.split("/").pop()||"/");
  document.body.appendChild(d);
