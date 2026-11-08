@@ -54,7 +54,7 @@ onAuthStateChanged(auth, async u => {
   h += '<a class="pa" href="announcements.html">Open the notice board &rarr;</a>';
 
   const st = document.createElement("style");
-  st.textContent = ".pbar{position:relative;background:#12163a;color:#eef0f8;border-bottom:4px solid #f5b94a;border-radius:12px;padding:12px 40px 12px 16px;margin:0 0 18px;font-size:.92rem;line-height:1.6}.pbar.wide{border-radius:0;margin:0}.pbar b{color:#fff}.pbar .nw{background:#f5b94a;color:#12163a;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:700}.pbar .pa{display:inline-block;margin-top:4px;color:#f5b94a;font-weight:700;text-decoration:none}.pbar .x{position:absolute;right:10px;top:6px;background:none;border:0;color:#cfd3e8;font-size:1.3rem;cursor:pointer}";
+  st.textContent = ".pbar{position:relative;background:var(--night);color:#f2faf5;border-bottom:4px solid #f0be4d;border-radius:12px;padding:12px 40px 12px 16px;margin:0 0 18px;font-size:.92rem;line-height:1.6}.pbar.wide{border-radius:0;margin:0}.pbar b{color:#fff}.pbar .nw{background:#f0be4d;color:var(--night);border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:700}.pbar .pa{display:inline-block;margin-top:4px;color:#f0be4d;font-weight:700;text-decoration:none}.pbar .x{position:absolute;right:10px;top:6px;background:none;border:0;color:#d3e8dc;font-size:1.3rem;cursor:pointer}";
   document.head.appendChild(st);
 
   const bar = document.createElement("div");
