@@ -84,7 +84,7 @@ function confetti() { const e = ["&#127881;", "&#11088;", "&#10024;", "&#127882;
 function draw(data) {
   let h = "";
   if (step === "search") {
-    h = `<div class="cd"><label for="fn">Father's name</label><input id="fn" placeholder="Type your name, e.g. Abdullah" autocomplete="off"><button class="b" id="go">Search</button>${err ? `<p class="er">${esc(err)}</p>` : ""}${results.length ? '<p class="hint">Tap your name:</p>' + results.map((r, i) => `<button class="fa" data-i="${i}"><b>${esc(r.father)}</b>${r.hint ? `<small>Phone starts with ${esc(r.hint)}…</small>` : ""}</button>`).join("") : ""}</div><a class="sj" href="madrasah-sadaqah.html"><div class="ar">الصدقة الجارية</div><b>Sadaqah Jariyah</b><small>Tap to see how to give</small></a>`;
+    h = `<div class="cd"><label for="fn">Father's name</label><input id="fn" placeholder="Type your name, e.g. Abdullah" autocomplete="off"><button class="b" id="go">Search</button>${err ? `<p class="er">${esc(err)}</p>` : ""}${results.length ? '<p class="hint">Tap your name:</p>' + results.map((r, i) => `<button class="fa" data-i="${i}"><b>${esc(r.father)}</b>${r.hint ? `<small>Phone starts with ${esc(r.hint)}…</small>` : ""}</button>`).join("") : ""}</div><a class="sj" href="donate.html"><div class="ar">الصدقة الجارية</div><b>Sadaqah Jariyah</b><small>Tap to give &mdash; your currency shows automatically</small></a>`;
   } else if (step === "code") {
     h = `<div class="cd"><b>${esc(pick.father)}</b><p class="hint">To keep your children's information private, type the <b>last 4 digits</b> of the phone number you gave the madrasah.</p><input id="cd" inputmode="numeric" maxlength="4" placeholder="Last 4 digits" autocomplete="off"><button class="b" id="ok">Show my children</button><button class="b g" id="back">Back</button>${err ? `<p class="er">${esc(err)}</p>` : ""}</div>`;
   } else {
@@ -116,7 +116,7 @@ function draw(data) {
           ${(fe.pays || []).length ? `<div class="pays">${fe.pays.map(p => esc(p.date) + ": " + N(p.amt)).join(" &middot; ")}</div>` : ""}${msg}</div>`;
       }).join("");
       return k + "</div>";
-    }).join("") + '<a class="sj" href="madrasah-sadaqah.html"><div class="ar">الصدقة الجارية</div><b>Sadaqah Jariyah</b><small>Give for the sake of Allah &mdash; tap to see how</small></a><button class="b g" id="done">Close</button>';
+    }).join("") + '<a class="sj" href="donate.html"><div class="ar">الصدقة الجارية</div><b>Sadaqah Jariyah</b><small>Give for the sake of Allah &mdash; your currency shows automatically</small></a><button class="b g" id="done">Close</button>';
   }
   $("app").innerHTML = h;
   const on = (id, f) => { const n = $(id); if (n) n.onclick = f; };
