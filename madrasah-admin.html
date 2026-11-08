@@ -38,7 +38,8 @@ const FEES = [["tuition", "Tuition (Tira fees)"], ["madrasah", "Madrasah fees"],
 const N = x => "₦" + Number(x || 0).toLocaleString();
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-let VIS = [], FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
+const SUR = [["Al-Fatihah", 7], ["Al-Baqarah", 286], ["Ali 'Imran", 200], ["An-Nisa", 176], ["Al-Ma'idah", 120], ["Al-An'am", 165], ["Al-A'raf", 206], ["Al-Anfal", 75], ["At-Tawbah", 129], ["Yunus", 109], ["Hud", 123], ["Yusuf", 111], ["Ar-Ra'd", 43], ["Ibrahim", 52], ["Al-Hijr", 99], ["An-Nahl", 128], ["Al-Isra", 111], ["Al-Kahf", 110], ["Maryam", 98], ["Ta-Ha", 135], ["Al-Anbiya", 112], ["Al-Hajj", 78], ["Al-Mu'minun", 118], ["An-Nur", 64], ["Al-Furqan", 77], ["Ash-Shu'ara", 227], ["An-Naml", 93], ["Al-Qasas", 88], ["Al-'Ankabut", 69], ["Ar-Rum", 60], ["Luqman", 34], ["As-Sajdah", 30], ["Al-Ahzab", 73], ["Saba", 54], ["Fatir", 45], ["Ya-Sin", 83], ["As-Saffat", 182], ["Sad", 88], ["Az-Zumar", 75], ["Ghafir", 85], ["Fussilat", 54], ["Ash-Shura", 53], ["Az-Zukhruf", 89], ["Ad-Dukhan", 59], ["Al-Jathiyah", 37], ["Al-Ahqaf", 35], ["Muhammad", 38], ["Al-Fath", 29], ["Al-Hujurat", 18], ["Qaf", 45], ["Adh-Dhariyat", 60], ["At-Tur", 49], ["An-Najm", 62], ["Al-Qamar", 55], ["Ar-Rahman", 78], ["Al-Waqi'ah", 96], ["Al-Hadid", 29], ["Al-Mujadila", 22], ["Al-Hashr", 24], ["Al-Mumtahanah", 13], ["As-Saff", 14], ["Al-Jumu'ah", 11], ["Al-Munafiqun", 11], ["At-Taghabun", 18], ["At-Talaq", 12], ["At-Tahrim", 12], ["Al-Mulk", 30], ["Al-Qalam", 52], ["Al-Haqqah", 52], ["Al-Ma'arij", 44], ["Nuh", 28], ["Al-Jinn", 28], ["Al-Muzzammil", 20], ["Al-Muddaththir", 56], ["Al-Qiyamah", 40], ["Al-Insan", 31], ["Al-Mursalat", 50], ["An-Naba", 40], ["An-Nazi'at", 46], ["'Abasa", 42], ["At-Takwir", 29], ["Al-Infitar", 19], ["Al-Mutaffifin", 36], ["Al-Inshiqaq", 25], ["Al-Buruj", 22], ["At-Tariq", 17], ["Al-A'la", 19], ["Al-Ghashiyah", 26], ["Al-Fajr", 30], ["Al-Balad", 20], ["Ash-Shams", 15], ["Al-Layl", 21], ["Ad-Duha", 11], ["Ash-Sharh", 8], ["At-Tin", 8], ["Al-'Alaq", 19], ["Al-Qadr", 5], ["Al-Bayyinah", 8], ["Az-Zalzalah", 8], ["Al-'Adiyat", 11], ["Al-Qari'ah", 11], ["At-Takathur", 8], ["Al-'Asr", 3], ["Al-Humazah", 9], ["Al-Fil", 5], ["Quraysh", 4], ["Al-Ma'un", 7], ["Al-Kawthar", 3], ["Al-Kafirun", 6], ["An-Nasr", 3], ["Al-Masad", 5], ["Al-Ikhlas", 4], ["Al-Falaq", 5], ["An-Nas", 6]];
+let LES = {}, lesDate = today(), lesCls = "", lesOpen = "", lesLoaded = "", VIS = [], FAM = [], tab = "fam", q = "", open = "", msg = "", adate = today(), acls = "", marks = {}, loadedDay = "";
 const getFam = id => FAM.find(f => f.id === id);
 const paid = fe => (fe.pays || []).reduce((s, p) => s + Number(p.amt || 0), 0);
 
@@ -84,7 +85,7 @@ function famHtml(f) {
 }
 function draw() {
   let h = `<h1>Madrasah</h1><p class="hint">Parents open <b>madrasah.html</b>, type the father's name, then the last 4 digits of the phone number you save here.</p>
-  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button><button class="b ${tab === "vis" ? "" : "off"}" data-a="tab" data-k="vis">Visits</button></div>`;
+  <div class="tabs"><button class="b ${tab === "fam" ? "" : "off"}" data-a="tab" data-k="fam">Families & fees</button><button class="b ${tab === "att" ? "" : "off"}" data-a="tab" data-k="att">Attendance</button><button class="b ${tab === "vis" ? "" : "off"}" data-a="tab" data-k="vis">Visits</button><button class="b ${tab === "les" ? "" : "off"}" data-a="tab" data-k="les">Quran lessons</button></div>`;
   if (msg) h += `<p class="m ${msg[0] === "!" ? "er" : "ok"}">${esc(msg.replace(/^!/, ""))}</p>`;
   if (tab === "fam") {
     h += `<div class="cd"><h2>Add a father</h2><div class="row"><input id="nf" placeholder="Father's full name"><input id="np" placeholder="Phone number" inputmode="tel"><button class="b s" data-a="addfam">Add</button></div></div>
@@ -92,6 +93,23 @@ function draw() {
     const ql = q.toLowerCase();
     const list = FAM.filter(f => !ql || String(f.father).toLowerCase().includes(ql));
     h += list.length ? list.map(famHtml).join("") : '<p class="hint">No family yet.</p>';
+  } else if (tab === "les") {
+    const cl = classes();
+    const kids = FAM.flatMap(f => (f.children || []).map(c => ({ ...c, father: f.father }))).filter(c => !lesCls || c.cls === lesCls).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    const TL = { H: "Hifz (new)", R: "Revision" }, ML = { E: "Excellent", G: "Good", P: "Needs practice" };
+    h += `<div class="cd"><h2>Daily Quran lessons</h2><p class="hint">Record what each child recited or revised. Parents see it on their page.</p>
+    <div class="row"><input type="date" id="ld" value="${lesDate}"><select id="lc"><option value="">All classes</option>${cl.map(c => `<option ${c === lesCls ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`;
+    h += kids.length ? kids.map(c => {
+      const es = LES[c.id] || [], isO = lesOpen === c.id;
+      return `<div class="kid"><b>${esc(c.name)}</b> <small class="hint">${esc(c.cls || "")} &middot; ${esc(c.father)}</small>
+      ${es.map((e, i) => `<div class="row" style="margin:3px 0"><span>${TL[e.t]}: <b>${esc((SUR[e.s - 1] || [""])[0])} ${e.a}${e.b !== e.a ? "&ndash;" + e.b : ""}</b> &middot; ${ML[e.m]}${e.n ? " &middot; " + esc(e.n) : ""}</span><button class="b s o" style="margin:0;padding:3px 10px" data-a="dellesson" data-k="${c.id}" data-i="${i}">x</button></div>`).join("")}
+      ${isO ? `<div class="fee"><div class="row"><select id="lt"><option value="H">Hifz (new)</option><option value="R">Revision</option></select><select id="lm"><option value="E">Excellent</option><option value="G">Good</option><option value="P">Needs practice</option></select></div>
+        <select id="ls">${SUR.map((x, i) => `<option value="${i + 1}">${i + 1}. ${esc(x[0])} (${x[1]})</option>`).join("")}</select>
+        <div class="row"><input id="la" type="number" inputmode="numeric" min="1" placeholder="From verse"><input id="lb" type="number" inputmode="numeric" min="1" placeholder="To verse"></div>
+        <input id="ln" placeholder="Note for the parent (optional)" maxlength="120" style="margin-top:6px">
+        <button class="b" data-a="addlesson" data-k="${c.id}">Add</button><button class="b g" data-a="openles" data-k="">Cancel</button></div>` : `<button class="b g" style="margin-top:4px" data-a="openles" data-k="${c.id}">+ Add recitation</button>`}</div>`;
+    }).join("") + `<button class="b" data-a="saveles">Save lessons for ${lesDate}</button>` : '<p class="hint">Add children first.</p>';
+    h += "</div>";
   } else if (tab === "vis") {
     const okv = VIS.filter(v => v.ok), seen = new Set(okv.map(v => v.familyId));
     const never = FAM.filter(f => !seen.has(f.id));
@@ -107,8 +125,15 @@ function draw() {
   }
   $("app").innerHTML = h;
   const fq = $("fq"); if (fq) { fq.oninput = () => { q = fq.value; const p = fq.selectionStart; draw(); const n = $("fq"); n.focus(); n.setSelectionRange(p, p); }; }
+  const ld = $("ld"); if (ld) ld.onchange = () => { lesDate = ld.value || today(); loadLes(); };
+  const lc = $("lc"); if (lc) lc.onchange = () => { lesCls = lc.value; draw(); };
   const ad = $("ad"); if (ad) ad.onchange = () => { adate = ad.value || today(); loadDay(); };
   const ac = $("ac"); if (ac) ac.onchange = () => { acls = ac.value; draw(); };
+}
+async function loadLes() {
+  LES = {}; lesOpen = "";
+  try { const x = await getDoc(doc(db, "madLessons", lesDate)); if (x.exists()) LES = { ...(x.data().entries || {}) }; } catch (e) {}
+  lesLoaded = lesDate; draw();
 }
 async function loadDay() {
   marks = {};
@@ -119,7 +144,7 @@ $("app").onclick = async e => {
   const t = e.target.closest("[data-a]"); if (!t) return;
   const a = t.dataset.a, k = t.dataset.k || ""; msg = "";
   try {
-    if (a === "tab") { tab = k; if (k === "vis") { VIS = (await getDocs(query(collection(db, "madVisits"), orderBy("at", "desc"), limit(200)))).docs.map(d => d.data()); } if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
+    if (a === "tab") { tab = k; if (k === "les" && lesLoaded !== lesDate) { await loadLes(); return; } if (k === "vis") { VIS = (await getDocs(query(collection(db, "madVisits"), orderBy("at", "desc"), limit(200)))).docs.map(d => d.data()); } if (k === "att" && loadedDay !== adate) { await loadDay(); return; } }
     else if (a === "open") { open = open === k ? "" : k; }
     else if (a === "addfam") {
       const father = $("nf").value.trim(), phone = $("np").value.trim();
@@ -142,6 +167,15 @@ $("app").onclick = async e => {
       else { if (!confirm("Remove this payment?")) return; fe.pays.splice(Number(t.dataset.i), 1); }
       await saveFam(f); msg = "Saved.";
     }
+    else if (a === "openles") { lesOpen = k; }
+    else if (a === "addlesson") {
+      const sn = Number($("ls").value), fa = Number($("la").value), fb = Number($("lb").value) || fa, mx = SUR[sn - 1][1];
+      if (!(fa >= 1) || fb < fa || fb > mx) { msg = "!Check the verses: " + SUR[sn - 1][0] + " has " + mx + " verses."; draw(); return; }
+      (LES[k] = LES[k] || []).push({ t: $("lt").value, s: sn, a: fa, b: fb, m: $("lm").value, n: $("ln").value.trim().slice(0, 120) });
+      lesOpen = ""; msg = "Added. Remember to tap Save lessons.";
+    }
+    else if (a === "dellesson") { LES[k].splice(Number(t.dataset.i), 1); if (!LES[k].length) delete LES[k]; }
+    else if (a === "saveles") { await setDoc(doc(db, "madLessons", lesDate), { entries: LES, updatedAt: serverTimestamp() }); msg = "Lessons saved for " + lesDate + "."; }
     else if (a === "mark") { marks[k] = marks[k] === t.dataset.m ? undefined : t.dataset.m; if (!marks[k]) delete marks[k]; }
     else if (a === "allp") { FAM.forEach(f => (f.children || []).forEach(c => { if ((!acls || c.cls === acls) && !marks[c.id]) marks[c.id] = "P"; })); }
     else if (a === "saveatt") { await setDoc(doc(db, "madAttendance", adate), { marks, updatedAt: serverTimestamp() }); msg = "Attendance saved for " + adate + "."; }
