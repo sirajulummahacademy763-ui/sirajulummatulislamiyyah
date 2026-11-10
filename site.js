@@ -308,3 +308,17 @@ setTimeout(()=>{try{
  document.body.appendChild(d);
 }catch(e){}},4000);
 import("./lang.js");
+
+// Safety net: any leftover navy/blue panel (for example a banner drawn by a file we did not recolour) is turned into the site green.
+(function(){try{
+var busy=0;
+function navy(c){var m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c||"");if(!m)return false;var r=+m[1],g=+m[2],b=+m[3];return b>g+12&&b>r+12&&Math.max(r,g,b)<150}
+function fix(){busy=0;var els=document.querySelectorAll("div,section,aside,a,article,li,button,span,p");
+for(var i=0;i<els.length&&i<4000;i++){var e=els[i];if(e.closest("#sb-root"))continue;var cs=getComputedStyle(e);
+ if(navy(cs.backgroundColor)){e.style.setProperty("background-color","var(--night)","important");if(cs.backgroundImage&&cs.backgroundImage!=="none")e.style.setProperty("background-image","none","important")}
+ else if(cs.backgroundImage&&cs.backgroundImage.indexOf("gradient")>-1){var m=/rgba?\(\d+,\s*\d+,\s*\d+/.exec(cs.backgroundImage);if(m&&navy(m[0])){e.style.setProperty("background-image","linear-gradient(135deg,var(--night),var(--deep))","important")}}}}
+function later(){if(!busy){busy=1;setTimeout(fix,500)}}
+window.addEventListener("load",function(){later();setTimeout(fix,2500);setTimeout(fix,6000);new MutationObserver(later).observe(document.body,{childList:true,subtree:true})});
+}catch(e){}})();
+
+;(function(){try{if(/exam/i.test(location.pathname)&&!window.__examGuard){var g=document.createElement("script");g.src="exam-guard.js?v=1";document.head.appendChild(g)}}catch(e){}})();
