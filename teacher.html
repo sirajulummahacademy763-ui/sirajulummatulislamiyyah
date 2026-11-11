@@ -153,7 +153,7 @@ async function showRes(eid) {
   const show = r => x.type === "mcq" ? qs.map((q, i) => `${i + 1}. ${esc(q.q)}\n   Answer: ${esc((q.options || [])[(r.answers || [])[i]] || "-")}`).join("\n") : esc(r.text);
   const done = subs.filter(r => r.status === "graded").length;
   $("xr").innerHTML = `<h3 style="margin-top:0">${esc(x.title)} <small>· ${esc(x.subject || "")}</small></h3><p class="hint">${subs.length} submitted · ${done} marked</p>` + (x.type === "mcq" && subs.length ? '<button id="xauto" type="button" style="margin-top:0">Mark all automatically</button> <span id="xmsg"></span>' : "") +
-    (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}
+    (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}${r.autoReason ? ' <span class="pill c" style="background:#fde4e1;color:#b3261e">Auto-submitted: ' + esc(r.autoReason) + "</span>" : ""}
       <pre>${show(r)}</pre>
       <div class="row"><div><label>Score (out of ${x.maxScore})</label><input type="number" min="0" max="${x.maxScore}" id="xs-${r.id}" value="${r.score == null ? "" : r.score}"></div>
       <div><label>Comment</label><input id="xf-${r.id}" value="${esc(r.feedback || "")}"></div></div>

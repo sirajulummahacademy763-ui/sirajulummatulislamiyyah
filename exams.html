@@ -1,121 +1,157 @@
 <!DOCTYPE html>
 <html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tests and exams | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
-.ex{max-width:900px}
-.xc{background:#fff;border:1.5px solid #cfd3e8;border-left:5px solid #f5b94a;border-radius:14px;padding:18px;margin-bottom:16px}
-.xc h3{margin:0 0 4px;font-family:Amiri,serif;font-size:1.5rem}
-.xc small{color:#4b5072;display:block;line-height:1.6}
-.bd{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:#12163a;color:#f5b94a;margin-left:6px;vertical-align:middle}
-.st{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:999px;font-weight:700;font-size:.85rem;background:#eef0f8;color:#12163a}
-.st.ok{background:#e6f4ec;color:#1c7a4d}.st.no{background:#fdecea;color:#b3261e}
-.xb{font:inherit;font-weight:700;padding:10px 20px;border:0;border-radius:10px;background:#12163a;color:#f5b94a;cursor:pointer;margin-top:10px}
-a.xb{display:inline-block;text-decoration:none}
-.tm{position:sticky;top:0;z-index:5;background:#12163a;color:#f5b94a;font-weight:700;padding:12px 16px;border-radius:12px;margin-bottom:14px;display:flex;justify-content:space-between}
-.q{background:#fff;border:1.5px solid #cfd3e8;border-radius:12px;padding:16px;margin-bottom:12px}
-.q label{display:block;padding:5px 0}
-.q textarea{width:100%;padding:10px;border:1.5px solid #cfd3e8;border-radius:8px;font:inherit}
-.er{color:#b3261e;font-weight:500}
+.ca{max-width:820px}
+.hint{color:#4b6358;font-size:.92rem}
+.cl{font-family:Amiri,serif;font-size:1.5rem;margin:22px 0 6px}
+.cl small{font-family:Figtree,sans-serif;font-size:.6em;color:#4b6358;font-weight:500}
+.ex{background:#fff;border:1.5px solid #cfe0d6;border-left:5px solid #f0be4d;border-radius:12px;padding:13px 15px;margin-top:10px}
+.ex.test{border-left-color:#0d6a50}
+.ex b{font-size:1.08rem}
+.ex .mt{color:#4b6358;font-size:.86rem;margin:3px 0 8px}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:700;margin-right:6px;background:#fdf1d4;color:#8a5a00}
+.pill.t{background:#e4f0e9;color:#0a4535}.pill.o{background:#dff3e7;color:#1c7a4d}.pill.u{background:#e6eefc;color:#2a4c8f}.pill.c{background:#eee;color:#555}.pill.d{background:#fde4e1;color:#b3261e}
+.bt{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:#0a4535;color:#fff;cursor:pointer}
+.bt:disabled{opacity:.5}
+.er{color:#b3261e;font-weight:500}.ok{color:#1c7a4d;font-weight:500}
+#run{background:#fff;border:1.5px solid #cfe0d6;border-radius:14px;padding:16px}
+#tm{position:sticky;top:0;z-index:5;background:#0a4535;color:#fff;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:14px}
+#tm.low{background:#b3261e}
+.q{border-top:1px solid #e2eee7;padding:14px 0}
+.q p{margin:0 0 8px;font-weight:700}
+.q label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1.5px solid #cfe0d6;border-radius:10px;margin:6px 0;cursor:pointer;background:#fff}
+.q label.on{border-color:#0d6a50;background:#e4f0e9}
+.q input{width:20px;height:20px;flex:none;margin-top:2px}
+#wt{width:100%;box-sizing:border-box;min-height:180px;padding:10px;border:1.5px solid #cfe0d6;border-radius:10px;font:inherit}
 </style></head><body>
-<main class="page ex">
-<h1>Tests and exams</h1>
-<p class="lead">Tests and exams for the courses you unlocked. Each one opens and closes at a set time, and has a time limit once you start.</p>
-<div id="app"><p>Loading...</p></div>
-</main>
+<main class="page ca" id="app"><p>Loading...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
 const fmt = t => t && t.toDate ? t.toDate().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
-let me = null, items = [], timer = null;
+let me = null, myName = "Student", exams = [], results = {}, starts = {}, run = null, tick = null, reason = "";
+// every exam is described the same way, whether it belongs to a class or to a course
+const P = x => x.src === "class"
+  ? { exam: ["classExams", x.id], q: ["classExamQuestions", x.id], start: ["classExamStarts", me.uid + "_" + x.id], res: ["classExamResults", me.uid + "_" + x.id] }
+  : { exam: ["courses", x.cid, "exams", x.id], q: ["courses", x.cid, "examQuestions", x.id], start: ["courses", x.cid, "examStarts", me.uid + "_" + x.id], res: ["courses", x.cid, "examResults", me.uid + "_" + x.id] };
+const ref = p => doc(db, ...p);
+window.addEventListener("exam-violation", e => { reason = (e.detail && e.detail.reason) || "left the exam"; });
 
-onAuthStateChanged(auth, async u => { if (!u) return; me = u; loadList(); });
-
-async function loadList() {
-  clearInterval(timer); window.onbeforeunload = null;
-  $("app").innerHTML = "<p>Loading...</p>";
-  items = [];
+onAuthStateChanged(auth, async u => {
+  if (!u) return $("app").innerHTML = '<h1>Tests and exams</h1><p>Please <a href="login.html">log in</a> first.</p>';
+  me = u;
   try {
-    const en = await getDocs(query(collection(db, "enrollments"), where("uid", "==", me.uid)));
-    const cids = [...new Set(en.docs.map(d => d.data().courseId))];
-    for (const cid of cids) {
-      let c; try { c = await getDoc(doc(db, "courses", cid)); } catch (e) { continue; }
-      if (!c.exists()) continue;
-      let ex = []; try { ex = (await getDocs(collection(db, "courses", cid, "exams"))).docs; } catch (e) {}
-      const res = {};
-      try { (await getDocs(query(collection(db, "courses", cid, "examResults"), where("uid", "==", me.uid)))).docs.forEach(d => res[d.data().examId] = d.data()); } catch (e) {}
-      for (const d of ex) items.push({ cid, course: c.data().title, id: d.id, ...d.data(), res: res[d.id] });
+    const s = await getDoc(doc(db, "students", u.uid));
+    const st = s.exists() ? s.data() : {};
+    myName = st.name || u.email || "Student";
+    const classes = st.classes || {};
+    for (const sec of Object.keys(SN)) {
+      const lv = classes[sec]; if (!lv || lv === "none") continue;
+      try { (await getDocs(query(collection(db, "classExams"), where("classKey", "==", sec + "|" + lv)))).docs.forEach(d => exams.push({ id: d.id, src: "class", group: SN[sec] + " · " + lv, ...d.data() })); } catch (e) {}
     }
-    await Promise.all(items.map(async it => {
-      if (it.res && it.res.status === "graded" && it.res.score >= it.passMark) { try { it.cert = (await getDoc(doc(db, "certificates", me.uid + "_" + it.id))).exists(); } catch (e) {} }
-    }));
-  } catch (e) { $("app").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
-  items.sort((a, b) => a.opensAt.seconds - b.opensAt.seconds);
-  if (!items.length) { $("app").innerHTML = "<p>No tests or exams yet. Unlock a course to see its tests here.</p>"; return; }
-  $("app").innerHTML = items.map(it => {
-    const now = Date.now(), o = it.opensAt.toMillis(), c = it.closesAt.toMillis(), r = it.res;
-    let st = "", btn = "";
-    if (r) {
-      if (r.status === "graded") {
-        const ok = r.score >= it.passMark;
-        st = `<span class="st ${ok ? "ok" : "no"}">Score: ${r.score} / ${it.maxScore} · ${ok ? "Passed" : "Not passed"}</span>${r.feedback ? `<small>Teacher's comment: ${esc(r.feedback)}</small>` : ""}`;
-        if (it.cert) btn = `<a class="xb" href="certificate.html?id=${me.uid}_${it.id}">View my certificate</a>`;
-      } else st = '<span class="st">Submitted. Waiting for your teacher to mark it.</span>';
-    } else if (now < o) st = `<span class="st">Opens ${fmt(it.opensAt)}</span>`;
-    else if (now > c) st = '<span class="st no">Closed</span>';
-    else { st = '<span class="st ok">Open now</span>'; btn = `<button class="xb" data-s="${it.id}">Start</button>`; }
-    return `<div class="xc"><h3>${esc(it.title)}<span class="bd">${it.kind === "exam" ? "Exam" : "Test"}</span></h3><small>${esc(it.course)}</small>
-      <small>Opens ${fmt(it.opensAt)} · Closes ${fmt(it.closesAt)} · ${it.durationMin} minutes · ${it.maxScore} marks · Pass mark ${it.passMark}</small>${st}<br>${btn}</div>`;
-  }).join("");
-  $("app").querySelectorAll("[data-s]").forEach(b => b.onclick = () => start(items.find(x => x.id === b.dataset.s)));
+    try {
+      const en = await getDocs(query(collection(db, "enrollments"), where("uid", "==", u.uid)));
+      for (const e of en.docs) {
+        const cid = e.data().courseId; let title = "Course";
+        try { const c = await getDoc(doc(db, "courses", cid)); if (c.exists()) title = c.data().title || title; } catch (x) {}
+        try { (await getDocs(collection(db, "courses", cid, "exams"))).docs.forEach(d => exams.push({ id: d.id, src: "course", cid, group: "Course · " + title, ...d.data() })); } catch (x) {}
+      }
+    } catch (e) {}
+    await loadMine(); draw();
+  } catch (e) { $("app").innerHTML = '<h1>Tests and exams</h1><p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; }
+});
+
+async function loadMine() {
+  results = {}; starts = {};
+  await Promise.all(exams.map(async x => {
+    const p = P(x);
+    try { const r = await getDoc(ref(p.res)); if (r.exists()) results[x.src + x.id] = r.data(); } catch (e) {}
+    try { const r = await getDoc(ref(p.start)); if (r.exists()) starts[x.src + x.id] = r.data(); } catch (e) {}
+  }));
 }
 
-async function start(it) {
-  const sref = doc(db, "courses", it.cid, "examStarts", me.uid + "_" + it.id);
-  let st = null;
-  try { const s = await getDoc(sref); if (s.exists()) st = s.data(); } catch (e) {}
-  if (!st) {
-    if (!confirm("Start now? You will have " + it.durationMin + " minutes. The timer cannot be paused and you can submit only once.")) return;
-    try { await setDoc(sref, { uid: me.uid, examId: it.id, startedAt: serverTimestamp() }); st = (await getDoc(sref)).data(); }
-    catch (e) { return alert("Could not start: " + (e.code || e.message)); }
-  }
-  const started = st.startedAt ? st.startedAt.toMillis() : Date.now();
-  const deadline = Math.min(started + it.durationMin * 60000, it.closesAt.toMillis());
-  if (Date.now() > deadline + 20000) return alert("Your time for this test is over.");
-  let q;
-  try { q = (await getDoc(doc(db, "courses", it.cid, "examQuestions", it.id))).data(); }
-  catch (e) { return alert("This test is not open now."); }
-  const mcq = it.type === "mcq";
-  $("app").innerHTML = `<div class="tm"><span>${esc(it.title)}</span><span id="cd">--:--</span></div>` +
-    (mcq ? (q.questions || []).map((x, i) => `<div class="q"><b>${i + 1}. ${esc(x.q)}</b>${(x.options || []).map((o, k) => `<label><input type="radio" name="q${i}" value="${k}"> ${esc(o)}</label>`).join("")}</div>`).join("")
-      : `<div class="q"><p style="white-space:pre-wrap">${esc(q.prompt)}</p><textarea id="tx" rows="12" placeholder="Write your answer here"></textarea></div>`) +
-    '<button class="xb" id="sb">Submit</button> <span class="er" id="er"></span>';
-  window.onbeforeunload = () => "Your test is running.";
-  let done = false;
-  const send = async auto => {
-    if (done) return;
-    if (!auto && !confirm("Submit now? You cannot change your answers afterwards.")) return;
-    done = true; clearInterval(timer);
-    const data = { uid: me.uid, examId: it.id, status: "submitted", createdAt: serverTimestamp() };
-    if (mcq) data.answers = (q.questions || []).map((x, i) => { const r = document.querySelector(`input[name="q${i}"]:checked`); return r ? +r.value : -1; });
-    else data.text = $("tx").value.trim();
-    try { data.studentName = (await getDoc(doc(db, "students", me.uid))).data().name || ""; } catch (e) { data.studentName = ""; }
-    try { await setDoc(doc(db, "courses", it.cid, "examResults", me.uid + "_" + it.id), data); alert(auto ? "Time is up. Your answers were submitted." : "Submitted. Good luck!"); loadList(); }
-    catch (e) { done = false; $("er").textContent = "Could not submit: " + (e.code || e.message); }
-  };
-  $("sb").onclick = () => send(false);
-  const tick = () => {
-    const left = deadline - Date.now();
-    if (left <= 0) { $("cd").textContent = "00:00"; send(true); return; }
-    const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
-    $("cd").textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-  };
-  tick(); timer = setInterval(tick, 1000);
+function draw() {
+  clearInterval(tick); run = null;
+  let h = '<h1>Tests and exams</h1><p class="hint">Tests and exams for your classes and courses. Each one opens and closes at a set time, and has a time limit once you start. You will see the rules before you begin.</p>';
+  if (!exams.length) h += '<p>No tests or exams yet.</p>';
+  const groups = {}; exams.forEach(x => (groups[x.group] = groups[x.group] || []).push(x));
+  const now = Date.now();
+  Object.keys(groups).forEach(g => {
+    h += '<div class="cl">' + esc(g) + "</div>";
+    groups[g].sort((a, b) => b.opensAt.seconds - a.opensAt.seconds).forEach(x => {
+      const o = x.opensAt.toMillis(), c = x.closesAt.toMillis(), r = results[x.src + x.id], s = starts[x.src + x.id];
+      let status, act = "";
+      if (r) {
+        const graded = r.status === "graded";
+        status = graded ? ['<span class="pill ' + (r.score >= x.passMark ? "o" : "d") + '">' + (r.score >= x.passMark ? "Passed" : "Not passed") + "</span>", "Score: <b>" + r.score + " / " + x.maxScore + "</b>" + (r.feedback ? "<br>Teacher: " + esc(r.feedback) : "")]
+          : ['<span class="pill c">Submitted</span>', "Your answers are with the teacher. Your mark will appear here."];
+        act = '<div>' + status[1] + "</div>"; status = status[0];
+      } else if (now < o) { status = '<span class="pill u">Opens ' + esc(fmt(x.opensAt)) + "</span>"; }
+      else if (now > c) { status = '<span class="pill d">Closed. Not submitted</span>'; }
+      else {
+        const left = s ? s.startedAt.toMillis() + x.durationMin * 60000 - now : 1;
+        if (s && left <= 0) status = '<span class="pill d">Time is over. Not submitted</span>';
+        else { status = '<span class="pill o">Open now</span>'; act = '<button class="bt" data-go="' + x.src + x.id + '" type="button">' + (s ? "Continue exam" : "Start " + (x.kind === "exam" ? "exam" : "test")) + "</button>"; }
+      }
+      h += '<div class="ex ' + x.kind + '"><span class="pill ' + (x.kind === "exam" ? "" : "t") + '">' + (x.kind === "exam" ? "Exam" : "Test") + "</span>" + status + "<br><b>" + esc(x.title) + '</b><div class="mt">' + esc(x.subject || "") + (x.subject ? " · " : "") + esc(fmt(x.opensAt)) + " to " + esc(fmt(x.closesAt)) + " · " + x.durationMin + " min · " + x.maxScore + " marks</div>" + act + "</div>";
+    });
+  });
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-go]").forEach(b => b.onclick = () => begin(exams.find(x => x.src + x.id === b.dataset.go)));
+}
+
+async function begin(x) {
+  const p = P(x); reason = "";
+  try {
+    let s = starts[x.src + x.id];
+    if (!s) { await setDoc(ref(p.start), { uid: me.uid, examId: x.id, startedAt: serverTimestamp() }); s = (await getDoc(ref(p.start))).data(); starts[x.src + x.id] = s; }
+    const q = (await getDoc(ref(p.q))).data() || {};
+    const end = Math.min(s.startedAt.toMillis() + x.durationMin * 60000, x.closesAt.toMillis());
+    run = { x, q, end, ans: [], done: false };
+    paint();
+    tick = setInterval(() => { const l = run.end - Date.now(); if (l <= 0) { clearInterval(tick); send(true); } else clock(l); }, 500);
+  } catch (e) { alert("Could not start: " + (e.code || e.message) + ". Check that the exam is open and try again."); }
+}
+function clock(l) { const t = $("tm"); if (!t) return; const m = Math.floor(l / 60000), s = Math.floor(l % 60000 / 1000); $("cd").textContent = m + ":" + String(s).padStart(2, "0"); t.className = l < 60000 ? "low" : ""; }
+function paint() {
+  const { x, q } = run;
+  let h = '<div id="run"><div id="tm"><span>' + esc(x.title) + '</span><span>Time left: <span id="cd"></span></span></div>';
+  if (x.type === "mcq") h += (q.questions || []).map((qq, i) => '<div class="q"><p>' + (i + 1) + ". " + esc(qq.q) + "</p>" + (qq.options || []).map((o, j) => '<label class="' + (run.ans[i] === j ? "on" : "") + '"><input type="radio" name="q' + i + '" data-q="' + i + '" value="' + j + '"' + (run.ans[i] === j ? " checked" : "") + "><span>" + esc(o) + "</span></label>").join("") + "</div>").join("");
+  else h += '<div class="q"><p>' + esc(q.prompt || "") + '</p><textarea id="wt" placeholder="Write your answer here">' + esc(run.text || "") + "</textarea></div>";
+  h += '<button class="bt" id="sub" type="button">Submit exam</button> <span id="em"></span></div>';
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-q]").forEach(i => i.onchange = () => { run.ans[+i.dataset.q] = +i.value; $("app").querySelectorAll('input[name="q' + i.dataset.q + '"]').forEach(r => r.parentElement.classList.toggle("on", r.checked)); });
+  if ($("wt")) $("wt").oninput = () => { run.text = $("wt").value; };
+  $("sub").onclick = () => { if (!run || run.done) return; const open = run.x.type === "mcq" ? (run.q.questions || []).length - run.ans.filter(v => v != null).length : 0;
+    if (!reason && open && !run.warned) { run.warned = true; $("em").className = "er"; $("em").textContent = open + " question(s) not answered. Tap Submit again to send anyway."; return; }
+    send(false); };
+  clock(run.end - Date.now());
+}
+async function send(auto) {
+  if (!run || run.done) return; run.done = true; clearInterval(tick);
+  const { x, q } = run, p = P(x);
+  const n = x.type === "mcq" ? (q.questions || []).length : 0;
+  const d = { uid: me.uid, examId: x.id, studentName: myName, status: "submitted", createdAt: serverTimestamp() };
+  if (x.src === "class") d.classKey = x.classKey;
+  if (x.type === "mcq") d.answers = Array.from({ length: n }, (_, i) => run.ans[i] == null ? -1 : run.ans[i]); else d.text = (run.text || "").slice(0, 4900);
+  if (reason && x.src === "class") d.autoReason = reason;
+  else if (auto && x.src === "class") d.autoReason = "time was over";
+  try { await setDoc(ref(p.res), d); } catch (e) { run.done = false; $("em") && ($("em").textContent = "Could not submit: " + (e.code || e.message)); return; }
+  try { if (window.ExamGuard) window.ExamGuard.disarm(); } catch (e) {}
+  await loadMine(); draw();
+  const m = document.createElement("p"); m.className = "ok"; m.textContent = reason ? "Your exam was submitted automatically because " + reason + "." : (auto ? "Time was over. Your answers were submitted." : "Submitted. Well done!"); $("app").prepend(m);
 }
 </script>
 </body></html>

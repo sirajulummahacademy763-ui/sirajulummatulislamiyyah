@@ -74,8 +74,8 @@
   function wmDraw() {
     if (!wmEl) return;
     var d = new Date(), tm = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    var txt = ((wmName || "Student") + " | " + tm + " | Sirajul Ummah").replace(/[^\x20-\x7E]/g, "?").replace(/[<&>]/g, "");
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="520" height="230"><text x="260" y="115" transform="rotate(-24 260 115)" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#000" fill-opacity=".16" stroke="#fff" stroke-opacity=".25" stroke-width=".6">' + txt + '</text></svg>';
+    var txt = ((wmName || "Student") + " | " + tm).replace(/[^\x20-\x7E]/g, "?").replace(/[<&>]/g, "");
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="220"><text x="200" y="110" transform="rotate(-24 200 110)" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#000" fill-opacity=".16" stroke="#fff" stroke-opacity=".25" stroke-width=".6">' + txt + '</text></svg>';
     wmEl.style.backgroundImage = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
   }
   function wmStart() {
@@ -98,7 +98,7 @@
     var b = e.target.closest && e.target.closest("button,a,input[type=button],input[type=submit]");
     if (!b || b.closest("#egm,#egd")) return;
     var t = (b.textContent || b.value || "").trim();
-    if (!armed && !done && /^(start|begin|take|open)\b.*(exam|test|quiz)|^start$|^begin$/i.test(t)) {
+    if (!armed && !done && /^(start|begin|take|open|continue|resume)\b.*(exam|test|quiz)|^start$|^begin$/i.test(t)) {
       if (allowStart) { allowStart = false; setTimeout(arm, 0); return; }
       e.preventDefault(); e.stopImmediatePropagation();
       showRules(function () { allowStart = true; b.click(); });
