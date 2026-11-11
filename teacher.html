@@ -9,7 +9,7 @@
 .cd{background:#fff;border:1.5px solid var(--line,#cfe0d6);border-radius:14px;padding:18px;margin-bottom:20px}
 .cd h2{margin-top:0}
 .cd label{display:block;font-size:.88rem;font-weight:500;margin:10px 0 3px}
-.cd input,.cd select,.cd textarea{width:100%;padding:10px;border:1.5px solid var(--line,#cfe0d6);border-radius:8px;font:inherit;background:#fff}
+.cd input,.cd select,.cd textarea{width:100%;box-sizing:border-box;padding:10px;border:1.5px solid var(--line,#cfe0d6);border-radius:8px;font:inherit;background:#fff}
 .cd .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cd button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night,#0a4535);color:#fff;cursor:pointer;margin-top:14px}
 .cd button.sm{padding:6px 12px;font-size:.84rem;margin:0 4px 0 0;background:#fff;color:var(--night,#0a4535);border:1.5px solid var(--line,#cfe0d6)}
@@ -50,6 +50,10 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const say = (id, t, ok) => { const e = $(id); if (!e) return; e.textContent = t; e.className = ok ? "ok" : "er"; };
 const SN = { islamic: "Arabic and Islamic", western: "Western", tech: "Technology" };
+const MAXM = 100, gradeOf = p => p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "F";
+let terms = [];
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const termFor = d => { const k = ymd(d); return terms.find(t => k >= t.startDate && k <= t.endDate) || null; };
 const FORMAT = "Question | option 1 | option 2 | option 3 | number of the correct option";
 let uid = "", myName = "", items = [], all = [], selKey = "", exs = [], selSub = "", plans = {};
 const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -66,6 +70,7 @@ onAuthStateChanged(auth, async u => {
   myName = t.name || "";
   try { const a = await getDoc(doc(db, "teacherAssign", u.uid)); items = a.exists() ? (a.data().items || []) : []; } catch (e) {}
   for (const i of items) { if (i.subjects && i.subjects.length) continue; try { const p = await getDoc(doc(db, "classPlans", planId(i.section, i.level))); plans[planId(i.section, i.level)] = p.exists() ? (p.data().subjects || []).map(x => x.name).filter(Boolean) : []; } catch (e) {} }
+  try { terms = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) {}
   if (items.length) selKey = keyOf(items[0]);
   await loadAll(); draw();
 });
@@ -123,7 +128,7 @@ async function addExam() {
   const c = cur(), subject = selSub, title = $("xt").value.trim(), kind = $("xk").value, type = $("xy").value, o = $("xo").value, cl = $("xc").value;
   const dur = parseInt($("xd").value, 10), max = Math.max(1, parseInt($("xmk").value, 10) || 20), pass = Math.max(0, parseInt($("xp").value, 10) || 0), txt = $("xq").value.trim();
   if (!subject || !title || !o || !cl || !(dur > 0) || !txt) return say("xm2", "Please fill in every box, including the subject and the opening and closing time.");
-  const od = new Date(o), cd = new Date(cl);
+  const od = new Date(o), cd = new Date(cl), tm = termFor(od);
   if (!(cd > od)) return say("xm2", "The closing time must be after the opening time.");
   let qdoc, key = null;
   if (type === "mcq") {
@@ -136,7 +141,7 @@ async function addExam() {
     qdoc = { questions: qs }; key = ans;
   } else qdoc = { prompt: txt };
   try {
-    const r = await addDoc(collection(db, "classExams"), { title, kind, type, subject, classKey: selKey, section: c.section, level: c.level, opensAt: Timestamp.fromDate(od), closesAt: Timestamp.fromDate(cd), durationMin: dur, maxScore: max, passMark: pass, teacherId: uid, teacherName: myName, createdAt: serverTimestamp() });
+    const r = await addDoc(collection(db, "classExams"), { title, kind, type, subject, classKey: selKey, section: c.section, level: c.level, opensAt: Timestamp.fromDate(od), closesAt: Timestamp.fromDate(cd), durationMin: dur, maxScore: max, passMark: pass, termId: tm ? tm.id : "", termName: tm ? (tm.name || "") : "", teacherId: uid, teacherName: myName, createdAt: serverTimestamp() });
     await setDoc(doc(db, "classExamQuestions", r.id), qdoc);
     if (key) await setDoc(doc(db, "classExamKeys", r.id), { answers: key });
     selSub = ""; await loadAll(); draw();
@@ -152,8 +157,9 @@ async function showRes(eid) {
   const passed = r => r.status === "graded" && r.score >= x.passMark;
   const show = r => x.type === "mcq" ? qs.map((q, i) => `${i + 1}. ${esc(q.q)}\n   Answer: ${esc((q.options || [])[(r.answers || [])[i]] || "-")}`).join("\n") : esc(r.text);
   const done = subs.filter(r => r.status === "graded").length;
+  const rp = x.termId && x.subject && x.subject !== "General" ? '<div id="rp" class="sb"><p class="hint" style="margin:0">Updating the report cards...</p></div>' : '<div class="sb"><p class="er" style="margin:0">' + (!x.termId ? "This test has no school term, so it cannot go to the report card. Ask the admin to create the term, then set the test again." : "Choose a real subject for the test so it can go to the report card.") + "</p></div>";
   $("xr").innerHTML = `<h3 style="margin-top:0">${esc(x.title)} <small>· ${esc(x.subject || "")}</small></h3><p class="hint">${subs.length} submitted · ${done} marked</p>` + (x.type === "mcq" && subs.length ? '<button id="xauto" type="button" style="margin-top:0">Mark all automatically</button> <span id="xmsg"></span>' : "") +
-    (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}${r.autoReason ? ' <span class="pill c" style="background:#fde4e1;color:#b3261e">Auto-submitted: ' + esc(r.autoReason) + "</span>" : ""}
+    rp + (subs.length ? subs.map(r => `<div class="sb"><b>${esc(r.studentName || "Student")}</b> · ${r.status === "graded" ? "Score: " + r.score + " / " + x.maxScore + (passed(r) ? " (passed)" : " (not passed)") : "Not marked"}${r.autoReason ? ' <span class="pill c" style="background:#fde4e1;color:#b3261e">Auto-submitted: ' + esc(r.autoReason) + "</span>" : ""}
       <pre>${show(r)}</pre>
       <div class="row"><div><label>Score (out of ${x.maxScore})</label><input type="number" min="0" max="${x.maxScore}" id="xs-${r.id}" value="${r.score == null ? "" : r.score}"></div>
       <div><label>Comment</label><input id="xf-${r.id}" value="${esc(r.feedback || "")}"></div></div>
@@ -175,6 +181,43 @@ async function showRes(eid) {
       showRes(eid);
     } catch (e) { say("xmsg", "Failed: " + (e.code || e.message)); }
   };
+
+  if ($("rp")) syncReport(x).then(t => { if ($("rp")) $("rp").innerHTML = t; }).catch(e => { if ($("rp")) $("rp").innerHTML = '<p class="er" style="margin:0">Report card not updated: ' + esc(e.code || e.message) + "</p>"; });
+}
+
+// Adds the marked tests and exams of one subject together and puts the result on the report card of every student,
+// then works out total, percentage, grade and position for the whole class.
+async function syncReport(x) {
+  const key = x.classKey, sec = key.split("|")[0], lvl = key.split("|").slice(1).join("|"), tid = x.termId, sub = x.subject, now = Date.now();
+  const exAll = (await getDocs(query(collection(db, "classExams"), where("classKey", "==", key)))).docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.termId === tid && e.subject === sub);
+  const rs = (await getDocs(query(collection(db, "classExamResults"), where("classKey", "==", key)))).docs.map(d => d.data());
+  const mem = (await getDocs(query(collection(db, "classMembers"), where("classKey", "==", key)))).docs.map(d => d.data());
+  const people = {}; mem.forEach(m => { people[m.uid] = m.name || "Student"; }); rs.forEach(r => { if (!people[r.uid]) people[r.uid] = r.studentName || "Student"; });
+  const cards = {}; (await getDocs(query(collection(db, "reportCards"), where("classKey", "==", key), where("termId", "==", tid)))).docs.forEach(d => { cards[d.data().uid] = d.data(); });
+  const tm = terms.find(t => t.id === tid) || {};
+  const rid = u => u + "__" + tid + "__" + sec;
+  for (const u of Object.keys(people)) {
+    let sc = 0, mx = 0;
+    for (const e of exAll) {
+      const r = rs.find(z => z.uid === u && z.examId === e.id);
+      if (r && r.status === "graded") { sc += r.score; mx += e.maxScore; }
+      else if (!r && e.closesAt.toMillis() < now) mx += e.maxScore;   // did not take it: counts as 0 once it is closed
+    }
+    if (!mx) continue;
+    const v = Math.round(sc / mx * 1000) / 10;
+    const d = { uid: u, studentName: people[u], classKey: key, section: sec, level: lvl, termId: tid, termName: tm.name || "", session: tm.session || "", marks: { [sub]: v }, updatedAt: serverTimestamp(), by: uid, byName: myName };
+    if (!cards[u]) d.status = "draft";
+    await setDoc(doc(db, "reportCards", rid(u)), d, { merge: true });
+    cards[u] = { ...(cards[u] || {}), ...d, marks: { ...((cards[u] && cards[u].marks) || {}), [sub]: v } };
+  }
+  // class subjects, to work out the total
+  let all = []; try { const p = await getDoc(doc(db, "classPlans", planId(sec, lvl))); all = (p.exists() ? p.data().subjects || [] : []).map(z => z.name).filter(Boolean); } catch (e) {}
+  if (!all.length) { const set = new Set(); Object.values(cards).forEach(c => Object.keys(c.marks || {}).forEach(k => set.add(k))); all = [...set]; }
+  const rows = Object.values(cards).map(c => { let tot = 0; all.forEach(k => { if (typeof (c.marks || {})[k] === "number") tot += c.marks[k]; }); const max = all.length * MAXM; return { c, tot: Math.round(tot * 10) / 10, pct: max ? Math.round(tot / max * 1000) / 10 : 0 }; }).sort((a, b) => b.pct - a.pct);
+  let pos = 0, prev = null; rows.forEach((r, n) => { if (r.pct !== prev) { pos = n + 1; prev = r.pct; } r.pos = pos; });
+  for (const r of rows) await setDoc(doc(db, "reportCards", rid(r.c.uid)), { total: r.tot, percentage: r.pct, grade: gradeOf(r.pct), position: r.pos, classSize: rows.length, updatedAt: serverTimestamp() }, { merge: true });
+  return '<p class="ok" style="margin:0 0 6px">Report cards updated for <b>' + esc(sub) + "</b> (" + esc(tm.name || "term") + '). Tests and exams of this subject are added together and out of 100.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.9rem"><tr style="text-align:left;color:#4b6358"><th>Pos</th><th>Student</th><th>' + esc(sub) + "</th><th>Total</th><th>%</th><th>Grade</th></tr>" +
+    rows.map(r => "<tr style=\"border-top:1px solid #e2eee7\"><td>" + r.pos + "</td><td>" + esc(r.c.studentName) + "</td><td>" + (typeof (r.c.marks || {})[sub] === "number" ? r.c.marks[sub] : "-") + "</td><td>" + r.tot + "</td><td>" + r.pct + "</td><td><b>" + gradeOf(r.pct) + "</b></td></tr>").join("") + '</table></div><p class="hint" style="margin:6px 0 0">Students see the report card after you issue it on the Issue Reports page.</p>';
 }
 </script>
 </body></html>
