@@ -126,7 +126,7 @@ button:disabled{opacity:.6;cursor:wait}
 <script type="module">
 import { COUNTRIES } from "./countries.js";
 import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 
 const $ = id => document.getElementById(id);
@@ -192,8 +192,37 @@ const errors = {
   "permission-denied": "Database rules blocked saving. Check Firestore rules."
 };
 
+// Registration is closed while a term is running (the begin and end dates come from the admin's Terms list).
+let regClosed = false;
+function regState(r) {
+  const now = Date.now(), L = { month: "long", day: "numeric", year: "numeric" };
+  const ts = (r.terms || []);
+  for (let i = 1; i <= 3; i++) {
+    const s = r["w" + i + "s"], e = r["w" + i + "e"];
+    if (s && e && s.toMillis() <= now && now < e.toMillis()) {
+      const t = ts[i - 1] || {};
+      return { closed: true, text: "Registration is closed. " + (t.name ? t.name + " " : "The term ") + "has already begun" + (t.start ? " (" + new Date(t.start + "T12:00:00").toLocaleDateString("en-GB", L) + ")" : "") + ". New students can register again after the term ends." };
+    }
+  }
+  for (let i = 1; i <= 3; i++) {
+    const s = r["w" + i + "s"];
+    if (s && s.toMillis() > now) { const t = ts[i - 1] || {}; return { closed: false, text: "Registration is open until " + (t.name || "the term") + " begins on " + new Date(s.toMillis()).toLocaleDateString("en-GB", L) + "." }; }
+  }
+  return { closed: false, text: "" };
+}
+(async () => {
+  try {
+    const r = await getDoc(doc(db, "publicInfo", "registration"));
+    if (!r.exists()) return;
+    const st = regState(r.data());
+    if (st.text) { const b = document.createElement("p"); b.id = "regnote"; b.textContent = st.text; b.style.cssText = "padding:12px 14px;border-radius:12px;margin:12px 0;font-weight:600;" + (st.closed ? "background:#fde8e8;color:#8a1c1c" : "background:#e7f6ec;color:#17623a"); $("f").parentNode.insertBefore(b, $("f")); }
+    if (st.closed) { regClosed = true; $("f").querySelectorAll("input,select,button").forEach(x => x.disabled = true); }
+  } catch (e) { console.error(e); }
+})();
+
 $("f").addEventListener("submit", async e => {
   e.preventDefault();
+  if (regClosed) return msg("Registration is closed because the term has begun.", "err");
   const problem = check(cur);
   if (problem) return msg(problem, "err");
   if (cur < 3) return show(cur + 1);
@@ -218,6 +247,7 @@ $("f").addEventListener("submit", async e => {
     setTimeout(() => location.href = "index.html", 1200);
   } catch (err) {
     console.error(err);
+    if (err.code === "permission-denied") { try { await auth.currentUser.delete(); } catch (x) {} msg("Registration is closed because the term has begun. New students can register after the term ends.", "err"); $("next").disabled = false; return; }
     msg(errors[err.code] || ("Could not create account: " + (err.code || err.message)), "err");
     $("next").disabled = false;
   }
