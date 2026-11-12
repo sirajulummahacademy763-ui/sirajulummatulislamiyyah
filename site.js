@@ -322,3 +322,5 @@ window.addEventListener("load",function(){later();setTimeout(fix,2500);setTimeou
 }catch(e){}})();
 
 ;(function(){try{if(/exam/i.test(location.pathname)&&!window.__examGuard){var g=document.createElement("script");g.src="exam-guard.js?v=1";document.head.appendChild(g)}}catch(e){}})();
+
+;(function(){try{if(window.SITE_HOME&&!window.__portalLoaded){window.__portalLoaded=1;var p=document.createElement("script");p.type="module";p.src="portal.js?v=2";document.head.appendChild(p)}}catch(e){}})();
