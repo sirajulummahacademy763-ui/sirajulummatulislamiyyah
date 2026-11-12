@@ -4,8 +4,8 @@ import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/fireba
 import { auth, db } from "./firebase-config.js";
 
 const page = location.pathname.split("/").pop() || "index.html";
-const COUNT_PAGES = ["classes.html", "my-classes.html"];
-const NOBANNER = ["exams.html", "certificate.html", "classes.html", "admin.html", "teacher.html", "announcements.html"];
+const COUNT_PAGES = ["index.html", "classes.html", "my-classes.html"];
+const NOBANNER = ["index.html", "exams.html", "certificate.html", "classes.html", "admin.html", "teacher.html", "announcements.html"];
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const pad = n => String(n).padStart(2, "0");
 const now = new Date();
@@ -24,7 +24,7 @@ async function termCountdown(u) {
   const next = terms.find(t => today <= t.startDate && toDate(t.startDate) > new Date());
   if (!next) return;
   let nm = u.displayName || "";
-  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) nm = s.data().name; } catch (e) {}
+  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) nm = s.data().name; if (page === "index.html" && !s.exists()) return; } catch (e) {}
   nm = String(nm).trim().split(/\s+/).slice(0, 2).join(" ");
   const when = toDate(next.startDate), long = when.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const st = document.createElement("style");
@@ -33,7 +33,9 @@ async function termCountdown(u) {
   const box = document.createElement("div"); box.id = "tcd"; box.className = "tcd";
   box.innerHTML = '<div class="tt">' + esc(next.name || "Next term") + " " + esc(next.session || "") + ' begins on <b>' + esc(long) + '</b></div><div class="rw"><div class="bx"><b id="tcd-d">00</b><span>DAYS</span></div><div class="sp">:</div><div class="bx"><b id="tcd-h">00</b><span>HOURS</span></div><div class="sp">:</div><div class="bx"><b id="tcd-m">00</b><span>MINUTES</span></div><div class="sp">:</div><div class="bx"><b id="tcd-s">00</b><span>SECONDS</span></div></div><p>' + (nm ? "Assalamu alaikum, <b>" + esc(nm) + "</b>! " : "Assalamu alaikum! ") + 'We hope you are ready for another great term. It starts on <b>' + esc(fd(next.startDate)) + '</b>, in shaa Allah. Revise what you learned and keep your books and device ready.</p>';
   const main = document.querySelector("main.page"), pills = document.querySelector(".pills");
-  if (main) main.insertAdjacentElement("afterbegin", box);
+  const hero = document.querySelector(".hero");
+  if (page === "index.html" && hero) { box.style.cssText = "max-width:680px;margin:14px auto;width:calc(100% - 28px)"; hero.insertAdjacentElement("beforebegin", box); }
+  else if (main) main.insertAdjacentElement("afterbegin", box);
   else if (pills) pills.insertAdjacentElement("afterend", box);
   else { const hd = document.querySelector("header"); if (hd) hd.insertAdjacentElement("afterend", box); else return; }
   const tick = () => {
