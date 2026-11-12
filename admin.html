@@ -25,7 +25,7 @@
 <main class="page ad" id="app"><p>Checking access...</p></main>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, increment, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 import { WORKER_URL } from "./notice-config.js";
 const $ = id => document.getElementById(id);
@@ -54,6 +54,7 @@ function build() {
     <div><label>Session (for example 2026/2027)</label><input id="ms" placeholder="2026/2027"></div></div>
     <div class="row"><div><label>Begins</label><input id="md1" type="date"></div><div><label>Ends</label><input id="md2" type="date"></div></div>
     <button id="mb" type="button">Save term</button> <span id="mm"></span>
+    <p class="hint" style="font-size:.85rem;opacity:.8;margin-top:8px">The Begins date also drives the countdown students see. Registration closes automatically at 12:00 am (Nigeria time) on the Begins date and opens again after the Ends date.</p>
     <div id="ml" style="margin-top:14px"></div></div>
   <div class="cd"><h2>Send a notice</h2>
     <p style="margin-top:0">Choose who the notice is for. Only that group sees it: as a pop-up on any page they are on, as a phone alert if they turned notifications on, and as an email if you tick it. They can only read it, not reply.</p>
@@ -144,10 +145,27 @@ async function addTerm() {
   } catch (e) { say("mm", "Failed: " + (e.code || e.message)); }
 }
 
+// Public copy of the term dates so the register page (and the database rules) know when registration is closed.
+async function syncReg(ts) {
+  try {
+    const at = (d, end) => Timestamp.fromDate(new Date(d + (end ? "T23:59:59+01:00" : "T00:00:00+01:00")));
+    const old = Timestamp.fromDate(new Date("2000-01-01T00:00:00Z"));
+    const up = ts.filter(x => x.startDate && x.endDate && x.endDate >= todayStr()).slice(0, 3);
+    const o = { updatedAt: serverTimestamp(), terms: up.map(x => ({ name: x.name, session: x.session, start: x.startDate, end: x.endDate })) };
+    for (let i = 0; i < 3; i++) {
+      const x = up[i];
+      o["w" + (i + 1) + "s"] = x ? at(x.startDate, false) : old;
+      o["w" + (i + 1) + "e"] = x ? at(x.endDate, true) : old;
+    }
+    await setDoc(doc(db, "publicInfo", "registration"), o);
+  } catch (e) { console.error("registration sync", e); }
+}
+
 async function loadTerms() {
   let ts = [];
   try { ts = (await getDocs(collection(db, "terms"))).docs.map(d => ({ id: d.id, ...d.data() })).sort((x, y) => String(x.startDate).localeCompare(String(y.startDate))); }
   catch (e) { $("ml").innerHTML = '<p class="er">Could not load: ' + esc(e.code || e.message) + "</p>"; return; }
+  syncReg(ts);
   const t = todayStr();
   $("ml").innerHTML = ts.length ? ts.map(x => {
     const st = t < x.startDate ? "Upcoming" : t > x.endDate ? "Ended" : "Current term";
