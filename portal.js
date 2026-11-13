@@ -4,8 +4,8 @@ import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/fireba
 import { auth, db } from "./firebase-config.js";
 
 const page = location.pathname.split("/").pop() || "index.html";
-const COUNT_PAGES = ["classes.html", "my-classes.html"];
-const NOBANNER = ["exams.html", "certificate.html", "classes.html", "admin.html", "teacher.html", "announcements.html"];
+const COUNT_PAGES = ["index.html", "classes.html", "my-classes.html"];
+const NOBANNER = ["index.html", "exams.html", "certificate.html", "classes.html", "admin.html", "teacher.html", "announcements.html"];
 const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const pad = n => String(n).padStart(2, "0");
 const now = new Date();
@@ -23,8 +23,8 @@ async function termCountdown(u) {
   if (terms.some(t => today >= t.startDate && today <= t.endDate)) return;
   const next = terms.find(t => today <= t.startDate && toDate(t.startDate) > new Date());
   if (!next) return;
-  let nm = u.displayName || "";
-  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) nm = s.data().name; } catch (e) {}
+  let nm = u.displayName || "", coins = null;
+  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) nm = s.data().name; if (s.exists()) coins = Number(s.data().coins) || 0; if (page === "index.html" && !s.exists()) return; } catch (e) {}
   nm = String(nm).trim().split(/\s+/).slice(0, 2).join(" ");
   const when = toDate(next.startDate), long = when.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const st = document.createElement("style");
@@ -33,7 +33,9 @@ async function termCountdown(u) {
   const box = document.createElement("div"); box.id = "tcd"; box.className = "tcd";
   box.innerHTML = '<div class="tt">' + esc(next.name || "Next term") + " " + esc(next.session || "") + ' begins on <b>' + esc(long) + '</b></div><div class="rw"><div class="bx"><b id="tcd-d">00</b><span>DAYS</span></div><div class="sp">:</div><div class="bx"><b id="tcd-h">00</b><span>HOURS</span></div><div class="sp">:</div><div class="bx"><b id="tcd-m">00</b><span>MINUTES</span></div><div class="sp">:</div><div class="bx"><b id="tcd-s">00</b><span>SECONDS</span></div></div><p>' + (nm ? "Assalamu alaikum, <b>" + esc(nm) + "</b>! " : "Assalamu alaikum! ") + 'We hope you are ready for another great term. It starts on <b>' + esc(fd(next.startDate)) + '</b>, in shaa Allah. Revise what you learned and keep your books and device ready.</p>';
   const main = document.querySelector("main.page"), pills = document.querySelector(".pills");
-  if (main) main.insertAdjacentElement("afterbegin", box);
+  const hero = document.querySelector(".hero");
+  if (page === "index.html" && hero) { box.style.cssText = "max-width:680px;margin:14px auto;width:calc(100% - 28px)"; hero.insertAdjacentElement("beforebegin", box); }
+  else if (main) main.insertAdjacentElement("afterbegin", box);
   else if (pills) pills.insertAdjacentElement("afterend", box);
   else { const hd = document.querySelector("header"); if (hd) hd.insertAdjacentElement("afterend", box); else return; }
   const tick = () => {
@@ -43,10 +45,20 @@ async function termCountdown(u) {
     document.getElementById("tcd-d").textContent = pad(d); document.getElementById("tcd-h").textContent = pad(h); document.getElementById("tcd-m").textContent = pad(m); document.getElementById("tcd-s").textContent = pad(sc);
   };
   const iv = setInterval(tick, 1000); tick();
+  // Under the countdown: a reminder to buy coins, only for a student who has none
+  if (coins === 0 && !document.getElementById("tcd-coin")) {
+    const cb = document.createElement("div"); cb.id = "tcd-coin";
+    cb.style.cssText = "margin:-6px 0 18px;padding:14px;border-radius:14px;background:#fff8e6;border:1.5px solid #f0be4d;color:#3a2c05;text-align:center;font-weight:600" + (page === "index.html" ? ";max-width:680px;margin:0 auto 14px;width:calc(100% - 28px)" : "");
+    cb.innerHTML = '<div style="margin-bottom:10px">🪙 You have no coins yet. Buy your coins before the term begins, so you can join courses and unlock books as soon as it starts.</div><a href="wallet.html" style="display:inline-block;background:#0a4535;color:#fff;text-decoration:none;padding:11px 22px;border-radius:12px;font-weight:700">Buy your coins</a>';
+    box.insertAdjacentElement("afterend", cb);
+  }
 }
 
 onAuthStateChanged(auth, async u => {
   if (!u) return;
+  // portal.js can be started twice on one page; only the first copy may draw anything
+  if (window.__portalRan) return;
+  window.__portalRan = 1;
   termCountdown(u);
 
   // "Notices" link in the menu
