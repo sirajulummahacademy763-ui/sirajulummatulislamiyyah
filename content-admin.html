@@ -36,7 +36,7 @@ const TABS = {
     ["title", "Title", "text", 1], ["author", "Written by", "text"], ["body", "Article", "area", 1], ["published", "Show it on the website", "bool"]] }
 };
 let tab = "faculty", rows = [], editId = null, msg = "";
-const SOC = [["facebook", "Facebook page link"], ["youtube", "YouTube channel link"], ["whatsapp", "WhatsApp link (for example https://wa.me/234...)"], ["instagram", "Instagram link"], ["x", "X (Twitter) link"], ["telegram", "Telegram link"]];
+const SOC = [["facebook", "Facebook page link"], ["youtube", "YouTube channel link"], ["whatsapp", "WhatsApp link (for example https://wa.me/234...)"], ["instagram", "Instagram link"], ["x", "X (Twitter) link"], ["telegram", "Telegram link"], ["tiktok", "TikTok link"]];
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>Website content</h1><p>Please <a href="login.html">log in</a> first.</p>';
