@@ -49,9 +49,8 @@ const SECS = [["islamic", "Arabic and Islamic Studies", "العلوم العرب
 const DAYS = [[1, "Monday", "الاثنين"], [2, "Tuesday", "الثلاثاء"], [3, "Wednesday", "الأربعاء"], [4, "Thursday", "الخميس"], [5, "Friday", "الجمعة"], [6, "Saturday", "السبت"], [0, "Sunday", "الأحد"]];
 const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return esc(t); return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
-let mode = "all", plans = [];
-try { mode = localStorage.getItem("ttMode") || "all"; } catch (e) {}
-if (!["all", "online", "physical"].includes(mode)) mode = "all";
+const mode = "online";   // the institute teaches online, so only online lessons are shown
+let plans = [];
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>My Timetable</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -69,14 +68,13 @@ onAuthStateChanged(auth, async u => {
 function draw(noClasses, failed) {
   const today = new Date().getDay();
   let h = `<h1>الجدول · My Timetable<small>Your weekly lessons</small></h1>
-    <div class="lk"><a href="subjects.html">📖 My subjects and books</a><a href="classroom.html">🎧 Classroom</a></div>
-    <div class="md">${[["all", "All"], ["online", "Online"], ["physical", "Physical"]].map(([k, n]) => `<button type="button" data-m="${k}" class="${mode === k ? "on" : ""}">${n}</button>`).join("")}</div>`;
+    <div class="lk"><a href="subjects.html">📖 My subjects and books</a><a href="classroom.html">🎧 Classroom</a></div>`;
   if (failed) h += `<p class="er">Some data could not be loaded (${esc(failed)}). Please refresh.</p>`;
   if (noClasses) h += '<div class="emp"><p class="no" style="margin:0">You have not chosen your classes yet.</p><p style="margin:8px 0 0"><a href="index.html">Open the Home page</a> and choose them, then come back here.</p></div>';
   plans.forEach(({ name, ar, lvl, p }) => {
-    const slots = ((p && p.slots) || []).filter(s => mode === "all" || (s.mode || "both") === "both" || s.mode === mode);
+    const slots = ((p && p.slots) || []).filter(s => mode === "all" || (s.mode || "both") === "both" || s.mode === "online");
     let body = "";
-    if (!slots.length) body = `<p class="no">${p && (p.slots || []).length ? "No lessons for this choice." : "The timetable for this class will be added soon."}</p>`;
+    if (!slots.length) body = `<p class="no">${p && (p.slots || []).length ? "No online lessons yet." : "The timetable for this class will be added soon."}</p>`;
     else {
       if (p.tz) body += `<p class="nt">Times are in ${esc(p.tz)}.</p>`;
       DAYS.forEach(([d, en, a]) => {
@@ -85,7 +83,7 @@ function draw(noClasses, failed) {
         body += `<div class="dy${d === today ? " today" : ""}"><h3>${en} · <span dir="rtl" lang="ar">${a}</span></h3>` + ds.map(s => {
           const w = String(s.where || "");
           const where = /^https?:\/\//i.test(w) ? `<a class="jn" href="${esc(w)}" target="_blank" rel="noopener">Join class</a>` : (w ? esc(w) : "");
-          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span class="tx"><b>${esc(s.subject)}</b>${s.mode && s.mode !== "both" ? `<span class="tag">${s.mode === "online" ? "Online" : "Physical"}</span>` : ""}` +
+          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span class="tx"><b>${esc(s.subject)}</b>` +
             `${s.teacher ? `<small>👤 ${esc(s.teacher)}</small>` : ""}${where && !/^https?:\/\//i.test(w) ? `<small>📍 ${where}</small>` : ""}</span>${where && /^https?:\/\//i.test(w) ? where : ""}</div>`;
         }).join("") + "</div>";
       });
@@ -93,7 +91,6 @@ function draw(noClasses, failed) {
     h += `<section class="dp"><div class="dh"><div><h2>${esc(lvl)}</h2><p class="sec">${esc(name)}</p></div><div class="ar" dir="rtl" lang="ar">${ar}</div></div><div class="bd">${body}</div></section>`;
   });
   $("app").innerHTML = h;
-  $("app").querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; try { localStorage.setItem("ttMode", mode); } catch (e) {} draw(noClasses, failed); });
 }
 </script>
 </body></html>
