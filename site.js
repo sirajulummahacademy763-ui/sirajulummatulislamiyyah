@@ -287,6 +287,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  let done=false,tries=0;
  const place=()=>{
   const m=document.querySelector("main.page");if(!m)return false;
+  if(m.querySelector("#cert"))return true;   // the printed certificate keeps its own design: no breadcrumb inside it
   const h1=m.querySelector("h1");if(!h1)return false;
   if(!m.querySelector(".crumb")){
    const c=document.createElement("nav");c.className="crumb";c.setAttribute("aria-label","Where you are");
