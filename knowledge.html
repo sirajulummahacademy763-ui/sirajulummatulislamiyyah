@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Series | Sirajul Ummah Islamic Institute</title>
+<meta name="description" content="Short Islamic articles and lessons from Sirajul Ummah Islamic Institute.">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><link rel="stylesheet" href="pub.css?v=1"><script src="site.js" defer></script>
+</head><body>
+<div class="ph"><span class="ar" dir="rtl" lang="ar">سلسلة المعرفة</span><h1 id="ttl">Knowledge Series</h1><p id="sub">Short articles and lessons from our teachers, free for everyone to read.</p></div>
+<main class="page pg" id="app"><p class="empty">Loading...</p></main>
+<script type="module">
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const dt = a => a && a.seconds ? new Date(a.seconds * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+const app = document.getElementById("app");
+const id = new URLSearchParams(location.search).get("id");
+(async () => {
+  if (id) {
+    try {
+      const d = await getDoc(doc(db, "articles", id));
+      if (!d.exists() || d.data().published === false) throw 0;
+      const a = d.data();
+      document.title = a.title + " | Sirajul Ummah Islamic Institute";
+      document.getElementById("ttl").textContent = a.title;
+      document.getElementById("sub").textContent = [a.author ? "By " + a.author : "", dt(a.createdAt)].filter(Boolean).join(" · ");
+      app.innerHTML = `<article class="ar-body">${esc(a.body)}</article><p style="text-align:center;margin-top:30px"><a href="knowledge.html">&larr; All articles</a></p>`;
+    } catch (e) { app.innerHTML = '<p class="empty">This article could not be found. <a href="knowledge.html">See all articles</a>.</p>'; }
+    return;
+  }
+  let list = [];
+  try { list = (await getDocs(collection(db, "articles"))).docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.published !== false); }
+  catch (e) { app.innerHTML = '<p class="empty">The articles could not be loaded. Please refresh.</p>'; return; }
+  list.sort((a, b) => ((b.createdAt && b.createdAt.seconds) || 0) - ((a.createdAt && a.createdAt.seconds) || 0));
+  if (!list.length) { app.innerHTML = '<p class="empty">The first articles will be published soon, in shaa Allah.</p>'; return; }
+  app.innerHTML = '<div class="g3 ar-list">' + list.map(a => {
+    const sn = String(a.body || "").replace(/\s+/g, " ").slice(0, 150);
+    return `<a class="cdp" href="knowledge.html?id=${encodeURIComponent(a.id)}"><h3>${esc(a.title)}</h3><small>${esc([a.author, dt(a.createdAt)].filter(Boolean).join(" · "))}</small><p style="margin:8px 0 0;color:#33403a">${esc(sn)}${String(a.body || "").length > 150 ? "..." : ""}</p></a>`;
+  }).join("") + "</div>";
+})();
+</script>
+</body></html>

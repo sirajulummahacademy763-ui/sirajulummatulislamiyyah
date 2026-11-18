@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Plan | Sirajul Ummah Islamic Institute</title>
+<meta name="description" content="The levels, subjects and weekly class times at Sirajul Ummah Islamic Institute.">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><link rel="stylesheet" href="pub.css?v=1"><script src="site.js" defer></script>
+</head><body>
+<div class="ph"><span class="ar" dir="rtl" lang="ar">الخطة الدراسية</span><h1>Study Plan</h1><p>Our levels, the subjects in each one, and the weekly class times. Choose a department to see what you will study.</p></div>
+<main class="page pg" id="app"><p class="empty">Loading...</p></main>
+<section class="cta2"><h2>Ready to begin?</h2><p>Creating an account is free. Choose your classes after you register.</p><a class="btnp" href="register.html">Register now</a></section>
+<script type="module">
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const SECS = [["islamic", "Arabic & Islamic Studies", "العلوم العربية والإسلامية"], ["western", "Western Studies", "الدراسات الغربية"], ["tech", "Technology", "التقنية"]];
+const DAYS = [[0, "Sunday", "الأحد"], [1, "Monday", "الاثنين"], [2, "Tuesday", "الثلاثاء"], [3, "Wednesday", "الأربعاء"], [4, "Thursday", "الخميس"], [5, "Friday", "الجمعة"], [6, "Saturday", "السبت"]];
+const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return esc(t); return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
+let plans = [], sec = "islamic", term = null;
+const toD = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d); };
+const fdate = s => toD(s).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+async function load() {
+  try { plans = (await getDocs(collection(db, "classPlans"))).docs.map(d => d.data()); }
+  catch (e) { $("app").innerHTML = '<p class="empty">The study plan could not be loaded. Please refresh.</p>'; return; }
+  try { const r = await getDoc(doc(db, "publicInfo", "registration")); if (r.exists()) { const n = Date.now(); const t = (r.data().terms || []).find(x => x.end && new Date(x.end + "T23:59:59+01:00").getTime() >= n); if (t) term = t; } } catch (e) {}
+  const first = SECS.find(s => plans.some(p => p.section === s[0])); if (first) sec = first[0];
+  draw();
+}
+function draw() {
+  let h = "";
+  if (term) h += `<div class="facts"><div><b>${esc(term.name || "Next term")}</b><span>${esc(term.session || "")}</span></div><div><b>${esc(fdate(term.start))}</b><span>Term begins</span></div><div><b>${esc(fdate(term.end))}</b><span>Term ends</span></div><div><b>Free</b><span>to create an account</span></div></div>`;
+  h += '<div class="tabs2" role="tablist">' + SECS.map(([k, n]) => `<button type="button" role="tab" data-s="${k}" class="${sec === k ? "on" : ""}">${n}</button>`).join("") + "</div>";
+  const list = plans.filter(p => p.section === sec).sort((a, b) => String(a.level).localeCompare(String(b.level), undefined, { numeric: true }));
+  if (!list.length) h += '<p class="empty">The classes for this department will be added soon.</p>';
+  else {
+    h += '<div class="g3">' + list.map(p => {
+      const subs = (p.subjects || []).map(s => `<li><b>${esc(s.name)}</b>${s.nameAr ? `<span class="ar" dir="rtl" lang="ar">${esc(s.nameAr)}</span>` : ""}</li>`).join("");
+      const slots = p.slots || [];
+      let tt = "";
+      DAYS.forEach(([d, en]) => {
+        const ds = slots.filter(s => Number(s.day) === d).sort((x, y) => String(x.start).localeCompare(String(y.start)));
+        if (!ds.length) return;
+        tt += `<div class="dy"><h4>${en}</h4>` + ds.map(s => `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span>${esc(s.subject)}</span></div>`).join("") + "</div>";
+      });
+      return `<div class="cdp lv"><h3>${esc(p.level)}</h3><small>${(p.subjects || []).length} subject${(p.subjects || []).length === 1 ? "" : "s"}</small>` +
+        `<ul>${subs || '<li class="mut">Subjects coming soon.</li>'}</ul>` +
+        (tt ? `<h4 style="margin:14px 0 0">Weekly timetable</h4>${tt}${p.tz ? `<p class="tz">Times are in ${esc(p.tz)}.</p>` : ""}` : '<p class="tz">The weekly timetable will be added soon.</p>') + "</div>";
+    }).join("") + "</div>";
+  }
+  h += '<p class="sub" style="margin-top:24px">Hifz (Qur\'an memorization) and Revision have their own classes for brothers and sisters. Open <a href="register.html">Register</a> to join.</p>';
+  $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { sec = b.dataset.s; draw(); });
+}
+load();
+</script>
+</body></html>

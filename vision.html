@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision &amp; Mission | Sirajul Ummah Islamic Institute</title>
+<meta name="description" content="The vision, mission and values of Sirajul Ummah Islamic Institute, and what our students say.">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><link rel="stylesheet" href="pub.css?v=1"><script src="site.js" defer></script>
+</head><body>
+<div class="ph"><span class="ar" dir="rtl" lang="ar">الرؤية والرسالة</span><h1>Vision &amp; Mission</h1><p>Why Sirajul Ummah Islamic Institute exists, and what we work towards.</p></div>
+<main class="page pg" id="app"><p class="empty">Loading...</p></main>
+<section class="cta2"><h2>Be part of it</h2><p>Create a free account and begin your journey.</p><a class="btnp" href="register.html">Register now</a></section>
+<script type="module">
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+(async () => {
+  const app = document.getElementById("app");
+  let s = {}, q = [];
+  try { const d = await getDoc(doc(db, "publicInfo", "site")); if (d.exists()) s = d.data(); } catch (e) {}
+  try { q = (await getDocs(collection(db, "testimonials"))).docs.map(d => d.data()); } catch (e) {}
+  q.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999));
+  let h = "";
+  const box = (t, ar, txt) => txt ? `<div class="cdp"><h3>${t} <span dir="rtl" lang="ar" style="font-family:Amiri,serif;color:#9a6b10">${ar}</span></h3><p>${esc(txt)}</p></div>` : "";
+  const vm = box("Our Vision", "رؤيتنا", s.vision) + box("Our Mission", "رسالتنا", s.mission) + box("Our Values", "قيمنا", s.values);
+  h += vm ? `<div class="vm">${vm}</div>` : '<p class="empty">Our vision and mission will be published soon.</p>';
+  if (s.profile) h += `<h2>About the Institute</h2><div class="cdp pr"><p>${esc(s.profile)}</p></div>`;
+  if (q.length) h += '<h2>What our students say</h2><div class="g3">' + q.map(t => `<div class="q"><p>${esc(t.text)}</p><b>${esc(t.name)}</b>${t.role ? `<small>${esc(t.role)}</small>` : ""}</div>`).join("") + "</div>";
+  app.innerHTML = h;
+})();
+</script>
+</body></html>

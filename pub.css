@@ -1,0 +1,58 @@
+/* Shared look for the public pages: Study Plan, Faculty, Vision & Mission, Knowledge Series */
+.ph{background:linear-gradient(160deg,var(--night,#072f25),var(--deep,#0a4535));color:#fff;padding:46px clamp(16px,5vw,56px) 40px;text-align:center;border-bottom:4px solid #f0be4d}
+.ph h1{margin:0 0 6px;font-family:Amiri,serif;font-size:clamp(2rem,5.5vw,3.2rem);line-height:1.15}
+.ph .ar{display:block;font-family:Amiri,serif;font-size:1.5rem;color:#f1c75c;margin-bottom:4px}
+.ph p{max-width:62ch;margin:8px auto 0;opacity:.92;font-size:1.05rem}
+.pg{max-width:1100px;margin:0 auto;padding:30px clamp(16px,4vw,40px) 60px}
+.pg h2{font-family:Amiri,serif;font-size:2rem;margin:34px 0 10px;line-height:1.2}
+.pg h2:first-child{margin-top:0}
+.sub{color:#4b5a53;margin:0 0 16px}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.cdp{background:#fff;border:1.5px solid var(--line,#cfe0d6);border-radius:16px;padding:18px}
+.cdp h3{margin:0 0 4px;font-size:1.15rem}
+.cdp small,.cdp .mut{color:#4b5a53}
+.tabs2{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
+.tabs2 button{font:inherit;font-weight:700;padding:10px 18px;border-radius:999px;border:1.5px solid var(--line,#cfe0d6);background:#fff;color:inherit;cursor:pointer;min-height:44px}
+.tabs2 button.on{background:#f0be4d;border-color:#f0be4d;color:#0b3a2b}
+/* faculty */
+.fm{text-align:center}
+.fm .av{width:124px;height:124px;border-radius:50%;object-fit:cover;border:3px solid #f0be4d;margin:0 auto 12px;display:block;background:#0a4535;color:#f1c75c;font:700 2.6rem/118px Amiri,serif}
+.fm h3{font-size:1.2rem}
+.fm .rl{color:#9a6b10;font-weight:700;margin:2px 0 8px}
+.fm p{margin:6px 0 0;color:#33403a;font-size:.95rem}
+.chip{display:inline-block;margin:3px 3px 0;padding:3px 10px;border-radius:999px;background:#e9f3ee;color:#0b3a2b;font-size:.82rem;font-weight:600}
+/* study plan */
+.lv ul{list-style:none;margin:10px 0 0;padding:0}
+.lv li{padding:8px 0;border-top:1.5px solid var(--line,#cfe0d6)}
+.lv li b{display:block}
+.lv li .ar{font-family:Amiri,serif;font-size:1.15rem;color:#0b3a2b}
+.dy{margin:10px 0 0}
+.dy h4{margin:0 0 4px;font-size:.98rem;color:#0b3a2b}
+.sl{display:flex;gap:10px;padding:5px 0;border-top:1px dashed var(--line,#cfe0d6);font-size:.93rem}
+.sl .tm{min-width:118px;font-weight:700;color:#9a6b10}
+.tz{font-size:.85rem;color:#4b5a53;margin:8px 0 0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 26px}
+.facts div{background:#fff;border:1.5px solid var(--line,#cfe0d6);border-radius:14px;padding:14px;text-align:center}
+.facts b{display:block;font-size:1.5rem;color:#0b3a2b}
+.facts span{font-size:.85rem;color:#4b5a53}
+/* vision, quotes */
+.vm{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.vm .cdp{border-top:5px solid #f0be4d}
+.vm p,.pr p{white-space:pre-line;margin:6px 0 0;line-height:1.7}
+.q{background:#fff;border:1.5px solid var(--line,#cfe0d6);border-radius:16px;padding:18px;position:relative}
+.q:before{content:"\201C";position:absolute;top:2px;left:12px;font:700 3.4rem/1 Amiri,serif;color:#f0be4d}
+.q p{margin:18px 0 8px;line-height:1.7;white-space:pre-line}
+.q b{display:block}
+.q small{color:#4b5a53}
+/* articles */
+.ar-list a.cdp{display:block;text-decoration:none;color:inherit}
+.ar-list a.cdp:hover{border-color:#f0be4d}
+.ar-list h3{margin:0 0 4px}
+.ar-body{max-width:760px;margin:0 auto;line-height:1.85;font-size:1.05rem;white-space:pre-line}
+.btnp{display:inline-block;padding:12px 22px;border-radius:12px;background:#f0be4d;color:#0b3a2b;font-weight:800;text-decoration:none}
+.btnp.alt{background:transparent;border:2px solid #f0be4d;color:#fff}
+.empty{color:#4b5a53;padding:10px 0}
+.cta2{background:linear-gradient(160deg,var(--night,#072f25),var(--deep,#0a4535));color:#fff;text-align:center;padding:44px clamp(16px,5vw,56px);border-top:4px solid #f0be4d}
+.cta2 h2{font-family:Amiri,serif;font-size:2rem;margin:0 0 8px}
+.cta2 p{max-width:56ch;margin:0 auto 18px;opacity:.92}
+@media(max-width:520px){.sl{flex-direction:column;gap:0}.sl .tm{min-width:0}}

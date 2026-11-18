@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faculty Members | Sirajul Ummah Islamic Institute</title>
+<meta name="description" content="Meet the teachers of Sirajul Ummah Islamic Institute.">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><link rel="stylesheet" href="pub.css?v=1"><script src="site.js" defer></script>
+</head><body>
+<div class="ph"><span class="ar" dir="rtl" lang="ar">هيئة التدريس</span><h1>Faculty Members</h1><p>Our teachers guide every student with knowledge, patience and good character.</p></div>
+<main class="page pg" id="app"><p class="empty">Loading...</p></main>
+<section class="cta2"><h2>Learn with them</h2><p>Create a free account and join a class today.</p><a class="btnp" href="register.html">Register now</a></section>
+<script type="module">
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const ok = u => /^(data:image\/(jpeg|png|webp);base64,|https:\/\/)/i.test(String(u || ""));
+(async () => {
+  const app = document.getElementById("app");
+  let list = [];
+  try { list = (await getDocs(collection(db, "faculty"))).docs.map(d => ({ id: d.id, ...d.data() })); }
+  catch (e) { app.innerHTML = '<p class="empty">The teachers could not be loaded. Please refresh.</p>'; return; }
+  list.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999) || String(a.name).localeCompare(String(b.name)));
+  if (!list.length) { app.innerHTML = '<p class="empty">Our faculty list will be published soon.</p>'; return; }
+  app.innerHTML = '<div class="g3">' + list.map(t => {
+    const ini = esc(String(t.name || "?").trim().charAt(0).toUpperCase());
+    const av = ok(t.photo) ? `<img class="av" src="${esc(t.photo)}" alt="${esc(t.name)}" loading="lazy">` : `<span class="av" aria-hidden="true">${ini}</span>`;
+    const subs = (t.subjects || []).map(s => `<span class="chip">${esc(s)}</span>`).join("");
+    return `<article class="cdp fm">${av}<h3>${esc(t.name)}</h3>${t.role ? `<div class="rl">${esc(t.role)}</div>` : ""}<div>${subs}</div>${t.bio ? `<p>${esc(t.bio)}</p>` : ""}</article>`;
+  }).join("") + "</div>";
+})();
+</script>
+</body></html>
