@@ -106,12 +106,74 @@ footer{background:var(--night);color:#cfe0d6;padding:30px clamp(18px,5vw,64px);d
 footer a{text-decoration:none;margin-right:16px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.go a,.paths details,.paths summary::after,.faq summary::after{transition:none}}
 html:not(.ok){visibility:hidden}
+
+/* ---- Zad-style additions ---- */
+body:not(.u) .mem{display:none!important}
+body.u .vis{display:none!important}
+.hero .cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:20px}
+.hero .ghost{font-weight:700;color:#fff;text-decoration:none;border:2px solid rgba(240,190,77,.7);border-radius:10px;padding:10px 22px}
+.hero .ghost:hover{background:var(--lamp);color:var(--night)}
+.btn[aria-disabled=true]{opacity:.55;pointer-events:none}
+.regn{margin:10px 0 0;color:#ffe9a6;font-weight:600;font-size:.95rem}
+.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px}
+.facts div{border:1.5px solid rgba(240,190,77,.45);border-radius:14px;background:rgba(255,255,255,.04);padding:12px 14px;text-align:center}
+.facts b{display:block;font-size:1.25rem;color:var(--lamp);line-height:1.25}
+.facts span{font-size:.85rem;color:var(--soft)}
+@media(min-width:760px){.facts{grid-template-columns:repeat(4,1fr)}}
+.tcd2{border:2px solid var(--lamp);border-radius:16px;background:rgba(0,0,0,.22);padding:20px 14px;text-align:center}
+.tcd2 .tt{font-weight:700;font-size:1.1rem}.tcd2 .tt b{color:#ffe9a6}
+.tcd2 .rw{display:flex;justify-content:center;gap:8px;margin:12px 0 6px;align-items:flex-start}
+.tcd2 .bx{min-width:56px}.tcd2 .bx b{display:block;font-size:clamp(1.7rem,8vw,2.4rem);line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums}
+.tcd2 .bx span{font-size:.68rem;letter-spacing:.12em;color:var(--soft)}
+.tcd2 .sp{font-size:2rem;font-weight:800;color:var(--lamp);line-height:1.15}
+.tcd2 p{margin:8px auto 0;max-width:54ch;color:#e3f2ea}
+.about2{display:grid;gap:14px;border:1.5px solid rgba(240,190,77,.45);border-radius:16px;background:rgba(255,255,255,.04);padding:20px}
+.about2 p{margin:0;color:#e3efe8;max-width:70ch}
+.about2 .links{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.lnk{color:var(--lamp);font-weight:700;text-decoration:none}
+.lnk:hover{text-decoration:underline}
+.path5{counter-reset:p;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.path5 li{counter-increment:p;display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;border:1.5px solid rgba(240,190,77,.45);border-radius:14px;background:rgba(255,255,255,.04);padding:12px 16px}
+.path5 li:before{content:counter(p);font-family:Amiri,serif;font-size:2.2rem;color:var(--lamp);line-height:1;text-align:center}
+.path5 b{display:block}.path5 span{color:var(--soft);font-size:.9rem}
+@media(min-width:900px){.path5{grid-template-columns:repeat(5,1fr)}.path5 li{grid-template-columns:1fr;text-align:center}}
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tc{border:1.5px solid rgba(240,190,77,.45);border-radius:14px;background:rgba(255,255,255,.04);padding:16px;text-align:center;text-decoration:none;color:#fff;display:block}
+.tc .av{width:92px;height:92px;border-radius:50%;object-fit:cover;border:3px solid var(--lamp);margin:0 auto 8px;display:block;background:var(--deep);color:var(--lamp);font:700 2rem/86px Amiri,serif}
+.tc b{display:block}.tc small{color:var(--soft)}
+.tc.l{text-align:left}.tc.l p{margin:6px 0 0;color:#e3efe8;font-size:.95rem}
+.q2 p{margin:0 0 10px;line-height:1.7}
+.more{margin-top:12px}
+.cta3{padding:40px 0 46px;text-align:center}
+.cta3 h2{font-family:Amiri,serif;font-size:clamp(1.8rem,5vw,2.4rem);margin:0 0 6px}
+.cta3 p{max-width:52ch;margin:0 auto 18px;color:var(--soft)}
 </style>
 <script>window.SITE_HOME=true</script>
 <script src="site.js" defer></script>
 </head>
 <body>
-<section class="hero">
+<!-- Visitors see this hero (like Zad): facts, Register now, Log in -->
+<section class="hero vis">
+  <div class="in">
+    <div>
+      <p class="hello" dir="rtl" lang="ar">السلام عليكم ورحمة الله</p>
+      <h1>Learn the Qur'an, Arabic and Islamic knowledge online</h1>
+      <p class="lead">Memorize the Qur'an, master Arabic, study the Islamic and Western sciences and build technology skills, at your own pace, from your phone or computer.</p>
+      <div class="cta-row"><a class="btn" id="regbtn" href="register.html">Register now</a><a class="ghost" href="login.html">Log in</a></div>
+      <p class="regn" id="regnote"></p>
+    </div>
+    <img src="logo.svg" alt="Sirajul Ummah Islamic Institute logo">
+    <div class="facts" aria-label="At a glance">
+      <div><b>5</b><span>departments</span></div>
+      <div><b>Free</b><span>to create an account</span></div>
+      <div><b id="nextd">Soon</b><span id="nextl">next term begins</span></div>
+      <div><b>Online</b><span>on phone or computer</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Students see this hero: greeting and their shortcuts (unchanged) -->
+<section class="hero mem">
   <div class="in">
     <div>
       <p class="hello" dir="rtl" lang="ar">السلام عليكم ورحمة الله</p>
@@ -128,6 +190,23 @@ html:not(.ok){visibility:hidden}
     </nav>
   </div>
 </section>
+
+<!-- Countdown to the next term (visitors; logged-in students see the countdown card from portal.js) -->
+<section class="blk vis" id="termcd" hidden>
+  <div class="in"><div class="tcd2" id="tcbox"></div></div>
+</section>
+
+<section class="blk vis" id="about">
+  <div class="in">
+    <h2>About the Institute</h2>
+    <p class="sub">Who we are</p>
+    <div class="about2">
+      <p>Sirajul Ummah Islamic Institute is an online institute for Qur'an memorization, Arabic, Islamic and Western studies, and technology. Learn from qualified teachers at your own pace, with live classes, recorded lectures, homework, exams, a digital library and certificates you can verify.</p>
+      <div class="links"><a class="lnk" href="about.html">Find out more &rarr;</a><a class="lnk" href="vision.html">Vision &amp; Mission &rarr;</a></div>
+    </div>
+  </div>
+</section>
+
 <section class="blk" id="programs">
   <div class="in">
     <h2>What we teach</h2>
@@ -144,10 +223,26 @@ html:not(.ok){visibility:hidden}
       <details id="tech"><summary><span><b>Technology</b><span class="t">Practical skills, learned online</span></span><span class="w" dir="rtl" lang="ar">التقنية</span></summary>
         <div class="topics"><span>Computer basics</span><span>Digital safety</span><span>Digital tools</span><span>Web design and coding</span></div></details>
     </div>
+    <p class="more"><a class="lnk" href="study-plan.html">See the full Study Plan and timetable &rarr;</a></p>
   </div>
 </section>
 
-<section class="blk">
+<section class="blk vis" id="path">
+  <div class="in">
+    <h2>Your learning path</h2>
+    <p class="sub">Five steps, from sign-up to certificate.</p>
+    <ol class="path5">
+      <li><div><b>Register free</b><span>Create your account in a minute.</span></div></li>
+      <li><div><b>Choose your classes</b><span>Pick your level in each department.</span></div></li>
+      <li><div><b>Learn online</b><span>Live classes and recorded lectures.</span></div></li>
+      <li><div><b>Homework and exams</b><span>Practise, then sit your tests.</span></div></li>
+      <li><div><b>Report card and certificate</b><span>See your results and earn a certificate.</span></div></li>
+    </ol>
+    <p class="more"><a class="lnk" href="study-plan.html">See the Study Plan &rarr;</a></p>
+  </div>
+</section>
+
+<section class="blk mem">
   <div class="in">
     <h2>How it works</h2>
     <p class="sub">Four steps, from your class to your lessons.</p>
@@ -160,14 +255,48 @@ html:not(.ok){visibility:hidden}
   </div>
 </section>
 
+<section class="blk" id="facsec" hidden>
+  <div class="in">
+    <h2>Faculty Members</h2>
+    <p class="sub">Meet the teachers who guide our students.</p>
+    <div class="tg" id="facgrid"></div>
+    <p class="more"><a class="lnk" href="faculty.html">Meet all our teachers &rarr;</a></p>
+  </div>
+</section>
+
+<section class="blk" id="stosec" hidden>
+  <div class="in">
+    <h2>What our students say</h2>
+    <p class="sub">In their own words.</p>
+    <div class="tg q2" id="stogrid"></div>
+  </div>
+</section>
+
+<section class="blk" id="knosec" hidden>
+  <div class="in">
+    <h2>Knowledge Series</h2>
+    <p class="sub">Short articles and lessons from our teachers.</p>
+    <div class="tg" id="knogrid"></div>
+    <p class="more"><a class="lnk" href="knowledge.html">Read all articles &rarr;</a></p>
+  </div>
+</section>
+
 <section class="blk faq">
   <div class="in">
     <h2>Questions</h2>
     <div class="qs">
-      <details><summary>Where are my books?</summary><p>In Subjects. Each subject shows its book and its price in coins.</p></details>
-      <details><summary>Where is my timetable?</summary><p>In Timetable. The admin sets it for your class, term by term.</p></details>
-      <details><summary>How do I get coins?</summary><p>Open My wallet and add coins.</p></details>
-      <details><summary>Can I change my class?</summary><p>Contact the admin. Your class is fixed once chosen.</p></details>
+      <!-- for visitors -->
+      <details class="vis"><summary>Is it free to create an account?</summary><p>Yes. Creating an account costs nothing. Some books and courses use coins from your wallet.</p></details>
+      <details class="vis"><summary>Do I need any experience?</summary><p>No. Every department starts from the beginning.</p></details>
+      <details class="vis"><summary>How do I register?</summary><p>Tap Register now, fill in the short form, then choose your classes.</p></details>
+      <details class="vis"><summary>When does registration close?</summary><p>Registration closes on the day a term begins and opens again after the term ends. The dates are at the top of this page.</p></details>
+      <details class="vis"><summary>Can I learn on my phone?</summary><p>Yes. The classes, library and exams all work on a phone or a computer.</p></details>
+      <details class="vis"><summary>Will I get a certificate?</summary><p>Yes. Certificates can be checked online by anyone you show them to.</p></details>
+      <!-- for students (unchanged) -->
+      <details class="mem"><summary>Where are my books?</summary><p>In Subjects. Each subject shows its book and its price in coins.</p></details>
+      <details class="mem"><summary>Where is my timetable?</summary><p>In Timetable. The admin sets it for your class, term by term.</p></details>
+      <details class="mem"><summary>How do I get coins?</summary><p>Open My wallet and add coins.</p></details>
+      <details class="mem"><summary>Can I change my class?</summary><p>Contact the admin. Your class is fixed once chosen.</p></details>
     </div>
   </div>
 </section>
@@ -181,26 +310,97 @@ html:not(.ok){visibility:hidden}
   </div>
 </section>
 
-<footer>
-  <div style="max-width:560px"><span dir="rtl" lang="ar" class="ar" style="display:block;font-size:1.2rem;color:#f0be4d">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>
-  <div><a href="courses.html">Courses</a><a href="library.html">Library</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
-</footer>
+<section class="cta3 vis">
+  <div class="in">
+    <h2>Begin with the lamp of knowledge</h2>
+    <p>Create a free account and start learning today, in shaa Allah.</p>
+    <a class="btn" id="regbtn2" href="register.html">Register now</a>
+  </div>
+</section>
+
+<div id="zfmount"></div>
   <div style="background:var(--night);color:#cfe0d6;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
-// Greet the student by first name
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const okImg = u => /^(data:image\/(jpeg|png|webp);base64,|https:\/\/)/i.test(String(u || ""));
+const L = { day: "numeric", month: "long", year: "numeric" };
+const show = () => document.documentElement.classList.add("ok");
+setTimeout(show, 3000);   // never leave the page hidden if the sign-in check is slow
+
+let timer = null;
+function countdown(term, closed) {
+  const box = $("tcbox"), sec = $("termcd");
+  const start = new Date(term.start + "T00:00:00+01:00"), end = new Date(term.end + "T23:59:59+01:00");
+  const name = esc((term.name || "Next term") + " " + (term.session || "")).trim();
+  const fd = d => d.toLocaleDateString("en-GB", L);
+  sec.hidden = false;
+  const draw = () => {
+    const now = new Date();
+    if (now >= start) {
+      box.innerHTML = '<div class="tt"><b>' + name + '</b> is running</div><p>It began on ' + esc(fd(start)) + ' and ends on ' + esc(fd(end)) + '. Registration reopens after the term ends.</p>';
+      clearInterval(timer); return;
+    }
+    const ms = start - now, d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4), s = Math.floor(ms % 6e4 / 1e3);
+    const p = n => String(n).padStart(2, "0");
+    box.innerHTML = '<div class="tt"><b>' + name + '</b> begins on <b>' + esc(start.toLocaleDateString("en-GB", { weekday: "long", ...L })) + '</b></div><div class="rw"><div class="bx"><b>' + d + '</b><span>DAYS</span></div><div class="sp">:</div><div class="bx"><b>' + p(h) + '</b><span>HOURS</span></div><div class="sp">:</div><div class="bx"><b>' + p(m) + '</b><span>MINUTES</span></div><div class="sp">:</div><div class="bx"><b>' + p(s) + '</b><span>SECONDS</span></div></div><p>Register free before the term begins. Registration closes on the first day of the term.</p>';
+  };
+  draw(); timer = setInterval(draw, 1000);
+}
+
+async function visitorTerm() {
+  try {
+    const r = await getDoc(doc(db, "publicInfo", "registration"));
+    if (!r.exists()) return;
+    const x = r.data(), now = Date.now();
+    let closed = false;
+    for (let i = 1; i <= 3; i++) { const s = x["w" + i + "s"], e = x["w" + i + "e"]; if (s && e && s.toMillis() <= now && now < e.toMillis()) closed = true; }
+    const t = (x.terms || []).find(t => t.end && new Date(t.end + "T23:59:59+01:00").getTime() >= now);
+    if (t) {
+      countdown(t, closed);
+      const st = new Date(t.start + "T00:00:00+01:00");
+      if (st > new Date()) { $("nextd").textContent = st.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); $("nextl").textContent = (t.name || "Next term") + " begins"; }
+      else { $("nextd").textContent = "Running"; $("nextl").textContent = (t.name || "Term") + " in progress"; }
+    }
+    if (closed) {
+      for (const id of ["regbtn", "regbtn2"]) { const b = $(id); b.textContent = "Registration closed"; b.setAttribute("aria-disabled", "true"); b.removeAttribute("href"); }
+      $("regnote").textContent = "Registration is closed while a term is running. It opens again after the term ends.";
+    }
+  } catch (e) {}
+}
+
+async function teasers() {
+  try {
+    const f = (await getDocs(collection(db, "faculty"))).docs.map(d => d.data()).sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999)).slice(0, 4);
+    if (f.length) { $("facgrid").innerHTML = f.map(t => { const av = okImg(t.photo) ? '<img class="av" src="' + esc(t.photo) + '" alt="' + esc(t.name) + '" loading="lazy">' : '<span class="av" aria-hidden="true">' + esc(String(t.name || "?").trim().charAt(0).toUpperCase()) + '</span>'; return '<a class="tc" href="faculty.html">' + av + '<b>' + esc(t.name) + '</b><small>' + esc(t.role || "") + '</small></a>'; }).join(""); $("facsec").hidden = false; }
+  } catch (e) {}
+  try {
+    const q = (await getDocs(collection(db, "testimonials"))).docs.map(d => d.data()).sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999)).slice(0, 3);
+    if (q.length) { $("stogrid").innerHTML = q.map(t => '<div class="tc l"><p>&ldquo;' + esc(t.text) + '&rdquo;</p><b>' + esc(t.name) + '</b>' + (t.role ? '<small>' + esc(t.role) + '</small>' : '') + '</div>').join(""); $("stosec").hidden = false; }
+  } catch (e) {}
+  try {
+    const a = (await getDocs(collection(db, "articles"))).docs.map(d => ({ id: d.id, ...d.data() })).filter(x => x.published !== false).sort((x, y) => ((y.createdAt && y.createdAt.seconds) || 0) - ((x.createdAt && x.createdAt.seconds) || 0)).slice(0, 3);
+    if (a.length) { $("knogrid").innerHTML = a.map(x => '<a class="tc l" href="knowledge.html?id=' + encodeURIComponent(x.id) + '"><b>' + esc(x.title) + '</b><small>' + esc(x.author || "") + '</small><p>' + esc(String(x.body || "").replace(/\s+/g, " ").slice(0, 110)) + '...</p></a>').join(""); $("knosec").hidden = false; }
+  } catch (e) {}
+}
+
 onAuthStateChanged(auth, async u => {
-  if (!u) return;
-  let n = u.displayName || "";
-  try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) n = s.data().name; } catch (e) {}
-  n = String(n).trim().split(/\s+/)[0];
-  if (n === n.toUpperCase()) n = n.charAt(0) + n.slice(1).toLowerCase();
-  if (n && n.indexOf("@") < 0) document.getElementById("hi").textContent = "Welcome back, " + n;
+  if (u) {
+    document.body.classList.add("u");
+    // Greet the student by first name
+    let n = u.displayName || "";
+    try { const s = await getDoc(doc(db, "students", u.uid)); if (s.exists() && s.data().name) n = s.data().name; } catch (e) {}
+    n = String(n).trim().split(/\s+/)[0];
+    if (n === n.toUpperCase()) n = n.charAt(0) + n.slice(1).toLowerCase();
+    if (n && n.indexOf("@") < 0) $("hi").textContent = "Welcome back, " + n;
+  } else visitorTerm();
+  show();
+  teasers();
 });
 </script>
-<script type="module">import "./guard.js";</script>
   <script>
   // Keeps the Donate link in the top menu even if another script rebuilds the menu
   (function(){
@@ -216,7 +416,5 @@ onAuthStateChanged(auth, async u => {
     if(nav)new MutationObserver(ensure).observe(nav,{childList:true});
   })();
   </script>
-  <script src="bot.js?v=6" defer></script>
-<script type="module">import "./classes-check.js";</script>
 </body>
 </html>
