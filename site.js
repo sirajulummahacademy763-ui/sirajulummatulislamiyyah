@@ -5,20 +5,33 @@ if("AmbientLightSensor"in window){try{var s=new AmbientLightSensor({frequency:0.
 // Security: never let another website show this site inside a frame (clickjacking)
 try{if(window.top!==window.self){window.top.location=window.self.location}}catch(e){document.documentElement.style.display="none"}
 // Pages anyone can open without logging in (written without ".html", because Netlify can show /about instead of /about.html)
-const PUBLIC=["about","contact","privacy","terms","donate","parent"];
+const PUBLIC=["about","contact","privacy","terms","donate","parent","study-plan","faculty","vision","knowledge"];
 const page=(location.pathname.split("/").pop()||"index").replace(/\.html$/,"");
 const isPub=PUBLIC.includes(page);
-if(isPub)document.documentElement.classList.add("ok");else import("./guard.js").catch(()=>location.replace("login.html"));
-const nav=isPub?[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-const cta=isPub?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
+const isHome=!!window.SITE_HOME;
+if(isPub)document.documentElement.classList.add("ok");else if(!isHome)import("./guard.js").catch(()=>location.replace("login.html"));
+const nav=(isPub||isHome)?[["index.html","Home"],["about.html","About"],["vision.html","Vision & Mission"],["study-plan.html","Study Plan"],["faculty.html","Faculty"],["knowledge.html","Knowledge Series"],["contact.html","Contact"],["donate.html","Donate"],["login.html","Log in"]]:[["index.html","Home"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+const cta=(isPub||isHome)?'<a class="btn" href="register.html">Join free</a>':'<a class="btn" href="#" data-logout>Log out</a>';
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML("beforeend",'<link rel="icon" href="logo.svg">');
 document.body.insertAdjacentHTML("afterbegin",
  '<header class="top"><a class="logo" href="index.html" style="display:flex;align-items:center;gap:10px"><img src="logo.svg" alt="" width="40" height="40"><span style="display:block;line-height:1.25"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.15em">معهد سراج الأمة الإسلامية</span>Sirajul Ummah Islamic Institute</span></a><button class="mb" type="button" aria-expanded="false" aria-controls="mainnav">\u2630 Menu</button><nav id="mainnav">'+
  nav.map(n=>'<a href="'+n[0]+'">'+n[1]+'</a>').join("")+
  cta+'</nav></header>');
-if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
- '<footer><div style="max-width:560px"><span dir="rtl" lang="ar" style="display:block;font-family:Amiri,serif;font-size:1.2rem;color:#f0be4d">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur\u2019an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.</div>'+
- '<div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a></div></footer>');
+{
+ document.head.insertAdjacentHTML("beforeend",'<style id="zfcss">.zf{background:var(--night,#072f25);color:#cfe3d8;padding:40px clamp(18px,5vw,64px) 24px;border-top:4px solid #f0be4d}.zf .zg{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:28px;max-width:1100px;margin:0 auto}.zf h4{margin:0 0 10px;color:#f1c75c;font-size:1rem}.zf a{display:block;color:#cfe3d8;text-decoration:none;padding:5px 0}.zf a:hover{color:#f1c75c}.zf .zb{font-family:Amiri,serif;font-size:1.25rem;color:#f1c75c;display:block;margin-bottom:6px}.zf .zs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.zf .zs a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 14px;border:1.5px solid rgba(240,190,77,.6);border-radius:999px;font-weight:700;color:#fff}.zf .zs a:hover{background:#f0be4d;color:#0b3a2b}@media(max-width:760px){.zf .zg{grid-template-columns:1fr 1fr}.zf .zg>div:first-child{grid-column:1/-1}}</style>');
+ const zm=document.getElementById("zfmount");(zm?(h=>zm.insertAdjacentHTML("beforebegin",h)):(h=>document.body.insertAdjacentHTML("beforeend",h)))(
+ '<footer class="zf"><div class="zg"><div><span dir="rtl" lang="ar" class="zb">معهد سراج الأمة الإسلامية لتحفيظ القرآن ودراسة العلوم العربية والإسلامية والغربية والتقنية عبر الإنترنت</span><b>Sirajul Ummah Islamic Institute</b><br>For Qur\u2019an Memorization, Arabic, Islamic and Western Studies, and Technology through Online Learning.<div class="zs" id="zsoc"></div></div>'+
+ '<div><h4>About us</h4><a href="about.html">About the Institute</a><a href="vision.html">Vision &amp; Mission</a><a href="contact.html">Contact</a><a href="donate.html">Donate</a></div>'+
+ '<div><h4>Study</h4><a href="study-plan.html">Study Plan</a><a href="faculty.html">Faculty Members</a><a href="knowledge.html">Knowledge Series</a><a href="library.html">Library</a></div>'+
+ '<div><h4>Your account</h4><a href="register.html">Register</a><a href="login.html">Log in</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div></div></footer>');
+ // Social links the admin saved on the Website content page
+ Promise.all([import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),import("./firebase-config.js")]).then(([f,c])=>f.getDoc(f.doc(c.db,"publicInfo","site"))).then(d=>{
+  if(!d.exists())return;const x=d.data(),box=document.getElementById("zsoc");if(!box)return;
+  [["facebook","Facebook"],["youtube","YouTube"],["whatsapp","WhatsApp"],["instagram","Instagram"],["x","X"],["telegram","Telegram"]].forEach(p=>{
+   const u=String(x[p[0]]||"");if(!/^https:\/\//i.test(u))return;
+   const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener";a.textContent=p[1];a.setAttribute("aria-label",p[1]);box.appendChild(a)});
+ }).catch(()=>{});
+}
 const cat=new URLSearchParams(location.search).get("category");
 document.querySelectorAll("[data-cat]").forEach(el=>{if(cat&&el.dataset.cat!==cat)el.hidden=true});
 document.querySelectorAll(".tabs a").forEach(a=>{if((a.dataset.t||"")===(cat||""))a.classList.add("on")});
@@ -102,9 +115,9 @@ async function notifyLec(role,u,f,c){
   }catch(e){}
 }
 if(!isPub){
-  const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["absent-admin.html","Absent students"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
-  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["principals-admin.html","Principals (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["students-admin.html","Students (admin)"],["absent-admin.html","Absent students"],["backup-admin.html","Backup (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const STU=[["index.html","Home"],["subjects.html","Subjects"],["timetable.html","Timetable"],["classroom.html","Classroom"],["homework.html","Homework"],["exams.html","Exams"],["certificate.html","Certificates"],["report-card.html","Report Card"],["revision.html","Hifz & Revision"],["library.html","Library"],["wallet.html","My wallet"],["study-plan.html","Study Plan"],["faculty.html","Faculty"],["knowledge.html","Knowledge Series"],["vision.html","Vision & Mission"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const TCH=[["index.html","Home"],["teacher.html","Teacher"],["my-classes.html","My Classes"],["issue-reports.html","Issue Reports"],["absent-admin.html","Absent students"],["supervisor-inbox.html","Messages"],["signatures.html","My Signature"],["classroom.html","Classroom"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["study-plan.html","Study Plan"],["faculty.html","Faculty"],["knowledge.html","Knowledge Series"],["vision.html","Vision & Mission"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
+  const ADM=[["index.html?home=1","Home"],["dashboard.html","Today (admin)"],["admin.html","Admin"],["revision-admin.html","Hifz & Revision (admin)"],["classes-admin.html","Classes & Timetable (admin)"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers (admin)"],["overview-admin.html","Overview (admin)"],["signatures.html","Signature & Stamp (admin)"],["supervisors-admin.html","Supervisors (admin)"],["principals-admin.html","Principals (admin)"],["messages-admin.html","Messages (admin)"],["homework-admin.html","Homework & Reports (admin)"],["countries-admin.html","Students & Teachers by Country (admin)"],["students-admin.html","Students (admin)"],["absent-admin.html","Absent students"],["backup-admin.html","Backup (admin)"],["revision-choices-admin.html","Hifz & Revision choices (admin)"],["content-admin.html","Website content (admin)"],["timetable.html","Timetable"],["subjects.html","Subjects"],["library.html","Library"],["study-plan.html","Study Plan"],["faculty.html","Faculty"],["knowledge.html","Knowledge Series"],["vision.html","Vision & Mission"],["about.html","About"],["contact.html","Contact"],["donate.html","Donate"]];
   // ---- Menu: grouped by purpose, with a search box and an A-Z switch ----
   const GROUPS=["Start","Classes & learning","Teaching","Results & reports","People & messages","Admin settings","Wallet & giving","The institute"];
   const ICON={"Start":"🏠","Classes & learning":"📚","Teaching":"🧑‍🏫","Results & reports":"📝","People & messages":"👥","Admin settings":"⚙️","Wallet & giving":"💰","The institute":"ℹ️"};
@@ -119,7 +132,7 @@ if(!isPub){
    "supervisors-admin.html":["People & messages","supervisors"],"principals-admin.html":["People & messages","principals head teacher"],"principal.html":["People & messages","principal head teacher classes questions attendance"],"teacher-assign-admin.html":["People & messages","assign teachers classes subjects"],"countries-admin.html":["People & messages","students teachers country list"],
    "students-admin.html":["People & messages","students delete remove account search"],"absent-admin.html":["Results & reports","absent attendance missed classes remind whatsapp"],"backup-admin.html":["Admin settings","backup save download data export"],"admin.html":["Admin settings","students teachers codes terms notices library coins"],"classes-admin.html":["Admin settings","classes timetable time zone"],"revision-admin.html":["Admin settings","hifz revision juz teachers"],"revision-choices-admin.html":["Admin settings","hifz revision choices students"],
    "wallet.html":["Wallet & giving","coins buy money balance"],"donate.html":["Wallet & giving","sadaqah charity give donation"],
-   "about.html":["The institute","about us"],"contact.html":["The institute","contact phone whatsapp email"]};
+   "about.html":["The institute","about us"],"study-plan.html":["The institute","study plan curriculum levels subjects schedule"],"faculty.html":["The institute","faculty teachers staff"],"knowledge.html":["The institute","knowledge series articles lessons blog"],"vision.html":["The institute","vision mission values testimonials"],"content-admin.html":["Admin settings","website content teachers stories articles social links vision"],"contact.html":["The institute","contact phone whatsapp email"]};
   const grp=h=>{const k=String(h).split("?")[0].split("/").pop();return MAP[k]||["The institute",""]};
   let AZ=false;try{AZ=localStorage.getItem("menuAZ")==="1"}catch(e){}
   const show=list=>{
@@ -162,6 +175,16 @@ if(!isPub){
   ]).then(([a,f,c])=>{
     a.onAuthStateChanged(c.auth,async u=>{
       if(!u)return;
+      if(isHome){
+        const nv0=document.querySelector("header.top nav");
+        if(nv0&&!nv0.querySelector("[data-logout]")){const lo0=document.createElement("a");lo0.className="btn";lo0.href="#";lo0.setAttribute("data-logout","");lo0.textContent="Log out";nv0.appendChild(lo0);
+          lo0.onclick=async e=>{e.preventDefault();try{await a.signOut(c.auth)}catch(x){}location.href="login.html"}}
+        import("./guard.js").catch(()=>{});
+        import("./classes-check.js").catch(()=>{});
+        import("./notice-popup.js?v=9").catch(()=>{});
+        import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
+        const bs0=document.createElement("script");bs0.src="bot.js?v=6";document.body.appendChild(bs0);
+      }
       let role="student";
       try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())role="admin"; }catch(e){}
       if(role==="student"){try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())role="teacher"; }catch(e){}}
@@ -202,18 +225,18 @@ if(!isPub){
       if(role!=="student")notify(role,u,isSup,f,c,isPrin);
       if(role!=="admin")setTimeout(()=>notifyLec(role,u,f,c),400);
     });
-  }).catch(()=>{ show(STU); });
+  }).catch(()=>{ if(!isHome)show(STU); });
 }
 // Copyright line on every page
 if(!window.SITE_HOME)document.body.insertAdjacentHTML("beforeend",
  '<div style="background:var(--night,var(--night));color:#bfd6ca;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; '+new Date().getFullYear()+' Sirajul Ummah Islamic Institute. All rights reserved.<br>Website developed with Alpha Tech Hub</div>');
 // Help bot
 if(!isPub&&!window.SITE_HOME){const bs=document.createElement("script");bs.src="bot.js?v=6";document.body.appendChild(bs);}
-if(!isPub)import("./classes-check.js");
-if(!isPub)import("./notice-popup.js?v=9").catch(()=>{});
+if(!isPub&&!isHome)import("./classes-check.js");
+if(!isPub&&!isHome)import("./notice-popup.js?v=9").catch(()=>{});
 // Courses link: hidden unless the student is in Thanawi 3, SSS 3 or Advanced Technology
 if(!document.getElementById("cx")){document.head.insertAdjacentHTML("beforeend",'<style id="cx">a[href="courses.html"]{display:none!important}</style>');}
-if(!isPub)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
+if(!isPub&&!isHome)import("./courses-access.js").then(m=>m.check()).then(ok=>{if(ok.length){const x=document.getElementById("cx");if(x)x.remove()}}).catch(()=>{});
 // Shared look + tidy header menu (theme.css) and a "Jump to" bar on long admin pages
 if(!document.querySelector('link[href^="theme.css"]'))document.head.insertAdjacentHTML("beforeend",'<link rel="stylesheet" href="theme.css?v=7">');
 if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacentHTML("beforeend",'<meta name="theme-color" content="#0a3f31">');
@@ -257,7 +280,7 @@ if(!document.querySelector('meta[name=theme-color]'))document.head.insertAdjacen
  if(typeof isPub!=="undefined"&&isPub)return;
  const here=(location.pathname.split("/").pop()||"index.html");
  if(here==="index.html"||here==="login.html"||here==="register.html"||here==="dashboard.html")return;
- const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","principals-admin.html":"People & messages","principal.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","backup-admin.html":"Admin settings","students-admin.html":"People & messages","absent-admin.html":"Results & reports","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute"};
+ const GN={"index.html":"Start","dashboard.html":"Start","subjects.html":"Classes & learning","timetable.html":"Classes & learning","classroom.html":"Classes & learning","quran-classroom.html":"Classes & learning","homework.html":"Classes & learning","exams.html":"Classes & learning","revision.html":"Classes & learning","library.html":"Classes & learning","courses.html":"Classes & learning","teacher.html":"Teaching","my-classes.html":"Teaching","report-card.html":"Results & reports","certificate.html":"Results & reports","issue-reports.html":"Results & reports","homework-admin.html":"Results & reports","overview-admin.html":"Results & reports","signatures.html":"Results & reports","messages-admin.html":"People & messages","supervisor-inbox.html":"People & messages","supervisor.html":"People & messages","supervisors-admin.html":"People & messages","principals-admin.html":"People & messages","principal.html":"People & messages","teacher-assign-admin.html":"People & messages","countries-admin.html":"People & messages","admin.html":"Admin settings","backup-admin.html":"Admin settings","students-admin.html":"People & messages","absent-admin.html":"Results & reports","classes-admin.html":"Admin settings","revision-admin.html":"Admin settings","revision-choices-admin.html":"Admin settings","wallet.html":"Wallet & giving","donate.html":"Wallet & giving","about.html":"The institute","contact.html":"The institute","study-plan.html":"The institute","faculty.html":"The institute","knowledge.html":"The institute","vision.html":"The institute","content-admin.html":"Admin settings"};
  const DESC={"admin.html":"Manage students, teachers, terms, notices and the library. Tap a section to open it, or use the round buttons to jump straight to one.","countries-admin.html":"Everyone who registered, grouped by country. Use the search box to find a person.","revision-admin.html":"Set the teacher for each juz, for boys and girls separately.","classroom.html":"Your class room: lectures, voice notes, quizzes and questions for your teacher."};
  const group=GN[here]||"";
  const ttl=h=>{const c=h.cloneNode(true);c.querySelectorAll("small").forEach(x=>x.remove());const p=c.textContent.split("\u00b7").map(x=>x.trim()).filter(Boolean);return (p.find(x=>/[A-Za-z]/.test(x))||p[0]||"").replace(/[<>&]/g,"")};
