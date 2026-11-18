@@ -27,7 +27,7 @@ document.body.insertAdjacentHTML("afterbegin",
  // Social links the admin saved on the Website content page
  Promise.all([import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),import("./firebase-config.js")]).then(([f,c])=>f.getDoc(f.doc(c.db,"publicInfo","site"))).then(d=>{
   if(!d.exists())return;const x=d.data(),box=document.getElementById("zsoc");if(!box)return;
-  [["facebook","Facebook"],["youtube","YouTube"],["whatsapp","WhatsApp"],["instagram","Instagram"],["x","X"],["telegram","Telegram"]].forEach(p=>{
+  [["facebook","Facebook"],["youtube","YouTube"],["whatsapp","WhatsApp"],["instagram","Instagram"],["x","X"],["telegram","Telegram"],["tiktok","TikTok"]].forEach(p=>{
    const u=String(x[p[0]]||"");if(!/^https:\/\//i.test(u))return;
    const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener";a.textContent=p[1];a.setAttribute("aria-label",p[1]);box.appendChild(a)});
  }).catch(()=>{});
