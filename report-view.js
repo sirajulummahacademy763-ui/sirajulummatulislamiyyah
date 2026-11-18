@@ -181,7 +181,7 @@ function sheet(d, g) {
   if (!rows.length) rows = Array.from({ length: 8 }, () => ({ name: "", nameAr: "" }));
   const termTxt = d.term ? esc(d.term.name) + (d.term.session ? " " + esc(d.term.session) : "") : "";
   const f = (en, v, ar, va, w) => `<div class="f${w ? " w" : ""}"><div class="e"><b>${en}</b><span class="v">${v || ""}</span></div><div class="r" dir="rtl" lang="ar"><b class="a">${ar}</b><span class="v va">${va || ""}</span></div></div>`;
-  let h = `<section class="sh"><div class="shh"><div class="a1" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</div><div class="e1">SIRAJUL UMMAH ISLAMIC INSTITUTE</div></div>`;
+  let h = `<section class="sh"><div class="shh"><div class="a1" dir="rtl" lang="ar">معهد سراج الأمة الإسلامية</div><div class="e1">SIRAJUL UMMAH ISLAMIC INSTITUTE</div><div class="tg">For Qur’an Memorization, Arabic, Islamic and Western Studies, and Technology</div></div>`;
   h += `<div class="ttl"><span class="l">Report Sheet<br><small>${SEC[g.sec]}</small></span><img src="logo.svg" alt="" onerror="this.style.display='none'"><span class="r" dir="rtl">كشف الدرجات<br><small>${SECAR[g.sec]}</small></span></div>`;
   const termA = d.term ? [termAr(d.term.name), d.term.session ? AR(esc(d.term.session)) : ""].filter(Boolean).join(" ") : "";
   h += `<div class="fl">${f("Name:", esc(d.name), ":اسم", cd ? esc(cd.nameAr) : "", 1)}`
