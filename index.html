@@ -115,11 +115,11 @@ body.u .vis{display:none!important}
 .hero .ghost:hover{background:var(--lamp);color:var(--night)}
 .btn[aria-disabled=true]{opacity:.55;pointer-events:none}
 .regn{margin:10px 0 0;color:#ffe9a6;font-weight:600;font-size:.95rem}
-.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px}
+.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
 .facts div{border:1.5px solid rgba(240,190,77,.45);border-radius:14px;background:rgba(255,255,255,.04);padding:12px 14px;text-align:center}
 .facts b{display:block;font-size:1.25rem;color:var(--lamp);line-height:1.25}
-.facts span{font-size:.85rem;color:var(--soft)}
-@media(min-width:760px){.facts{grid-template-columns:repeat(4,1fr)}}
+.facts span{font-size:.78rem;color:var(--soft)}
+
 .tcd2{border:2px solid var(--lamp);border-radius:16px;background:rgba(0,0,0,.22);padding:20px 14px;text-align:center}
 .tcd2 .tt{font-weight:700;font-size:1.1rem}.tcd2 .tt b{color:#ffe9a6}
 .tcd2 .rw{display:flex;justify-content:center;gap:8px;margin:12px 0 6px;align-items:flex-start}
@@ -147,6 +147,13 @@ body.u .vis{display:none!important}
 .cta3{padding:40px 0 46px;text-align:center}
 .cta3 h2{font-family:Amiri,serif;font-size:clamp(1.8rem,5vw,2.4rem);margin:0 0 6px}
 .cta3 p{max-width:52ch;margin:0 auto 18px;color:var(--soft)}
+
+@media(max-width:759px){.hero .in>img{display:none}.hero h1{font-size:2rem;line-height:1.15}.hero{padding-bottom:22px}}
+.ab1{margin:0;color:#e3efe8;max-width:70ch;line-height:1.7}.ab1 .lnk{margin-left:10px;white-space:nowrap}
+.blk{padding-top:26px;padding-bottom:6px}
+.path5 li{padding:9px 14px;grid-template-columns:36px 1fr}.path5 li:before{font-size:1.7rem}
+.cta3{padding:24px 0 30px}.cta3 h2{font-size:1.6rem}
+.facts{margin-top:14px}.facts div{padding:9px 10px}.facts b{font-size:1.05rem}
 </style>
 <script>window.SITE_HOME=true</script>
 <script src="site.js" defer></script>
@@ -158,16 +165,15 @@ body.u .vis{display:none!important}
     <div>
       <p class="hello" dir="rtl" lang="ar">السلام عليكم ورحمة الله</p>
       <h1>Learn the Qur'an, Arabic and Islamic knowledge online</h1>
-      <p class="lead">Memorize the Qur'an, master Arabic, study the Islamic and Western sciences and build technology skills, at your own pace, from your phone or computer.</p>
+      <p class="lead">Live classes, your own pace, on your phone.</p>
       <div class="cta-row"><a class="btn" id="regbtn" href="register.html">Register now</a><a class="ghost" href="login.html">Log in</a></div>
       <p class="regn" id="regnote"></p>
     </div>
     <img src="logo.svg" alt="Sirajul Ummah Islamic Institute logo">
     <div class="facts" aria-label="At a glance">
-      <div><b>5</b><span>departments</span></div>
       <div><b>Free</b><span>to create an account</span></div>
       <div><b id="nextd">Soon</b><span id="nextl">next term begins</span></div>
-      <div><b>Online</b><span>on phone or computer</span></div>
+      <div><b>5</b><span>departments</span></div>
     </div>
   </div>
 </section>
@@ -197,30 +203,22 @@ body.u .vis{display:none!important}
 </section>
 
 <section class="blk vis" id="about">
-  <div class="in">
-    <h2>About the Institute</h2>
-    <p class="sub">Who we are</p>
-    <div class="about2">
-      <p>Sirajul Ummah Islamic Institute is an online institute for Qur'an memorization, Arabic, Islamic and Western studies, and technology. Learn from qualified teachers at your own pace, with live classes, recorded lectures, homework, exams, a digital library and certificates you can verify.</p>
-      <div class="links"><a class="lnk" href="about.html">Find out more &rarr;</a><a class="lnk" href="vision.html">Vision &amp; Mission &rarr;</a></div>
-    </div>
-  </div>
+  <div class="in"><p class="ab1">An online institute for Qur'an, Arabic, Islamic and Western studies and technology. <a class="lnk" href="about.html">About us &rarr;</a> <a class="lnk" href="vision.html">Vision &amp; Mission &rarr;</a></p></div>
 </section>
 
 <section class="blk" id="programs">
   <div class="in">
     <h2>What we teach</h2>
-    <p class="sub">Tap a department to see what it covers.</p>
-    <div class="paths">
-      <details id="quran"><summary><span><b>Qur'an memorization</b><span class="t">Memorize with accuracy, recite with beauty</span></span><span class="w" dir="rtl" lang="ar">القرآن</span></summary>
+        <div class="paths">
+      <details id="quran"><summary><span><b>Qur'an memorization</b></span><span class="w" dir="rtl" lang="ar">القرآن</span></summary>
         <div class="topics"><span>Hifz</span><span>Tajweed</span><span>Recitation</span><span>Revision</span></div></details>
-      <details id="arabic"><summary><span><b>Arabic language</b><span class="t">Understand the language of the Qur'an</span></span><span class="w" dir="rtl" lang="ar">العربية</span></summary>
+      <details id="arabic"><summary><span><b>Arabic language</b></span><span class="w" dir="rtl" lang="ar">العربية</span></summary>
         <div class="topics"><span>Reading and writing</span><span>Vocabulary</span><span>Grammar</span><span>Speaking</span></div></details>
-      <details id="islamic"><summary><span><b>Islamic studies</b><span class="t">Know your faith from reliable sources</span></span><span class="w" dir="rtl" lang="ar">الإسلامية</span></summary>
+      <details id="islamic"><summary><span><b>Islamic studies</b></span><span class="w" dir="rtl" lang="ar">الإسلامية</span></summary>
         <div class="topics"><span>Aqeedah</span><span>Fiqh</span><span>Hadith and Tafsir</span><span>Seerah and Adab</span></div></details>
-      <details id="western"><summary><span><b>Western studies</b><span class="t">Modern knowledge, taught with good values</span></span><span class="w" dir="rtl" lang="ar">الغربية</span></summary>
+      <details id="western"><summary><span><b>Western studies</b></span><span class="w" dir="rtl" lang="ar">الغربية</span></summary>
         <div class="topics"><span>English</span><span>Mathematics</span><span>Sciences</span><span>Social studies</span></div></details>
-      <details id="tech"><summary><span><b>Technology</b><span class="t">Practical skills, learned online</span></span><span class="w" dir="rtl" lang="ar">التقنية</span></summary>
+      <details id="tech"><summary><span><b>Technology</b></span><span class="w" dir="rtl" lang="ar">التقنية</span></summary>
         <div class="topics"><span>Computer basics</span><span>Digital safety</span><span>Digital tools</span><span>Web design and coding</span></div></details>
     </div>
     <p class="more"><a class="lnk" href="study-plan.html">See the full Study Plan and timetable &rarr;</a></p>
@@ -230,15 +228,13 @@ body.u .vis{display:none!important}
 <section class="blk vis" id="path">
   <div class="in">
     <h2>Your learning path</h2>
-    <p class="sub">Five steps, from sign-up to certificate.</p>
-    <ol class="path5">
-      <li><div><b>Register free</b><span>Create your account in a minute.</span></div></li>
-      <li><div><b>Choose your classes</b><span>Pick your level in each department.</span></div></li>
-      <li><div><b>Learn online</b><span>Live classes and recorded lectures.</span></div></li>
-      <li><div><b>Homework and exams</b><span>Practise, then sit your tests.</span></div></li>
-      <li><div><b>Report card and certificate</b><span>See your results and earn a certificate.</span></div></li>
+        <ol class="path5">
+      <li><div><b>Register free</b></div></li>
+      <li><div><b>Choose your classes</b></div></li>
+      <li><div><b>Learn online</b></div></li>
+      <li><div><b>Homework and exams</b></div></li>
+      <li><div><b>Report card and certificate</b></div></li>
     </ol>
-    <p class="more"><a class="lnk" href="study-plan.html">See the Study Plan &rarr;</a></p>
   </div>
 </section>
 
@@ -287,11 +283,8 @@ body.u .vis{display:none!important}
     <div class="qs">
       <!-- for visitors -->
       <details class="vis"><summary>Is it free to create an account?</summary><p>Yes. Creating an account costs nothing. Some books and courses use coins from your wallet.</p></details>
-      <details class="vis"><summary>Do I need any experience?</summary><p>No. Every department starts from the beginning.</p></details>
-      <details class="vis"><summary>How do I register?</summary><p>Tap Register now, fill in the short form, then choose your classes.</p></details>
-      <details class="vis"><summary>When does registration close?</summary><p>Registration closes on the day a term begins and opens again after the term ends. The dates are at the top of this page.</p></details>
-      <details class="vis"><summary>Can I learn on my phone?</summary><p>Yes. The classes, library and exams all work on a phone or a computer.</p></details>
-      <details class="vis"><summary>Will I get a certificate?</summary><p>Yes. Certificates can be checked online by anyone you show them to.</p></details>
+            <details class="vis"><summary>How do I register?</summary><p>Tap Register now, fill in the short form, then choose your classes.</p></details>
+                  <details class="vis"><summary>Will I get a certificate?</summary><p>Yes. Certificates can be checked online by anyone you show them to.</p></details>
       <!-- for students (unchanged) -->
       <details class="mem"><summary>Where are my books?</summary><p>In Subjects. Each subject shows its book and its price in coins.</p></details>
       <details class="mem"><summary>Where is my timetable?</summary><p>In Timetable. The admin sets it for your class, term by term.</p></details>
@@ -304,7 +297,7 @@ body.u .vis{display:none!important}
 <section class="give">
   <div class="in">
     <div>
-      <p><b>Sadaqah Jariyah</b>The Prophet &#65018; said: &ldquo;When a person dies, his deeds end except three: ongoing charity, knowledge that benefits, or a righteous child who prays for him.&rdquo; Help more people learn.</p>
+      <p><b>Sadaqah Jariyah</b>Ongoing charity that helps more people learn.</p>
       <a class="btn" href="donate.html">Give sadaqah</a>
     </div>
   </div>
@@ -312,14 +305,13 @@ body.u .vis{display:none!important}
 
 <section class="cta3 vis">
   <div class="in">
-    <h2>Begin with the lamp of knowledge</h2>
-    <p>Create a free account and start learning today, in shaa Allah.</p>
+    <h2>Ready to begin?</h2>
     <a class="btn" id="regbtn2" href="register.html">Register now</a>
   </div>
 </section>
 
 <div id="zfmount"></div>
-  <div style="background:var(--night);color:#cfe0d6;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen &middot; <a href="https://abdullahi-miftaudeen.netlify.app">Portfolio</a><br>Website developed with Alpha Tech Hub</div>
+  <div style="background:var(--night);color:#cfe0d6;text-align:center;padding:14px 16px;font-size:.85rem;border-top:1px solid rgba(255,255,255,.12)">&copy; <script>document.write(new Date().getFullYear())</script> Sirajul Ummah Islamic Institute. All rights reserved.<br>Founded by Abdullahi Miftaudeen<br>Website developed with Alpha Tech Hub</div>
 <script type="module">
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
