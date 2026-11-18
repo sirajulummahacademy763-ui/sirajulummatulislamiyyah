@@ -1,32 +1,42 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<!-- sec-v1 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
-<meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="robots" content="noindex,nofollow">
-
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Timetable | Sirajul Ummah Islamic Institute</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
 <style>
-.tt{max-width:900px}
-.tt h1 small{font-family:Figtree,sans-serif;font-size:.5em;font-weight:500;color:#555;display:block}
-.cd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
-.cd h2{margin:0 0 2px;font-size:1.2rem}
-.cd .sec{color:#555;font-size:.9rem;margin:0 0 10px}
-.dy{border-top:1px solid var(--line);padding:10px 0}
-.dy h3{margin:0 0 6px;font-size:1rem;color:var(--night)}
-.dy.today h3::after{content:"Today";margin-left:8px;font-size:.72rem;font-weight:700;background:#f0be4d;color:var(--night);border-radius:20px;padding:2px 9px}
-.sl{display:flex;gap:12px;align-items:flex-start;padding:7px 0}
-.sl .tm{flex:none;min-width:128px;font-weight:700;color:var(--night)}
-.sl .tx{flex:1;min-width:0}
-.sl small{color:#555;display:block}
-.sl a{font-weight:700}
-.no{color:#555;margin:0}
-.nt{color:#555;font-size:.85rem;margin:0 0 12px}
+.tt{max-width:960px}
+.tt h1 small{font-family:Figtree,sans-serif;font-size:.42em;font-weight:500;color:#cfe0d6;display:block}
+.lk{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.lk a{font-weight:700;text-decoration:none;color:var(--night);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 16px}
+.lk a:hover{background:#fff4dc;border-color:#f0be4d}
+.md{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.md button{font:inherit;font-weight:700;padding:9px 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--night);cursor:pointer}
+.md button.on{background:var(--night);color:#fff;border-color:var(--night)}
+.dp{background:#fff;border:1.5px solid var(--line);border-top:5px solid #f0be4d;border-radius:18px;box-shadow:var(--sh);margin:0 0 22px;overflow:hidden}
+.dh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,var(--night),var(--deep));color:#fff;padding:16px 18px}
+main.page .dh h2{margin:0;color:#fff;font-size:1.35rem}
+.dh .sec{margin:2px 0 0;color:#ffe9a6;font-size:.9rem}
+.dh .ar{font-family:Amiri,serif;font-size:1.6rem;color:#f0be4d;line-height:1.2}
+.dp .bd{padding:6px 16px 16px}
+.nt{color:#4b6358;font-size:.85rem;margin:12px 0 4px}
+.dy{border:1.5px solid var(--line);border-radius:14px;margin:12px 0 0;overflow:hidden}
+.dy>h3{margin:0;padding:10px 14px;background:#eef6f1;font-size:1rem;color:var(--night);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dy>h3 span{font-family:Amiri,serif;color:#9a6b10;font-size:1.15rem}
+.dy.today{border-color:#f0be4d;box-shadow:0 0 0 3px rgba(240,190,77,.35)}
+.dy.today>h3{background:linear-gradient(#ffe08a,#f0be4d)}
+.dy.today>h3::after{content:"Today";margin-left:auto;font-size:.72rem;font-weight:800;background:var(--night);color:#ffe9a6;border-radius:999px;padding:3px 11px}
+.sl{display:flex;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.sl .tm{flex:none;min-width:150px;font-weight:700;color:var(--night);background:#fff4dc;border-radius:10px;padding:7px 10px;text-align:center;font-size:.92rem}
+.sl .tx{flex:1;min-width:150px}
+.sl .tx b{font-size:1.02rem;color:var(--night)}
+.sl small{color:#4b6358;display:block;margin-top:2px}
+.jn{display:inline-block;font-weight:800;font-size:.92rem;text-decoration:none;background:linear-gradient(#ffe08a,#f0be4d);color:var(--night);border-radius:10px;padding:10px 16px;white-space:nowrap}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:6px;background:#e3f1e9;color:#1e4a3b;vertical-align:middle}
+.no{color:#555;margin:12px 0 0}
 .er{color:#b3261e;font-weight:500}
-@media(max-width:520px){.sl{flex-direction:column;gap:2px}.sl .tm{min-width:0}}
+.emp{background:#fff;border:1.5px dashed #f0be4d;border-radius:16px;padding:22px;text-align:center}
+@media(max-width:520px){.sl{flex-direction:column;align-items:stretch;gap:8px}.sl .tm{min-width:0}.jn{text-align:center}}
 </style></head><body>
 <main class="page tt" id="app"><p>Loading...</p></main>
 <script type="module">
@@ -39,25 +49,9 @@ const SECS = [["islamic", "Arabic and Islamic Studies", "العلوم العرب
 const DAYS = [[1, "Monday", "الاثنين"], [2, "Tuesday", "الثلاثاء"], [3, "Wednesday", "الأربعاء"], [4, "Thursday", "الخميس"], [5, "Friday", "الجمعة"], [6, "Saturday", "السبت"], [0, "Sunday", "الأحد"]];
 const planId = (sec, lvl) => sec + "__" + lvl.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const t12 = t => { const [h, m] = String(t || "").split(":").map(Number); if (isNaN(h)) return esc(t); return ((h % 12) || 12) + ":" + String(m || 0).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); };
-let plans = [];
-const MY = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return ""; } })();
-const tzName = z => String(z || "").split("/").pop().replace(/_/g, " ");
-const parts = (ms, tz, o) => Object.fromEntries(new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: tz, hourCycle: "h23" }, o)).formatToParts(new Date(ms)).map(p => [p.type, p.value]));
-const offMs = (ms, tz) => { const p = parts(ms, tz, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }); return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000; };
-// the next time this weekday/hour happens in zone tz, as a real moment; then shown in the student's own zone
-function mine(day, hhmm, tz) {
-  try {
-    const [h, mi] = hhmm.split(":").map(Number), now = Date.now();
-    const p = parts(now, tz, { year: "numeric", month: "2-digit", day: "2-digit" });
-    const wd = new Date(Date.UTC(+p.year, +p.month - 1, +p.day)).getUTCDay();
-    const d = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + ((day - wd + 7) % 7)));
-    const g = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), h, mi);
-    const ms = g - offMs(g, tz);
-    const f = parts(ms, MY, { weekday: "short", hour: "numeric", minute: "2-digit", hour12: true });
-    return { wd: f.weekday, t: f.hour + ":" + f.minute + " " + f.dayPeriod };
-  } catch (e) { return null; }
-}
-const dfmt = s => s ? new Date(s + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+let mode = "all", plans = [];
+try { mode = localStorage.getItem("ttMode") || "all"; } catch (e) {}
+if (!["all", "online", "physical"].includes(mode)) mode = "all";
 
 onAuthStateChanged(auth, async u => {
   if (!u) return $("app").innerHTML = '<h1>My Timetable</h1><p>Please <a href="login.html">log in</a> first.</p>';
@@ -74,36 +68,32 @@ onAuthStateChanged(auth, async u => {
 
 function draw(noClasses, failed) {
   const today = new Date().getDay();
-  let h = `<h1>الجدول · My Timetable<small>Your online lessons for the term</small></h1>
-    <p><a href="subjects.html">See my subjects and books</a></p>`;
+  let h = `<h1>الجدول · My Timetable<small>Your weekly lessons</small></h1>
+    <div class="lk"><a href="subjects.html">📖 My subjects and books</a><a href="classroom.html">🎧 Classroom</a></div>
+    <div class="md">${[["all", "All"], ["online", "Online"], ["physical", "Physical"]].map(([k, n]) => `<button type="button" data-m="${k}" class="${mode === k ? "on" : ""}">${n}</button>`).join("")}</div>`;
   if (failed) h += `<p class="er">Some data could not be loaded (${esc(failed)}). Please refresh.</p>`;
-  if (noClasses) h += '<div class="cd"><p class="no">You have not chosen your classes yet. Open the Home page and choose them, then come back here.</p></div>';
+  if (noClasses) h += '<div class="emp"><p class="no" style="margin:0">You have not chosen your classes yet.</p><p style="margin:8px 0 0"><a href="index.html">Open the Home page</a> and choose them, then come back here.</p></div>';
   plans.forEach(({ name, ar, lvl, p }) => {
-    const slots = (p && p.slots) || [];
+    const slots = ((p && p.slots) || []).filter(s => mode === "all" || (s.mode || "both") === "both" || s.mode === mode);
     let body = "";
-    if (!slots.length) body = `<p class="no">The timetable for this class will be added soon.</p>`;
+    if (!slots.length) body = `<p class="no">${p && (p.slots || []).length ? "No lessons for this choice." : "The timetable for this class will be added soon."}</p>`;
     else {
-      const tm = p.term || {}, td = new Date().toISOString().slice(0, 10);
-      if (tm.name) body += `<p class="nt"><b>${esc(tm.name)}</b>${tm.start || tm.end ? " · " + esc(dfmt(tm.start)) + " – " + esc(dfmt(tm.end)) : ""}</p>`;
-      if (tm.end && td > tm.end) body += `<p class="er">This term has ended. The timetable for the next term will be added soon.</p>`;
-      else if (tm.start && td < tm.start) body += `<p class="nt">This term starts on ${esc(dfmt(tm.start))}.</p>`;
-      body += `<p class="nt">These lessons repeat every week of the term. Each time is shown in its own country time${MY ? ", and in your time (" + esc(tzName(MY)) + ")" : ""}.</p>`;
+      if (p.tz) body += `<p class="nt">Times are in ${esc(p.tz)}.</p>`;
       DAYS.forEach(([d, en, a]) => {
         const ds = slots.filter(s => Number(s.day) === d).sort((x, y) => String(x.start).localeCompare(String(y.start)));
         if (!ds.length) return;
         body += `<div class="dy${d === today ? " today" : ""}"><h3>${en} · <span dir="rtl" lang="ar">${a}</span></h3>` + ds.map(s => {
           const w = String(s.where || "");
-          const where = /^https?:\/\//i.test(w) ? `<a href="${esc(w)}" target="_blank" rel="noopener">Join class</a>` : (w ? esc(w) : "");
-          const z = s.tz || p.tzId || "Africa/Lagos", a1 = MY && MY !== z ? mine(d, s.start, z) : null, a2 = MY && MY !== z ? mine(d, s.end, z) : null;
-          const you = a1 && a2 && (a1.wd + a1.t !== en.slice(0, 3) + t12(s.start)) ? `<small>Your time: ${a1.wd} ${a1.t} – ${a2.t}</small>` : "";
-          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}<small>${esc(tzName(z))} time</small>${you}</span><span class="tx"><b>${esc(s.subject)}</b>` +
-            `${s.teacher ? `<small>Teacher: ${esc(s.teacher)}</small>` : ""}${where ? `<small>${where}</small>` : ""}</span></div>`;
+          const where = /^https?:\/\//i.test(w) ? `<a class="jn" href="${esc(w)}" target="_blank" rel="noopener">Join class</a>` : (w ? esc(w) : "");
+          return `<div class="sl"><span class="tm">${t12(s.start)} – ${t12(s.end)}</span><span class="tx"><b>${esc(s.subject)}</b>${s.mode && s.mode !== "both" ? `<span class="tag">${s.mode === "online" ? "Online" : "Physical"}</span>` : ""}` +
+            `${s.teacher ? `<small>👤 ${esc(s.teacher)}</small>` : ""}${where && !/^https?:\/\//i.test(w) ? `<small>📍 ${where}</small>` : ""}</span>${where && /^https?:\/\//i.test(w) ? where : ""}</div>`;
         }).join("") + "</div>";
       });
     }
-    h += `<div class="cd"><h2>${esc(lvl)}</h2><p class="sec">${esc(name)} · <span dir="rtl" lang="ar">${ar}</span></p>${body}</div>`;
+    h += `<section class="dp"><div class="dh"><div><h2>${esc(lvl)}</h2><p class="sec">${esc(name)}</p></div><div class="ar" dir="rtl" lang="ar">${ar}</div></div><div class="bd">${body}</div></section>`;
   });
   $("app").innerHTML = h;
+  $("app").querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; try { localStorage.setItem("ttMode", mode); } catch (e) {} draw(noClasses, failed); });
 }
 </script>
 </body></html>
