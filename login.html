@@ -71,7 +71,8 @@ async function welcome(u){
       try{const d=await getDoc(doc(db,col,u.uid)); if(d.exists()){const x=d.data(); kind=col; nm=x.name||x.fullName||x.displayName||""; ttl=(x.title||x.position||x.designation||"").toString().trim(); break;}}catch(e){}
     }
     nm=(nm||u.displayName||(u.email||"").split("@")[0]||"").toString().replace(/[_.\-0-9]+/g," ").trim();
-    if(!ttl) ttl = {admins:"Director",principals:"Principal",supervisors:"Supervisor",teachers:"Teacher"}[kind]||"";
+    const OWNER_EMAIL="abdullahmiftaudeen7@gmail.com";
+    if(!ttl) ttl = (kind==="admins" && (u.email||"").toLowerCase()===OWNER_EMAIL) ? "Director and Founder" : {admins:"Director",principals:"Principal",supervisors:"Supervisor",teachers:"Teacher"}[kind]||"";
     const who=(ttl?ttl+" ":"")+nm;
     const text = ttl ? "Welcome, "+who+". You have successfully logged in." : "You have successfully logged in"+(nm?", "+nm:"")+".";
     try{sessionStorage.setItem("voiceWelcome",u.uid)}catch(e){}
