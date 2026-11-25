@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- sec-v1 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://js.paystack.co https://checkout.flutterwave.com https://meet.jit.si https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://www.google.com https://www.recaptcha.net https://*.googleapis.com https://www.gstatic.com https://*.workers.dev https://api.alquran.cloud https://cdn.mp3quran.net https://archive.org https://*.archive.org https://*.flutterwave.com https://api.paystack.co https://meet.jit.si wss://meet.jit.si; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://drive.google.com https://meet.jit.si https://checkout.flutterwave.com https://checkout.paystack.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="robots" content="noindex,nofollow">
+
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admins | Sirajul Ummah Islamic Institute</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css"><script src="site.js" defer></script>
+<style>
+.ad{max-width:900px}
+.cd{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+.cd h2{margin-top:0}
+.cd label{display:block;font-size:.88rem;font-weight:500;margin:10px 0 3px}
+.cd input[type=email]{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+.cd button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:10px;background:var(--night);color:#fff;cursor:pointer;margin-top:14px}
+.cd button.sm{padding:5px 10px;font-size:.82rem;margin:0 4px 0 0;background:#fff;color:var(--night);border:1.5px solid var(--line)}
+.it{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:6px}
+.pk label{display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0}
+.ok{color:#1c7a4d;font-weight:500}.er{color:#b3261e;font-weight:500}
+@media(max-width:600px){.pk{grid-template-columns:1fr}}
+</style></head><body>
+<main class="page ad" id="app"><p>Checking access...</p></main>
+<script type="module">
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+const OWNER = "abdullahmiftaudeen7@gmail.com";
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const say = (t, ok) => { $("m").textContent = t; $("m").className = ok ? "ok" : "er"; };
+// The dashboard items an admin can be given (page file, name)
+const ITEMS = [["dashboard.html","Today"],["admin.html","Admin (coins, terms, notices, people)"],["revision-admin.html","Hifz & Revision"],["classes-admin.html","Classes & Timetable"],["classroom.html","Classroom"],["teacher-assign-admin.html","Assign Teachers"],["overview-admin.html","Overview"],["signatures.html","Signature & Stamp"],["supervisors-admin.html","Supervisors"],["principals-admin.html","Principals"],["messages-admin.html","Messages"],["homework-admin.html","Homework & Reports"],["countries-admin.html","Students & Teachers by Country"],["students-admin.html","Students"],["absent-admin.html","Absent students"],["backup-admin.html","Backup"],["revision-choices-admin.html","Hifz & Revision choices"],["content-admin.html","Website content"]];
+let editing = null;
+
+onAuthStateChanged(auth, async u => {
+  if (!u) return;
+  if ((u.email || "").toLowerCase() !== OWNER) return $("app").innerHTML = "<h1>Admins</h1><p>Only the owner can open this page.</p>";
+  let ok = false;
+  try { ok = (await getDoc(doc(db, "admins", u.uid))).exists(); } catch (e) {}
+  if (!ok) return $("app").innerHTML = "<h1>Admins</h1><p>Only the owner can open this page.</p>";
+  build(); load();
+});
+
+function picker(sel) {
+  return ITEMS.map(([f, n]) => `<label><input type="checkbox" data-f="${f}" ${(!sel || sel.includes(f)) ? "checked" : ""}> ${esc(n)}</label>`).join("");
+}
+function build() {
+  $("app").innerHTML = `<h1>Admins</h1>
+  <div class="cd"><h2 id="ft">Add another admin</h2>
+    <p style="margin-top:0">The person must already have registered on the website. Then choose the dashboard items they will see.</p>
+    <label>Their email</label><input id="em" type="email" autocomplete="off">
+    <label>Dashboard items this admin can see</label>
+    <div class="pk" id="pk">${picker(null)}</div>
+    <div><button class="sm" id="all" type="button">Tick all</button><button class="sm" id="none" type="button">Clear all</button></div>
+    <button id="sv" type="button">Add admin</button> <button class="sm" id="cn" type="button" hidden>Cancel</button> <span id="m"></span></div>
+  <div class="cd"><h2>Current admins</h2><div id="ls">Loading...</div></div>`;
+  $("all").onclick = () => document.querySelectorAll("#pk input").forEach(i => i.checked = true);
+  $("none").onclick = () => document.querySelectorAll("#pk input").forEach(i => i.checked = false);
+  $("sv").onclick = save; $("cn").onclick = reset;
+}
+function reset() { editing = null; $("ft").textContent = "Add another admin"; $("em").value = ""; $("em").disabled = false; $("sv").textContent = "Add admin"; $("cn").hidden = true; $("pk").innerHTML = picker(null); say("", true); }
+const picked = () => [...document.querySelectorAll("#pk input:checked")].map(i => i.dataset.f);
+
+async function save() {
+  const allowed = picked();
+  if (!allowed.length) return say("Tick at least one item.");
+  try {
+    if (editing) {
+      await setDoc(doc(db, "admins", editing), { allowed }, { merge: true });
+      say("Saved.", true); reset(); return load();
+    }
+    const email = $("em").value.trim();
+    if (!email) return say("Enter the person's email.");
+    const s = await getDocs(query(collection(db, "students"), where("email", "==", email)));
+    if (s.empty) return say("No registered user with that email. They must register first.");
+    const d = s.docs[0];
+    await setDoc(doc(db, "admins", d.id), { name: d.data().name || email, email, allowed, addedAt: serverTimestamp() });
+    say("Admin added. They hear \u201CDirector\u201D when they log in.", true); reset(); load();
+  } catch (e) { say("Failed: " + (e.code || e.message)); }
+}
+async function load() {
+  try {
+    const s = await getDocs(collection(db, "admins"));
+    const list = s.docs.map(d => ({ id: d.id, ...d.data() }));
+    $("ls").innerHTML = list.map(a => {
+      const own = (a.email || "").toLowerCase() === OWNER;
+      const n = Array.isArray(a.allowed) && a.allowed.length ? a.allowed.length + " of " + ITEMS.length + " items" : "All items";
+      return `<div class="it"><span><b>${esc(a.name || a.email || a.id)}</b>${own ? " · Director and Founder" : ""}<br><small>${esc(a.email || "")} · ${own ? "All items" : n}</small></span>${own ? "" : `<span><button class="sm" data-e="${a.id}">Change items</button><button class="sm" data-r="${a.id}">Remove</button></span>`}</div>`;
+    }).join("") || "<p>No admins found.</p>";
+    document.querySelectorAll("[data-e]").forEach(b => b.onclick = () => {
+      const a = list.find(x => x.id === b.dataset.e); editing = a.id;
+      $("ft").textContent = "Change items for " + (a.name || a.email); $("em").value = a.email || ""; $("em").disabled = true;
+      $("pk").innerHTML = picker(Array.isArray(a.allowed) && a.allowed.length ? a.allowed : null);
+      $("sv").textContent = "Save items"; $("cn").hidden = false; scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.querySelectorAll("[data-r]").forEach(b => b.onclick = async () => {
+      if (!confirm("Remove this admin? They will no longer be able to open admin pages.")) return;
+      try { await deleteDoc(doc(db, "admins", b.dataset.r)); load(); } catch (e) { say("Failed: " + (e.code || e.message)); }
+    });
+  } catch (e) { $("ls").innerHTML = "<p class=er>Could not load admins: " + esc(e.code || e.message) + ". Publish the new rules first.</p>"; }
+}
+</script>
+</body></html>
