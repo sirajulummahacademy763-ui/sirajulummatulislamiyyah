@@ -65,17 +65,21 @@ const errors = {
 async function welcome(u){
   try{
     if(!("speechSynthesis" in window)) return;
-    let nm="";
-    for(const col of ["students","teachers","admins"]){
-      try{const d=await getDoc(doc(db,col,u.uid)); if(d.exists()){const x=d.data(); nm=x.name||x.fullName||x.displayName||""; if(nm)break;}}catch(e){}
+    let nm="", ttl="", kind="";
+    // Staff first (admin / teacher), then student. A "title" field on the staff record (e.g. Director, Principal, Supervisor) is spoken before the name.
+    for(const col of ["admins","principals","supervisors","teachers","students"]){
+      try{const d=await getDoc(doc(db,col,u.uid)); if(d.exists()){const x=d.data(); kind=col; nm=x.name||x.fullName||x.displayName||""; ttl=(x.title||x.position||x.designation||"").toString().trim(); break;}}catch(e){}
     }
     nm=(nm||u.displayName||(u.email||"").split("@")[0]||"").toString().replace(/[_.\-0-9]+/g," ").trim();
+    if(!ttl) ttl = {admins:"Director",principals:"Principal",supervisors:"Supervisor",teachers:"Teacher"}[kind]||"";
+    const who=(ttl?ttl+" ":"")+nm;
+    const text = ttl ? "Welcome, "+who+". You have successfully logged in." : "You have successfully logged in"+(nm?", "+nm:"")+".";
     try{sessionStorage.setItem("voiceWelcome",u.uid)}catch(e){}
-    msg("You have successfully logged in"+(nm?", "+nm:"")+".","ok");
+    msg(text,"ok");
     await new Promise(res=>{
-      const m=new SpeechSynthesisUtterance("You have successfully logged in"+(nm?", "+nm:"")+".");
+      const m=new SpeechSynthesisUtterance(text);
       m.lang="en-US"; m.rate=.95;
-      m.onend=res; m.onerror=res; setTimeout(res,5000);
+      m.onend=res; m.onerror=res; setTimeout(res,6000);
       try{speechSynthesis.cancel(); speechSynthesis.speak(m);}catch(e){res();}
     });
   }catch(e){}
