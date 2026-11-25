@@ -251,7 +251,20 @@ if(!isPub){
         else{const qs=await f.getDocs(f.query(f.collection(c.db,"classrooms"),f.where("teacherId","==",u.uid),f.where("section","in",["hifz","revision"]),f.limit(1)));qc=qs.docs.length>0}
         sessionStorage.setItem(qk,JSON.stringify({t:Date.now(),v:qc}));}}catch(e){}
       const withQ=l=>qc?l.reduce((a,x)=>{a.push(x);if(x[0]==="classroom.html")a.push(["quran-classroom.html","Quran Classroom"]);return a},[]):l;
-      show(withQ(role==="admin"?ADM:role==="teacher"?tl:STU));
+      let admL=ADM;
+      if(role==="admin"){try{
+        const ad=(await f.getDoc(f.doc(c.db,"admins",u.uid))).data()||{};
+        const owner=(u.email||"").toLowerCase()==="abdullahmiftaudeen7@gmail.com";
+        const AO=["dashboard.html","admin.html","revision-admin.html","classes-admin.html","classroom.html","teacher-assign-admin.html","overview-admin.html","signatures.html","supervisors-admin.html","principals-admin.html","messages-admin.html","homework-admin.html","countries-admin.html","students-admin.html","absent-admin.html","backup-admin.html","revision-choices-admin.html","content-admin.html"];
+        const al=Array.isArray(ad.allowed)&&ad.allowed.length?ad.allowed:null;
+        if(owner){admL=ADM.reduce((r,x)=>{r.push(x);if(x[0]==="admin.html")r.push(["admins-admin.html","Admins (owner)"]);return r},[])}
+        else if(al){
+          admL=ADM.filter(x=>AO.indexOf(x[0])<0||al.indexOf(x[0])>-1);
+          const pg=location.pathname.split("/").pop()||"index.html";
+          if(AO.indexOf(pg)>-1&&al.indexOf(pg)<0)location.replace("index.html?home=1");
+        }
+      }catch(e){}}
+      show(withQ(role==="admin"?admL:role==="teacher"?tl:STU));
       if(role!=="student")notify(role,u,isSup,f,c,isPrin);
       if(role!=="admin")setTimeout(()=>notifyLec(role,u,f,c),400);
     });
