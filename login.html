@@ -49,7 +49,8 @@ p{text-align:center;margin:18px 0 0}
 </div>
 <script type="module">
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { auth } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const $ = id => document.getElementById(id);
 const msg = (t, c) => { $("msg").textContent = t; $("msg").className = c; };
 const errors = {
@@ -60,12 +61,35 @@ const errors = {
   "auth/too-many-requests": "Too many tries. Wait a few minutes and try again.",
   "auth/network-request-failed": "No internet connection. Try again."
 };
+// Voice welcome: says the full name, then lets the page continue (max 5 seconds)
+async function welcome(u){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    let nm="";
+    for(const col of ["students","teachers","admins"]){
+      try{const d=await getDoc(doc(db,col,u.uid)); if(d.exists()){const x=d.data(); nm=x.name||x.fullName||x.displayName||""; if(nm)break;}}catch(e){}
+    }
+    nm=(nm||u.displayName||(u.email||"").split("@")[0]||"").toString().replace(/[_.\-0-9]+/g," ").trim();
+    try{sessionStorage.setItem("voiceWelcome",u.uid)}catch(e){}
+    msg("You have successfully logged in"+(nm?", "+nm:"")+".","ok");
+    await new Promise(res=>{
+      const m=new SpeechSynthesisUtterance("You have successfully logged in"+(nm?", "+nm:"")+".");
+      m.lang="en-US"; m.rate=.95;
+      m.onend=res; m.onerror=res; setTimeout(res,5000);
+      try{speechSynthesis.cancel(); speechSynthesis.speak(m);}catch(e){res();}
+    });
+  }catch(e){}
+}
 $("f").addEventListener("submit", async e => {
   e.preventDefault();
   const email = $("email").value.trim(), pw = $("pw").value;
   if (!email || !pw) return msg("Enter your email and password.", "err");
   $("btn").disabled = true; msg("Logging in...", "ok");
-  try { await signInWithEmailAndPassword(auth, email, pw); location.href = "index.html"; }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pw);
+    await welcome(cred.user);
+    location.href = "index.html";
+  }
   catch (err) { console.error(err); msg(errors[err.code] || "Could not log in: " + err.code, "err"); $("btn").disabled = false; }
 });
 $("reset").addEventListener("click", async () => {
