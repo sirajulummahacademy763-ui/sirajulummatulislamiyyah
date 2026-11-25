@@ -198,6 +198,27 @@ if(!isPub){
       try{ if((await f.getDoc(f.doc(c.db,"admins",u.uid))).exists())role="admin"; }catch(e){}
       if(role==="student"){try{ if((await f.getDoc(f.doc(c.db,"teachers",u.uid))).exists())role="teacher"; }catch(e){}}
       document.documentElement.setAttribute("data-role",role);
+      // Voice welcome: says the person's full name once per sign-in
+      try{
+        if(sessionStorage.getItem("voiceWelcome")!==u.uid && "speechSynthesis" in window){
+          let nm="";
+          for(const col of [role==="admin"?"admins":role==="teacher"?"teachers":"students","students","teachers","admins"]){
+            try{const d=await f.getDoc(f.doc(c.db,col,u.uid));if(d.exists()){const x=d.data();nm=x.name||x.fullName||x.displayName||"";if(nm)break}}catch(e){}
+          }
+          nm=(nm||u.displayName||(u.email||"").split("@")[0]||"").toString().replace(/[_.\-0-9]+/g," ").trim();
+          const say=()=>{
+            if(window.__vw)return;window.__vw=1;
+            try{sessionStorage.setItem("voiceWelcome",u.uid)}catch(e){}
+            const m=new SpeechSynthesisUtterance("You have successfully logged in"+(nm?", "+nm:"")+".");
+            m.lang="en-US";m.rate=.95;m.pitch=1;
+            try{speechSynthesis.cancel();speechSynthesis.speak(m)}catch(e){}
+          };
+          const act=navigator.userActivation;
+          if(act&&act.hasBeenActive)say();
+          else{const once=()=>{say();["click","touchstart","keydown"].forEach(e=>removeEventListener(e,once))};
+            ["click","touchstart","keydown"].forEach(e=>addEventListener(e,once,{passive:true}))}
+        }
+      }catch(e){}
       // Security: staff (admin/teacher) are signed out after 30 minutes without activity
       if(role!=="student"){try{
         let last=Date.now();
